@@ -1,5 +1,0 @@
-	instrpat = ( "{" . type len(1) . instr "}" | "[" . type span("01234567890") . data "]" )
-while	prog = trim(input)	:f(end)
-loop	prog instrpat =	:f(end)
-	output = type ":" instr ":" data	:(loop)
-end
