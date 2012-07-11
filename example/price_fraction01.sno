@@ -1,0 +1,5 @@
+	x = trim(input)
+while	input ">= " break(" ") . from " < " break(" ") .  to " := " rem . val	:f(stop)
+	output = ?(lt(x,to)) ?(ge(x,from)) "val = " val	:(while)
+stop	output = x
+end

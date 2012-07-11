@@ -1,0 +1,7 @@
+	max = 12
+	y = 0
+next_y	x = 0; y = ?(lt(y,max)) y + 1	:f(end)
+next_x	x = ?(lt(x,max)) x + 1	:f(out)
+	line = line char(9) x * y	:(next_x)
+out	line rem . output = y char(9) "|"	:(next_y)
+end

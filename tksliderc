@@ -1,0 +1,16 @@
+# enable custom tabs
+set ::customTabs      {1}
+set ::editorName      {gvim}
+set ::editorParam     {-f}
+set ::snobol4prog     {snobol4-1.2\bin\snobol4.exe}
+set ::snobol4option   {-b}
+set ::snobol4param    {}
+set ::inputfile       {snobol4.in}
+set ::outputfile      {snobol4.out}
+set ::errfile         {snobol4.err}
+set ::myFont          {Courier 10}
+set ::encoding        {utf-8}
+set ::browser         {c:\program files\internet explorer\iexplore.exe}
+set ::geom            {1024x730+-4+-4}
+set ::syntax          {1}
+set ::useUTFlibrary   {0}

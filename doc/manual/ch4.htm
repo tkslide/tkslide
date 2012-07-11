@@ -1,0 +1,85 @@
+<HTML>
+<HEAD><TITLE>Snobol4 Reference Manual: Chapter 4</TITLE></HEAD>
+<BODY>
+<!-- From Part III of the Catspaw manual distributed with Vanilla Snobol.
+     HTML markup by John English (je@brighton.ac.uk).
+-->
+
+<A HREF="ch3.htm"><IMG SRC="../prev.gif" ALT="Previous" ALIGN=TOP> Previous chapter</A>
+<B>&#183;</B> <A HREF="ch5.htm"><IMG SRC="../next.gif" ALT="Next" ALIGN=TOP> Next chapter</A>
+<B>&#183;</B> <A HREF="contents.htm"><IMG SRC="../toc.gif" ALT="Contents" ALIGN=TOP> Table of Contents</A>
+<HR>
+
+<H2>Chapter 4 : OPERATORS</H2>
+<P>
+            Following are lists of all the unary and binary operators in
+          SNOBOL4.  Unused operators may be attached to program-defined
+          functions using the OPSYN function.  Unary operators have equal
+          precedence among themselves, and higher precedence than binary
+          operators.  Operators of higher precedence are performed first,
+          unless reordered by parentheses.  Where several instances of
+          operators with the same priority appear, associativity specifies
+          which one is performed first.
+<H3><A NAME="4.1">4.1 UNARY OPERATORS</A></H3>
+            All unary operators are left-associative: if several appear together,
+          they are performed left-to-right.
+<PRE>
+    Graphic        Name                  Definition
+    =======  =================    ==============================
+      +      plus                 arithmetic positive
+      -      minus                arithmetic negative
+      .      period               name of object (address)
+      $      dollar sign          indirect reference through object
+      *      asterisk             unevaluated expression
+      &amp;      ampersand            keyword
+      ~      tilde                negation of success/failure
+      ?      question mark        interrogation
+      @      at sign              cursor position assignment
+      /      slash                &lt;none&gt;
+      ^, !   caret, exclamation   &lt;none&gt;
+      %      percent              &lt;none&gt;
+      #      pound sign           &lt;none&gt;
+      |      vertical bar         &lt;none&gt;
+</PRE>
+<H4>4.1.1 Indirect Reference and Case-Folding</H4>
+<P>
+            The indirect reference operator ($) converts a string to a
+          variable name.  When case-folding is in effect, the string characters
+          are treated as upper-case letters when producing the name.
+          The string itself is not modified.  Thus,
+<PRE>
+    $('abc')
+</PRE>
+          references variable ABC when case-folding, and variable abc when
+          not.
+<H3><A NAME="4.2">4.2 BINARY OPERATORS</A></H3>
+<PRE>
+    Graphic    Name            Definition       Precedence Associates
+    ======= =================  ===============  ========== ==========
+      ~     tilde              &lt;none&gt;                 12      right
+      ?     question mark      &lt;none&gt;                 12      left
+      .     period             conditional assignment 11      left
+      $     dollar sign        immediate assignment   13      left
+      ^, !  caret, exclamation exponentiation         12      right
+      **    double asterisk    exponentiation         12      right
+      %     percent            &lt;none&gt;                 11      left
+      *     asterisk           multiplication         10      left
+      /     slash              division                9      left
+      #     pound sign         &lt;none&gt;                  8      left
+      +     plus               addition                7      left
+      -     minus              subtraction             7      left
+      @     at sign            &lt;none&gt;                  6      left
+      blank blank              concatenation           5      left
+      tab   tab                concatenation           5      left
+      |     vertical bar       alternation             4      left
+      &amp;     ampersand          &lt;none&gt;                  3      left
+      =     equal sign         assignment              1      right
+</PRE>
+
+<P><HR>
+<A HREF="ch3.htm"><IMG SRC="../prev.gif" ALT="Previous" ALIGN=TOP> Previous chapter</A>
+<B>&#183;</B> <A HREF="ch5.htm"><IMG SRC="../next.gif" ALT="Next" ALIGN=TOP> Next chapter</A>
+<B>&#183;</B> <A HREF="contents.htm"><IMG SRC="../toc.gif" ALT="Contents" ALIGN=TOP> Table of Contents</A>
+
+</BODY>
+</HTML>

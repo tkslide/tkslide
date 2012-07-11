@@ -1,0 +1,162 @@
+0.34
+* corrected handling of "Save output" (no window title change)
+0.33
+* snippets added
+* examples added (mostly rosettacode.org)
+* links to "relevant" sites added in Help menu
+
+0.32
+* re-highlighting after "Open" fixed
+* focus handling in Preferences window corrected
+* window title setting after "Open"/"Open input" corrected
+
+0.31
+* Preferences: file browser uses native names (slash/backslash)
+* New icons
+
+0.30
+* ctext updated to 3.2
+* Preferences: editor/browser/interpreter selection via file browser
+
+0.29
+* filenames corrected (should work under WinXP now)
+* name of the file set correctly after "New File"
+* Snobol4 version in "About" window (hardcoded)
+
+0.28
+* slide.bat corrected
+* path separators for in/out/err/temp files made OS dependent
+* changelog moved to a separate file
+* manual updated
+* Snobol4 updated to 1.2
+* Tclkit updated to 8.5.2
+* fileutil library updated to 1.13.5
+
+0.27
+* Ctrl-v mapping only for Tk versions prior to 8.5
+* further code cleanup
+* "nag-screen" removed
+* code organization changed
+* switchable UTF hack
+* UTF hack configurable in prefix.sno
+* custom tabs added to preferences
+* online help works on Windows
+
+0.26
+* cut/copy/paste buttons added
+* find replaced with a more orthodox version by R. Suchenwirth
+* utf.sno hack (requested by Guido Milanese)
+* useUTFlibrary configuration parameter added (utf.sno hack)
+
+0.25
+* transcript function fixed
+
+0.24
+* typo in function template corrected
+* preferences dialog improved
+* context menu search added
+
+0.23
+* icons added
+* tooltips added
+* edit shortcuts fixed(?)
+
+0.22
+* libraries updated to tcllib-1.7 and tklib-1.8
+* forced exit (Alt-F4, 'close' button) confirmation fixed
+* filename in window title
+
+0.21
+* preferences dialog
+
+0.20
+* true replaced with 1 -- compatibility with Tcl version 8.3 (P. Thomas)
+* -undo and -uniform parameters used with 8.4+ only (Tcl 8.3 compat. - P. Thomas)
+
+0.19
+* rudimentary search (F3) added (wraparound)
+* highlighting color of brackets corrected
+
+0.18
+* Larry Gregg reported some problems with snobol4 full path name under
+Windows. This version should fix the problem. Use "normal" MS-DOS paths in
+{}, eg. {C:\some path\snobol4\snobol4.exe}. Thank you, Larry!
+
+0.17
+* 'encoding' variable added.
+* Ctrl-S logic adjusted: use saveFileAs for unnamed files, saveFile for all the rest
+* separate HOST(0) textfield added (variable 'snobol4param' renamed to
+'snobol4option', new (empty) variable snobol4param added  - update your
+config file!). Tested with CSnobol4 (requested by H.Bussey)
+* cosmetic changes in transcript
+* test version of the context help implemented
+* transcript file selection dialog implemented
+* undo/redo fixed
+* main window border added
+
+0.16
+* 'save transcript' function implemented (File/Save transcript)
+* program directory discovery done the right way (using 'file dirname').
+* snobol4 parameters fixed (can be entered with spaces)
+* 'Check updates' help menu item added
+* program file name adjusted in error messages (the temporary file name was shown)
+* system information added (in About window)
+* configuration file documented.
+* 'noSyntax' config file option added (disable syntax highlighting)
+
+0.15
+* noIntro switch added (I'll be glad you *won't* use it, though)
+* version number in the windows title added 
+* TkS*LIDE help in HTML format
+
+0.14
+* removed excessive code from runProgram
+* changed help system (thanks to J. English) - adjust browser variable
+
+0.13
+* fixed font set in online help
+* configuration entry for font adjusted
+
+0.12
+* rudimentary Snobol4 online help (thanks to M. Emmer)
+
+0.11
+* config file name changed
+* example config file added
+
+0.10
+* fixed scrolling in in/out/err windows (bug reported by H.Bussey)
+* improved runProgram (unconditional stderr display, update) (H.Bussey)
+
+0.09
+* scrollbars added to in/out/err windows (requested by H.Bussey)
+* snobol4 switches (requested by B.M.Axtens and H.Bussey)
+* 'Run' button and Alt-R binding added
+* toolbar added
+* basic mouse-based editing context menu added (copy/paste operations and run) (requested by H.Bussey)
+* custom tabs on/off switch added
+
+0.08 
+* "File/New" menu item added
+* "File/Open input" menu item added (so you can load your input data).
+* "Errors" window renamed (it's for displaying messages, not only error
+   messages)
+* commandline parameters: 
+  -f filename - load filename on startup
+  -r          - activates Snobol4's "-r" switch (request: by B.M.Axtens)
+  -t          - comfortable tabbing (label<Tab>instructions<Tab>goto will be automatically aligned)
+* rudimentary config file added.
+
+0.07 
+* external editor uses temporary file. 
+* input/output/program window focusing added.
+* program window focus on startup corrected.
+* small syntax hilighting regex change.
+* graceful exit on Alt-F4 (update: it DOESN'T work)
+* welcome screen added
+* program is now fully relocable (can be invoked from anywhere)
+* few emacs-like bindings added
+
+0.06 
+* snobol4 uses temporary file. Original source won't be overwritten.
+* new requirement(s) - tcllibs fileutil package.

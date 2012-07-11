@@ -1,0 +1,12 @@
+	fd = serv_listen("inet","stream",12321)	:f(lsnr.err)
+	input(.net,9,"UWT","/dev/fd/" fd)
+	output(.net,9)
+	crlf = char(13) char(10)
+
+while	line = net	:f(end)
+	line any(crlf) =
+	ident(line,'end')	:s(end)
+	net = line crlf	:(while)
+
+lsnr.err	terminal = "Cannot start listener"	:(end)
+end

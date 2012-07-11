@@ -1,0 +1,9 @@
+* example program 1
+* 
+	&trim = 1
+	&stlimit = 99999
+	pat = pos(0) len(1) . x
+again	line = input	:f(end)
+	line pat = "(" x ")"
+	output = line	:(again)
+end

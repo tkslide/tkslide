@@ -1,0 +1,241 @@
+<HTML>
+<HEAD><TITLE>Snobol4 Reference Manual: Chapter 5</TITLE></HEAD>
+<BODY>
+<!-- From Part III of the Catspaw manual distributed with Vanilla Snobol.
+     HTML markup by John English (je@brighton.ac.uk).
+-->
+
+<A HREF="ch4.htm"><IMG SRC="../prev.gif" ALT="Previous" ALIGN=TOP> Previous chapter</A>
+<B>&#183;</B> <A HREF="ch6.htm"><IMG SRC="../next.gif" ALT="Next" ALIGN=TOP> Next chapter</A>
+<B>&#183;</B> <A HREF="contents.htm"><IMG SRC="../toc.gif" ALT="Contents" ALIGN=TOP> Table of Contents</A>
+<HR>
+
+<H2>Chapter 5 : KEYWORDS</H2>
+<P>
+            Keywords allow a program to communicate with SNOBOL4.  Their
+          names are set apart from other variables by the unary operator
+          ampersand (&amp;).  Protected keywords cannot be changed by a program,
+          while unprotected keywords can.
+<P>
+            Several protected keywords can be traced using the TRACE function:
+          &amp;ERRTYPE, &amp;FNCLEVEL, &amp;STCOUNT, and &amp;STFCOUNT.  Tracing occurs
+          each time SNOBOL4 alters their value.  For example, tracing
+          keyword &amp;STCOUNT produces a trace after every SNOBOL4 statement
+          is executed.
+<H3><A NAME="5.1">5.1 PROTECTED KEYWORDS</A></H3>
+            Among these keywords are several which serve as read-only
+          repositories of fundamental system patterns and values, such as
+          &amp;ARB.  The nonkeyword form (ARB) may be changed by a program, and
+          later restored to its original value by assigning it the corresponding
+          keyword.
+<UL>
+<LI><B>&amp;ABORT</B><P>           The primitive pattern ABORT.
+
+<P>
+<LI><B>&amp;ALPHABET</B><P>        String of 256 ASCII character values in ascending
+                     order.
+
+<P>
+<LI><B>&amp;ARB</B><P>             The primitive pattern ARB.
+
+<P>
+<LI><B>&amp;BAL</B><P>             The primitive pattern BAL.
+
+<P>
+<LI><B>&amp;ERRTEXT</B><P>         String containing most recent system generated
+                     error text.
+
+<P>
+<LI><B>&amp;ERRTYPE</B><P>         Integer code of the last execution error to occur.
+                     This keyword may be traced with function TRACE().
+
+<P>
+<LI><B>&amp;FAIL</B><P>            The primitive pattern FAIL.
+
+<P>
+<LI><B>&amp;FENCE</B><P>           The primitive pattern FENCE.
+
+<P>
+<LI><B>&amp;FNCLEVEL</B><P>        Integer depth of program-defined function calls.
+                     It is initially zero, and incremented by one for
+                     each function call, and decremented for each
+                     function return.  This keyword may be traced.
+
+<P>
+<LI><B>&amp;LASTNO</B><P>          Integer statement number of the previous
+                     statement executed.
+
+<P>
+<LI><B>&amp;LCASE</B><P>           The 26 lower-case alphabetic letters.
+
+<P>
+<LI><B>&amp;PARM</B><P>            The command string used to invoke SNOBOL4.
+                     Begins with the blank following the word
+                     SNOBOL4.
+
+<P>
+<LI><B>&amp;REM</B><P>             The primitive pattern REM.
+
+<P>
+<LI><B>&amp;RTNTYPE</B><P>         Contains a string describing the type of return
+                     most recently made by a program-defined function,
+                     either 'RETURN', 'FRETURN', or 'NRETURN'.
+
+<P>
+<LI><B>&amp;STCOUNT</B><P>         Integer count of the number of statements
+                     executed.  This keyword may be traced.  Since
+                     integers are 16-bit quantities, executing
+                     more than 32,767 statements will cause this
+                     keyword to overflow.  No harm results, and
+                     the keyword may still be traced, but its
+                     value will be a large negative number.
+
+<P>
+<LI><B>&amp;STFCOUNT</B><P>        Integer count of the number of statements
+                     which failed.  This keyword may be traced.
+                     The same overflow problem discussed for
+                     &amp;STCOUNT occurs with this keyword.
+
+<P>
+<LI><B>&amp;STNO</B><P>            Integer statement number of the current
+                     statement being executed.
+
+<P>
+<LI><B>&amp;SUCCEED</B><P>         The primitive pattern SUCCEED.
+
+<P>
+<LI><B>&amp;UCASE</B><P>           The 26 upper-case alphabetic letters.
+</UL>
+<H3><A NAME="5.2">5.2 UNPROTECTED KEYWORDS</A></H3>
+            These keywords may be set to integer values to modify SNOBOL4's
+          behavior.
+<UL>
+<LI><B>&amp;ANCHOR</B><P>          Nonzero for anchored pattern match.  Initially
+                     0, unanchored.
+
+<P>
+<LI><B>&amp;CASE</B><P>            Zero to prevent case-folding during compilation
+                     with the functions CODE and EVAL.  Initially
+                     1, causing case-folding to occur.
+
+<P>
+<LI><B>&amp;CODE</B><P>            The end-of-job code is an integer value in
+                     the range 0 to 255 returned to the operating
+                     system.  It can be tested with the DOS Batch
+                     condition ERRORLEVEL.  Initially 0.
+
+<P>
+<LI><B>&amp;DUMP</B><P>            Nonzero to list unprotected keywords and variables
+                     with nonnull values at program termination.
+                     A positive value causes the list to be sorted; negative
+                     values leave them unsorted.  Initially 0.  The dump is
+                     produced to I/O unit 6 (OUTPUT).
+
+<P>
+<LI><B>&amp;ERRLIMIT</B><P>        Determines the number of conditionally fatal
+                     execution errors permitted before terminating
+                     a program.  The Execution Error Messages section
+                     of <A HREF="../tutorial/ch7.htm">Chapter 7 of the
+                     companion tutorial</A>, &quot;System Messages,&quot; describes
+                     the errors which are conditionally
+                     fatal.  Initially 0, causing SNOBOL4 to stop
+                     if any error occurs.
+
+<P>
+<LI><B>&amp;FTRACE</B><P>          Nonzero value causes each call and return of
+                     a program-defined function to be listed.
+                     Decremented for each trace.  Initially 0.
+
+<P>
+<LI><B>&amp;FULLSCAN</B><P>        Nonzero to disable pattern matching heuristics.
+                     Initially 0, the quickscan mode of
+                     pattern matching.
+
+<P>
+<LI><B>&amp;INPUT</B><P>           Zero to disable all input.  When disabled,
+                     using variable INPUT (or other input-associated
+                     variables) does not read data from the
+                     file.  Initially 1, input is enabled.
+
+<P>
+<LI><B>&amp;MAXLNGTH</B><P>        Maximum string length.  Initially 5000, maximum
+                     value is 32767.  Memory limitations in
+                     Vanilla SNOBOL4 will limit actual strings to
+                     a smaller size.
+
+<P>
+<LI><B>&amp;OUTPUT</B><P>          Zero to disable all output.  When disabled,
+                     assigning data to OUTPUT or SCREEN (or other
+                     output-associated variables) does not write
+                     data to the file.  Initially 1, output is enabled.
+
+<P>
+<LI><B>&amp;STLIMIT</B><P>         The number of statements allowed to execute.
+                     If positive, it is decremented for each
+                     statement executed; execution terminates when
+                     it reaches 0.  If negative, there is no
+                     limit, and it is not decremented.  Initially
+                     -1.
+
+<P>
+<LI><B>&amp;TRACE</B><P>           Nonzero to permit tracing with the TRACE
+                     function.  Initially 0, it is decremented for
+                     each trace performed.
+
+<P>
+<LI><B>&amp;TRIM</B><P>            Nonzero to strip trailing blanks from lines
+                     read from ASCII files.  This is faster than
+                     using the TRIM function.  It does not strip
+                     trailing tab characters.  Initially 0: blanks
+                     are not removed and short records are blank
+                     padded to the file's standard record length.
+</UL>
+<H3><A NAME="5.3">5.3 SPECIAL NAMES</A></H3>
+            The following names have special meaning to SNOBOL4.  If casefolding
+          is in effect, they may appear with any combination of
+          upper- and lower-case letters.
+<UL>
+<LI><B>END</B><P>              This is a special label which denotes the last
+                     statement of the user's program.  An optional
+                     label may follow the word END (in the subject
+                     field) to denote where program execution is to
+                     begin.  A program should terminate execution by
+                     transferring to label END.
+
+<P>
+<LI><B>FRETURN</B><P>          Transfer to this label to return from a
+                     program-defined function with a failure
+                     indication.
+
+<P>
+<LI><B>INPUT</B><P>            Variable associated with input from unit
+                     number 5.
+
+<P>
+<LI><B>NRETURN</B><P>          Transfer to this label to return successfully
+                     from a program-defined function by name,
+                     rather than by value.  The function name
+                     should be assigned a name result (usually
+                     with the period (.) unary operator).  This
+                     permits a function call to be the object of
+                     an assignment operation.
+
+<P>
+<LI><B>OUTPUT</B><P>           Variable associated with output to unit
+                     number 6.
+
+<P>
+<LI><B>RETURN</B><P>           Transfer to this label to return from a
+                     program-defined function with a success
+                     indication.  A value may be returned as
+                     the function's result; simply assign it
+                     to a variable with the same name as the
+                     function before transferring to RETURN.
+</UL>
+<P><HR>
+<A HREF="ch4.htm"><IMG SRC="../prev.gif" ALT="Previous" ALIGN=TOP> Previous chapter</A>
+<B>&#183;</B> <A HREF="ch6.htm"><IMG SRC="../next.gif" ALT="Next" ALIGN=TOP> Next chapter</A>
+<B>&#183;</B> <A HREF="contents.htm"><IMG SRC="../toc.gif" ALT="Contents" ALIGN=TOP> Table of Contents</A>
+
+</BODY>
+</HTML>

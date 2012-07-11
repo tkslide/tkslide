@@ -1,0 +1,10 @@
+-include "tcp.sno"
+	CR = char(10)
+	trgt = host(2,3)
+	tcp.open(.net,trgt,80)	:f(tcp.fail)
+	net = "GET / HTTP/1.0" CR CR
+while	output = net	:s(while)
+	tcp.close(net)
+		:(end)
+tcp.fail	terminal = "Err"
+end

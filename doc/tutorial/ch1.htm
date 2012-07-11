@@ -1,0 +1,443 @@
+<HTML>
+<HEAD><TITLE>A Snobol4 Tutorial: Chapter 1</TITLE>
+</HEAD>
+
+<BODY>
+<!-- From Part II of the Catspaw manual distributed with Vanilla Snobol.
+     HTML markup by John English (je@brighton.ac.uk).
+-->
+
+<IMG SRC="../prev.gif" ALT="Previous" ALIGN=TOP> Previous chapter
+<B>&#183;</B> <A HREF="ch2.htm"><IMG SRC="../next.gif" ALT="Next" ALIGN=TOP> Next chapter</A>
+<B>&#183;</B> <A HREF="contents.htm"><IMG SRC="../toc.gif" ALT="Contents" ALIGN=TOP> Table of Contents</A>
+<HR>
+
+<H2>Chapter 1 : FUNDAMENTALS</H2>
+      SNOBOL4 is really a combination of two kinds of languages:  a
+    conventional language, with several data types and a simple but
+    powerful control structure, and a pattern language, with a structure
+    all its own.  The conventional language is not block structured,
+    and may appear old-fashioned.  The pattern language,
+    however, remains unsurpassed, and is unique to SNOBOL4.
+<P>
+      You should try to master the conventional portion of SNOBOL4
+    first.  When you're comfortable with it, you can move on to pattern
+    matching.  Pattern matching by itself is a very large subject,
+    and this manual can only offer an introduction.  The sample
+    programs accompanying Vanilla SNOBOL4, as well as the many
+    SNOBOL4 books available from Catspaw can be studied for a deeper
+    understanding of patterns and their application.
+<P>
+      We'll begin by discussing data types, operators, and variables.
+<H3><A NAME="1.1">
+                          1.1 SIMPLE DATA TYPES
+</A></H3>
+      SNOBOL4 has several different basic types, but has a mechanism
+    to define hundreds more as aggregates of others.  Initially,
+    we'll discuss the two most basic:  integers and strings.
+<H3><A NAME="1.1.1">
+    1.1.1 Integers
+</A></H3>
+      An integer is a simple whole number, without a fractional part.
+    In SNOBOL4, its value can range from -32767 to +32767.  It appears
+    without quotation marks, and commas should not be used to
+    group digits.  Here are some acceptable integers:
+<PRE>
+    14    -234    0    0012    +12832    -9395    +0
+</PRE>
+      These are incorrect in SNOBOL4:
+<PRE>
+    13.4             fractional part is not allowed
+    49723            larger than 32767
+    -                number must contain at least one digit
+    3,076            comma is not allowed
+</PRE>
+      Use the CODE.SNO program to test different integer values.  Try
+    both legal and illegal values.  Here are some sample test lines:
+<PRE>
+    Enter SNOBOL4 statements:
+    ?       OUTPUT = 42
+    42
+    ?       OUTPUT = -825
+    -825
+    ?       OUTPUT = 73768
+    Compilation error: Erroneous integer, re-enter:
+</PRE>
+<H3><A NAME="1.1.2">
+    1.1.2 Reals
+</A></H3>
+      Vanilla SNOBOL4 does not include real numbers.  They are
+    available in SNOBOL4+, Catspaw's highly enhanced implementation
+    of the SNOBOL4 programming language.
+<H3><A NAME="1.1.3">
+    1.1.3 Strings
+</A></H3>
+      A string is an ordered sequence of characters.  The order of
+    the characters is important: the strings AB and BA are different.
+    Characters are not restricted to printing characters; all of the
+    256 combinations possible in an 8-bit byte are allowed.
+<P>
+      Normally, the maximum length of a string is 5,000 characters,
+    although you can tell SNOBOL4 to accept longer strings.  A string
+    of length zero (no characters) is called the null string.  At
+    first, you may find the idea of an empty string disturbing:  it's
+    a string, but it has no characters.  Its role in SNOBOL4 is similar
+    to the role of zero in the natural number system.
+<P>
+      Strings may appear literally in your program, or may be created
+    during execution.  To place a literal string in your program, enclose
+    it in apostrophes (')<A HREF="#F1" NAME="R1"><SUP>1</SUP></A> or double quotation marks (&quot;).
+    Either may be used, but the beginning and ending marks must be
+    the same. The string itself may contain one type of mark if the
+    other is used to enclose the string.  The null string is represented
+    by two successive marks, with no intervening characters.
+    Here are some samples to try with CODE.SNO:
+<PRE>
+    ?       OUTPUT = 'STRING LITERAL'
+    STRING LITERAL
+    ?       OUTPUT = &quot;So is this&quot;
+    So is this
+    ?       OUTPUT = ''
+
+    ?       OUTPUT = 'WHO COINED THE WORD &quot;BYTE&quot;?'
+    WHO COINED THE WORD &quot;BYTE&quot;?
+    ?       OUTPUT = &quot;WON'T&quot;
+    WON'T
+</PRE>
+<H3><A NAME="1.2">
+                          1.2 SIMPLE OPERATORS
+</A></H3>
+      If data is the raw material, operators are the tools that do
+    the work.  Some operators, such as + and -, appear in all programming
+    languages, and pocket calculators.  But SNOBOL4 provides
+    many more, some of which are unique to the SNOBOL4 language.
+    SNOBOL4 also allows you to define your own operators.  We'll
+    examine just a few basic operators below.
+<H3><A NAME="1.2.1">
+    1.2.1 Unary vs. Binary
+</A></H3>
+<P>
+      SNOBOL4 operators require either one or two items of data,
+    called operands.  For example, the minus sign (-) can be used
+    with one object.  In this form, the operator is considered unary:
+<PRE>
+    -6
+</PRE>
+    or as a binary operator with two operands:
+<PRE>
+    4 - 1
+</PRE>
+      In the first case, the minus sign negates the number.  The second
+    example subtracts 1 from 4.  The minus sign's meaning depends
+    on the context in which it appears.  SNOBOL4 has a very simple
+    rule for determining if an operator is binary or unary:
+<BLOCKQUOTE>
+         Unary operators are placed immediately to the left of
+         their operand.  No blank or tab character may appear
+         between operator and operand.
+<P>
+         Binary operators have one or more blank or tab characters
+    on each side.
+</BLOCKQUOTE>
+      The blank or tab requirement for binary operators causes problems
+    for programmers first learning SNOBOL4.  Most other languages
+    make these white space characters optional.  Omitting the
+    right hand blank after a binary operator will produce a unary
+    operator, and while the statement may be syntactically correct,
+    it will probably produce unexpected results.  Fortunately, blanks
+    and binary operators quickly become a way of SNOBOL4 life, and
+    after some initial forgetfulness there are few problems.
+<H3><A NAME="1.2.2">
+    1.2.2 Some Binary Operators
+</A></H3>
+<PRE>
+    Operation:     Assignment
+    Symbol:        = (equals sign)
+</PRE>
+      You've already met one binary operator, the equals sign (=).
+    It appeared in the first sample program:
+<PRE>
+    OUTPUT = 'Hello world!'
+</PRE>
+      It assigns, or transfers, the value of the object on the right
+    ('Hello world!') to the object on the left (variable OUTPUT).
+<PRE>
+    Operation:     Arithmetic
+    Symbols:       **, *, /, +, -
+</PRE>
+      These characters provide the arithmetic operations -- exponentiation,
+    multiplication, division, addition, and subtraction
+    respectively.  Each is assigned a priority, so SNOBOL4 knows
+    which to perform first if more than one appear in an expression.
+    Exponentiation is performed first, followed by multiplication,
+    division, and finally addition and subtraction.  SNOBOL4 is
+    unusual in giving multiplication higher priority than division;
+    most programming languages treat them equally.
+<P>
+      You may use parentheses to change the order of operations.
+    Division of an integer by another integer will produce a truncated
+    integer result; the fractional result is discarded.  Try
+    the following:
+<PRE>
+    ?       OUTPUT = 3 - 6 + 2
+    -1
+    ?       OUTPUT = 2 * (10 + 4)
+    28
+    ?       OUTPUT = 7 / 4
+    1
+    ?       OUTPUT = 3 ** 5
+    243
+    ?       OUTPUT = 10 / 2 * 5
+    1
+    ?       OUTPUT = (10 / 2) * 5
+    25
+</PRE>
+      When the same operator occurs more than once in an expression,
+    which one should be performed first?  The governing principle is
+    called associativity, and is either left or right.  Multiple
+    instances of *, /, + and - are performed left to right, while
+    **'s are performed right to left.  Again, parentheses may be used
+    to change the default order.  Try a few examples:
+<PRE>
+    ?       OUTPUT = 24 / 4 / 2
+    3
+    ?       OUTPUT = 24 / (4 / 2)
+    12
+    ?       OUTPUT = 2 ** 2 ** 3
+    256
+    ?       OUTPUT = (2 ** 2) ** 3
+    64
+</PRE>
+      Here's the first bit of SNOBOL4 magic: what happens if either
+    operand is a string rather than an integer or real number?  The
+    action taken is one which is widespread throughout the SNOBOL4
+    language; the system tries to convert the operand to a suitable
+    data type.  Given the statement
+<PRE>
+    ?       OUTPUT = 14 + '54'
+    68
+</PRE>
+    SNOBOL4 detects the addition of an integer and a string, and
+    tries to convert the string to a numeric value.  Here the conversion
+    succeeds, and the integers 14 and 54 are added together.  If
+    the characters in the string do not form an acceptable integer,
+    SNOBOL4 produces the error message &quot;Illegal data type.&quot;
+<P>
+      SNOBOL4 is strict about the composition of strings being converted
+    to numeric values: leading or trailing blanks or tabs are
+    not allowed.  The null string is permitted, and converted to
+    integer 0.  Try producing some arithmetic errors:
+<PRE>
+    ?       OUTPUT = 14 + ' 54'
+    Execution error #1, Illegal data type
+    Failure
+    ?       OUTPUT = 'A' + 1
+    Execution error #1, Illegal data type
+    Failure
+</PRE>
+    Note:  Error numbers are listed in <A HREF="../manual/ch9.htm">Chapter 9
+    of the Reference Manual</A>,
+     &quot;System Messages.&quot;
+<PRE>
+    Operation:     Concatenation
+    Symbols:       blank or tab
+</PRE>
+      This is the fundamental operator for assembling strings.  Two
+    strings are concatenated simply by writing one after the other,
+    with one or more blank or tab characters between them.  There is
+    no explicit symbol for concatenation (it is special in this
+    regard), the white space between two objects serves to define
+    this operator.  The blank or tab character merely specifies the
+    operation; it is not included in the resulting string.
+<P>
+      The string that results from concatenation is the right string
+    appended to the end of the left.  The two strings remain
+    unchanged and a third string emerges as the result.  Try a few
+    simple concatenations with CODE.SNO:
+<PRE>
+    ?       OUTPUT = 'CONCAT' 'ENATION'
+    CONCATENATION
+    ?       OUTPUT = 'ONE,' 'TWO,' 'THREE'
+    ONE,TWO,THREE
+    ?       OUTPUT = 'A'                 'B'       'C'
+    ABC
+    ?       OUTPUT = 'BEGINNING '   'AND '   'END.'
+    BEGINNING AND END.
+</PRE>
+      The string resulting from concatenation can not be longer than
+    the maximum allowable string size.
+<P>
+      The concatenation operator works only on character strings, but
+    if an operand is not a string, SNOBOL4 will convert it to its
+    string form.  For example,
+<PRE>
+    ?       OUTPUT = (20 - 17)  ' DOG NIGHT'
+    3 DOG NIGHT
+    ?       OUTPUT = 19  (12 / 3)
+    194
+</PRE>
+      In the first case, concatenation's right operand is the string
+    ' DOG NIGHT', but the left operand is an integer expression
+    (20 - 17).  SNOBOL4 performs the subtraction, converts the result
+    to the string '3', and produces the final result '3 DOG NIGHT'.
+    In the second example, the integer operands are converted to the
+    strings '19' and '4', to produce the result string '194'.  This
+    is not exactly good math, but it is correct concatenation.
+<P>
+      You must be careful however.  If you accidentally omit an
+    operator, SNOBOL4 will think you intended to perform concatenation.
+     In the example above, perhaps we omitted a minus sign and
+    had really meant to say:
+<PRE>
+    ?       OUTPUT = 19 - (12 / 3)
+    15
+</PRE>
+      It is always possible for concatenation to automatically convert
+    a number to a string.  But there is one important exception
+    when SNOBOL4 doesn't try to do this: if either operand is the
+    null string, the other operand is returned unchanged.  It is not
+    coerced into the string data type.  If the first example were
+    changed to:
+<PRE>
+    ?       OUTPUT = (20 - 17)  ''
+    3
+</PRE>
+    the result is the INTEGER 3.  You'll find you'll use this aspect
+    of null string concatenations extensively in your SNOBOL4 programming.
+<P>
+               Before we proceed, let's think about the null string one more
+    time as the string equivalent of the number zero.  First of all,
+    adding zero to a number does not change its value, and concatenating
+    the null string with an object doesn't change it, either.
+    Second, just as a calculator is cleared to zero before adding a
+    series of numbers, the null string can serve as the starting
+    place for concatenating a series of strings.
+<H3><A NAME="1.2.3">
+    1.2.3 Some Unary Operators
+</A></H3>
+<P>
+      There aren't many interesting unary operators at this point in
+    your tour of SNOBOL4.  Most of them appear in connection with
+    pattern matching, discussed later.  Note, however, that all unary
+    operations are performed before binary operations, unless precedence
+    is altered by parentheses.
+<PRE>
+    Operation:     Arithmetic
+    Symbols:       +, -
+</PRE>
+      These unary operators require a single numeric operand, which
+    must immediately follow the operator, without an intervening
+    blank or tab.  Unary minus (-) changes the arithmetic sign of its
+    operand; unary plus (+) leaves the sign unchanged.  If the
+    operand is a string, SNOBOL4 will try to convert it to a number.
+    The null string is converted to integer 0.  Coercing a string to
+    a number with unary plus is a noteworthy technique.  Try unary
+    plus and minus with CODE.SNO:
+<PRE>
+    ?       OUTPUT = -(3 * 5)
+    -15
+    ?       OUTPUT = +''
+    0
+</PRE>
+<H3><A NAME="1.3">
+                              1.3 VARIABLES
+</A></H3>
+<P>
+      A variable is a place to store an item of data.  The number of
+    variables you may have is unlimited, provided you give each one a
+    unique name.  Think of a variable as a box, marked on the outside
+    with a permanent name, able to hold any data value or type.  Many
+    programming languages require that you formally declare what kind
+    of entity the box will contain -- integer, real, string, etc. -- 
+    but SNOBOL4 is more flexible.  A variable's contents may change
+    repeatedly during program execution.  The size of the box contracts
+    or expands as necessary.  One moment it might contain an
+    integer, then a 2,000 character string, then the null string; in
+    fact, any SNOBOL4 data type.
+<P>
+      There are only a few rules about composing a variable's name
+    when it appears in your program:
+<OL>
+      <LI>The name must begin with an upper- or lower-case letter.
+<P>
+      <LI>If it is more than one character long, the remaining characters
+    may be any combination of letters, numbers, or the
+         characters period (.) and underscore (_).
+<P>
+      <LI>The name may not be longer than the maximum line length (120
+         characters).
+</OL><P>
+      Here are some correct SNOBOL4 names:
+<PRE>
+    WAGER     P23     VerbClause     SUM.OF.SQUARES     Buffer
+</PRE>
+      Normally, SNOBOL4 performs &quot;case-folding&quot; on names.  Lower-case
+    alphabetic characters are changed to upper-case when they appear
+    in names -- Buffer and BUFFER are equivalent.  Naturally, casefolding
+    of data does not occur within a string literal.  Casefolding
+    can be disabled by the command line option /C.
+<P>
+      In some languages, the initial value of a new variable is
+    undefined.  SNOBOL4 guarantees that a new variable's initial
+    value is the null string.  However, except in very small programs,
+    you should always initialize variables.  This prevents
+    unexpected results when a program is modified or a program segment
+    is reexecuted.
+<P>
+      You store something in a variable by making it the object of an
+    assignment operation.  You can retrieve its contents simply by
+    using it wherever its value is needed.  Using a variable's value
+    is nondestructive; the value in the box remains unchanged.  Try
+    creating some variables using CODE.SNO:
+<PRE>
+    ?       ABC = 'EGG'
+    ?       OUTPUT = ABC
+    EGG
+    ?       D = 'SHELL'
+    ?       OUTPUT = abc d             (Same as ABC D)
+    EGGSHELL
+    ?       OUTPUT = NONESUCH          (New variable is null)
+     
+    ?       OUTPUT = ABC NULL D
+    EGGSHELL
+    ?       N1 = 43
+    ?       D = 17
+    ?       OUTPUT = N1 + D
+    60
+    ?       output = ABC D
+    EGG17
+</PRE>
+      OUTPUT is a variable with special properties; when a value is
+    stored in its box, it is also displayed on your screen.  There is
+    a corresponding variable named INPUT, which reads data from your
+    keyboard.  Its box has no permanent contents.  Whenever SNOBOL4
+    is asked to fetch its value, a complete line is read from the
+    keyboard and used instead.  If INPUT were used twice in one
+    statement, two separate lines of input would be read.  Try these
+    examples:
+<PRE>
+    ?       OUTPUT = INPUT
+    TYPE ANYTHING YOU DESIRE
+    TYPE ANYTHING YOU DESIRE
+    ?       TWO.LINES = INPUT '-AND-' INPUT
+    FIRST LINE
+    SECOND LINE
+    ?       OUTPUT = TWO.LINES
+    FIRST LINE-AND-SECOND LINE
+</PRE>
+      SNOBOL4 variables are global in scope -- any variable may be
+    referenced anywhere in the program.
+<P><HR>
+    <A NAME="F1" HREF="#R1"><SUP>1</SUP></A> Apostrophe (single quote) should not be confused with the
+    grave accent mark (`) which appears next to it on some computer
+    keyboards.  The grave accent may not be used as a string
+    delimiter.
+
+<P><HR>
+<IMG SRC="../prev.gif" ALT="Previous" ALIGN=TOP> Previous chapter
+<B>&#183;</B> <A HREF="ch2.htm"><IMG SRC="../next.gif" ALT="Next" ALIGN=TOP> Next chapter</A>
+<B>&#183;</B> <A HREF="contents.htm"><IMG SRC="../toc.gif" ALT="Contents" ALIGN=TOP> Table of Contents</A>
+
+</BODY>
+</HTML>
+

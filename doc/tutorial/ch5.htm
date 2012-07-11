@@ -1,0 +1,699 @@
+<HTML>
+<HEAD><TITLE>A Snobol4 Tutorial</TITLE>
+</HEAD>
+
+<BODY>
+<!-- From Part II of the Catspaw manual distributed with Vanilla Snobol.
+     HTML markup by John English (je@brighton.ac.uk).
+-->
+
+<A HREF="ch4.htm"><IMG SRC="../prev.gif" ALT="Previous" ALIGN=TOP> Previous chapter</A>
+<B>&#183;</B> <A HREF="ch6.htm"><IMG SRC="../next.gif" ALT="Next" ALIGN=TOP> Next chapter</A>
+<B>&#183;</B> <A HREF="contents.htm"><IMG SRC="../toc.gif" ALT="Contents" ALIGN=TOP> Table of Contents</A>
+<HR>
+
+<H2>Chapter 5 : ADDITIONAL OPERATORS AND DATA TYPES</H2>
+<P>
+      In this chapter we will explore some additional SNOBOL4 operators
+    and data types.  Many of these concepts are entirely absent
+    from other programming languages.  Far from being esoteric, they
+    fit quite naturally into SNOBOL4, and add to its conciseness and
+    power of expression.  In the following examples, we will continue
+    to use the CODE.SNO program to illustrate each new idea.
+<H3><A NAME="5.1">
+                         5.1 INDIRECT REFERENCE
+</A></H3>
+<P>
+      In conventional programming languages, a variable's name may be
+    specified only at the time the program is written.  In fact, once
+    the run-time storage has been allocated, the textual form of the
+    name can be discarded.  This is not the case in SNOBOL4; you can
+    create new variables during execution, and reference existing
+    ones from names specified in character strings.
+<P>
+      The unary operator dollar sign ($) is the &quot;indirect reference
+    operator.&quot;  By applying it to a variable you instruct SNOBOL4 to
+    use its contents as the name of another variable, and to continue
+    on to reference that variable.  SNOBOL4 &quot;goes through&quot; the operand
+    to reach the variable.  Try the following simple example:
+<PRE>
+    ?       DOG = 'BARK'
+    ?       CAT = 'MEOW'
+    ?       ANIMAL = 'CAT'
+    ?       OUTPUT = $ANIMAL
+    MEOW
+    ?       ANIMAL = 'DOG'
+    ?       OUTPUT = $ANIMAL
+    BARK
+</PRE>
+      These statements make their indirect reference through the
+    string contained in variable ANIMAL.  ANIMAL's contents are
+    treated as a &quot;pointer&quot; to the final destination.  That is, using
+    ANIMAL by itself retrieves the string 'DOG', while $ANIMAL refers
+    to the variable DOG.
+<P>
+      New variables may also be created by using an indirect reference
+    as the object of an assignment.  Here, $DOG causes variable
+    BARK to be created, and assigned the string 'RUFF':
+<PRE>
+    ?       $DOG = 'RUFF'
+    ?       OUTPUT = BARK
+    RUFF
+</PRE>
+      Indirect referencing may proceed to any depth, provided the
+    null string is never encountered as a variable name:
+<PRE>
+    ?       OUTPUT = $ANIMAL '-' $$ANIMAL
+    BARK-RUFF
+    ?       OUTPUT = $RUFF
+    Execution error #4, Null string in illegal context
+</PRE>
+      In the first example, $ANIMAL produces the contents of variable
+    DOG, while $$ANIMAL refers to the variable BARK.  The second example
+    attempts to go through RUFF -- which was not previously defined -- and
+    obtains the null string.  Of course, the null string
+    is not a valid variable name.
+<H3><A NAME="5.1.1">
+    5.1.1 Associative Programming
+</A></H3>
+<P>
+      Indirect referencing provides a means of &quot;programming by association.&quot;
+     Suppose we want to write a program that allows the
+    user to enter a state name and receive the state's capital in
+    response.  We've provided a data file called CAPITAL.DAT, in
+    which each line contains a state name, comma, and the capital.
+    The first part of the program will read the file and set up an
+    associative data base:
+<PRE>
+    *  Trim input, attach data file to variable INFILE
+            &amp;TRIM = 1
+            INPUT('INFILE', 1, , 'CAPITAL.DAT')       :F(ERR)
+
+    *  Read a line from file.  Start querying upon EOF
+    READF   LINE = INFILE                             :F(QUERY)
+
+    *  Break out state and capital from line
+            LINE BREAK(',') . STATE LEN(1) REM . CAPITAL :F(ERR)
+
+    *  Convert state name into a variable, and assign the
+    *  capital city string to it.  Then read next line.
+            $STATE = CAPITAL                          :(READF)
+
+    ERR     OUTPUT = 'Illegal data file'              :(END)
+    QUERY    . . .
+</PRE>
+      We attach the file, and associate variable INFILE with it.
+    Successive file lines are read into variable LINE.  Pattern
+    matching assigns the state name and capital city to variables
+    STATE and CAPITAL respectively.  We use an indirect reference
+    through $STATE to create a new variable with the state's name,
+    and assign the capital city to it.  For example, the file line
+    'COLORADO,DENVER' creates variable COLORADO, containing 'DENVER'.
+<P>
+      Having established a data base, completing the program to access
+    it is trivial:
+<PRE>
+    *  Read state name, access it as a variable
+    QUERY   OUTPUT = $INPUT                           :S(QUERY)
+    END
+</PRE>
+      An input line is read from the user, and used for an indirect
+    reference.  If the user types a state name, treating it as a
+    variable name obtains the state capital.  An invalid state name
+    would reference a new variable, whose value is the null string,
+    and a blank line would be output.  A more complete program might
+    test for this null string and produce an error message.
+<P>
+      The addition of one statement to the program loop creating the
+    data base allows us to enter either the state name or capital
+    city, and obtain the other:
+<PRE>
+    $STATE = CAPITAL
+    $CAPITAL = STATE                          :(READF)
+</PRE>
+      How would we solve this problem in a language like BASIC?
+    States and capitals could be stored in an array.  We would then
+    use a loop to sequentially compare the user's input string with
+    the array elements.  If a match were found, the result would be
+    displayed from another array element.  In SNOBOL4, we did it all
+    with one statement: OUTPUT = $INPUT.  Associative programming can
+    often replace a conventional linear search.
+<H3><A NAME="5.1.2">
+    5.1.2 Variable Names
+</A></H3>
+<P>
+      Earlier I said that variable names were composed of letters,
+    digits, and the characters period and underscore.  These restrictions
+    apply only to variables which appear in program text.  Variable
+    names created or referenced with the indirect reference
+    operator may be composed of ANY nonnull string of characters, and
+    may be as long as any other string.  If we set keyword &amp;DUMP
+    nonzero, we would see a list of states and capitals when the
+    program terminated.  The variable names created by $STATE are in
+    the left column, and their string contents in the right column:
+<PRE>
+    ALABAMA = 'MONTGOMERY'
+    ALASKA = 'JUNEAU'
+          . . .
+    NEW HAMPSHIRE = 'CONCORD'
+</PRE>
+      The dump reveals a variable named NEW HAMPSHIRE, which contains
+    a &quot;blank&quot; within its name.  Clearly, you cannot directly say:
+<PRE>
+    NEW HAMPSHIRE = 'CONCORD'
+</PRE>
+    since SNOBOL4 sees this as a pattern match statement: variable
+    NEW is the subject, and variable HAMPSHIRE contains the pattern.
+    To reference this variable, we must use:
+<PRE>
+    $'NEW HAMPSHIRE' = 'CONCORD'
+</PRE>
+      Try CODE.SNO with some unconventional variable names:
+<PRE>
+    ?       $'&quot;' = 'DOUBLE QUOTE'
+    ?       $'$#@!*' = 53
+    ?       OUTPUT = $'$#@!*' $'&quot;'
+    53 DOUBLE QUOTE
+</PRE>
+<H3><A NAME="5.1.3">
+    5.1.3 Indirect GOTOs
+</A></H3>
+<P>
+      Indirect referencing is not restricted to the main body of a
+    statement.  It may be used in the GOTO field to transfer control
+    to a label specified by a variable.  Suppose variable OP held the
+    one-character string '+', '-', '*', or '/'.  This GOTO would
+    transfer to one of four statements, labeled L+, L-, L*, or L/:
+<PRE>
+            statement                            :($('L' OP))
+    L+      statement
+    L-      statement
+</PRE>
+      The string in OP is appended to string 'L', and the result is
+    used with an indirect reference to obtain the final label name.
+<P>
+      Indirect referencing in the GOTO field is a more powerful version
+    of the computed GOTO which appears in some languages.  It
+    allows a program to quickly perform a multiway control branch
+    based on an item of data.  Of course, the computed label name
+    must be defined in the program.  SNOBOL4 provides an error message
+    if your program transfers to an undefined label.
+<P>
+      Indirect referencing may not be used in a statement's label
+    field.  Dynamically changing the name of a statement during execution
+    is excessive even by SNOBOL4 standards.
+<H3><A NAME="5.2">
+                       5.2 UNEVALUATED EXPRESSIONS
+</A></H3>
+<P>
+      The pattern data type appears when a pattern structure is
+    stored in a variable for subsequent use in a pattern match.  For
+    example, a pattern to capture the next N characters after a
+    colon, and store them in variable ITEM could be written as:
+<PRE>
+    NPAT = ':' LEN(N) . ITEM
+</PRE>
+      Notice that a definition such as this is static.  NPAT captures
+    the value of variable N at the time of pattern construction.  If
+    we subsequently alter N in the program, NPAT retains N's original
+    value.  One way to use the current value of N is to explicitly
+    specify the pattern each time it is needed:
+<PRE>
+    SUBJECT ':' LEN(N) . ITEM
+</PRE>
+      Now the pattern is being constructed anew whenever the statement
+    is executed.  But reconstructing a pattern whenever it is
+    used is inefficient, so a one-time definition is preferable.
+<P>
+      The &quot;unevaluated expression&quot; operator allows us to obtain the
+    efficiency of the NPAT formulation, yet use the current value of
+    N when NPAT is referenced.  It is a unary operator, whose graphic
+    symbol is the asterisk (*).  Now we would specify NPAT like this:
+<PRE>
+    NPAT = ':' LEN(*N) . ITEM
+</PRE>
+      The pattern is only constructed once, and assigned to NPAT.
+    The current value of N is ignored at this time.  Later, when NPAT
+    is used in a pattern match, the unevaluated expression operator
+    tells SNOBOL4 to fetch the current value of N.
+<P>
+      The unevaluated expression operator may be used with the argument
+    of the pattern functions ANY, BREAK, LEN, NOTANY, POS, RPOS,
+    RTAB, SPAN, or TAB.  It may also be applied to an alternate or
+    subsequent clause or to an entire pattern.  Here's an example:
+<PRE>
+    ?       PAT = TAB(*I) . OUTPUT SPAN(*S) . OUTPUT
+    ?       SUB = '123AABBCC'
+    ?       I = 4
+    ?       S = 'AB'
+    ?       SUB PAT
+    123A
+    ABB
+    ?       I = 3
+    ?       SUB PAT
+    123
+    AABB
+</PRE>
+      It's worth noting that I and S were undefined when PAT was
+    first constructed.  Later, we will apply this technique to construct
+    recursive patterns.
+<H3><A NAME="5.3">
+                        5.3 IMMEDIATE ASSIGNMENT
+</A></H3>
+<P>
+      Our examples have made extensive use of the conditional assignment
+    operator to capture matched substrings after a successful
+    pattern match.  The &quot;immediate assignment&quot; operator allows us to
+    capture intermediate results during the pattern match.
+<P>
+      Immediate assignment occurs whenever a subpattern matches, even
+    if the entire pattern match ultimately fails.  Immediate assignment
+    is a binary operator whose graphic symbol is the dollar sign
+    ($).  Like conditional assignment, the matching substring on its
+    left is assigned to the variable on its right.  Here are examples
+    with CODE.SNO where we use variable OUTPUT to reveal the work of
+    the pattern matcher:
+<PRE>
+    ?       S = 'ABCDEFG'
+    ?       S 'A' ARB $ OUTPUT 'E'
+
+    B
+    BC
+    BCD
+    Success
+    ?       S ('B' LEN(2) | 'C' LEN(3)) $ OUTPUT 'G'
+    BCD
+    CDEF
+    Success
+    ?
+</PRE>
+
+<H3><A NAME="5.3.1">
+    5.3.1 Immediate Assignment and Unevaluated Expressions
+</A></H3>
+<P>
+      As useful as immediate assignment is for revealing the inner
+    workings of a pattern match, a more powerful use is possible.  It
+    can be used with the unevaluated expression operator to develop a
+    new class of patterns.  An interesting substring at the beginning
+    of the subject is immediately assigned to a variable, and the
+    variable is then subsequently used in the very same pattern.
+<P>
+      Suppose a number at the beginning of the subject specifies the
+    length of a variable width field that follows.  We would like to
+    capture the number into variable N, then use it with the LEN
+    function to transfer the data into variable FIELD.  When used
+    with LEN, N must be preceded by the unevaluated expression operator,
+    so that its new value is retrieved.  For instance:
+<PRE>
+    ?       FPAT = SPAN('0123456789') $ N LEN(*N) . FIELD
+    ?       '12ABCDEFGHIJKLMNOPQ' FPAT
+    Success
+    ?       OUTPUT = FIELD
+    ABCDEFGHIJKL
+</PRE>
+      SPAN matched the field length, 12, and immediately assigned it
+    to N.  LEN(*N) then matched the next 12 characters.  Another subject,
+    with a different field length, would update N appropriately.
+     Type conversion was working quietly behind the scenes
+    here:  N was assigned the string '12', yet it appeared as integer
+    12 to the LEN function.
+<P>
+      Now here is an example which provides a glimpse of just how
+    powerful SNOBOL4's pattern matching can be.  Problem:  Examine a
+    subject for an arbitrary three-character substring which appears
+    twice in a row, or bracketed in parentheses.  Solution:
+<PRE>
+    ?       TWOPAT = LEN(3) $ X . OUTPUT *(X | &quot;(&quot; X &quot;)&quot;)
+    ?       'ABCDECDEFGH' TWOPAT
+    CDE
+    Success
+    ?       'ABCDE(CDE)BA' TWOPAT
+    CDE
+    Success
+</PRE>
+      As you experiment with these types of patterns, you may discover
+    some which fail when they should succeed.  The problem is
+    that SNOBOL4 stops matching when it believes further match attempts
+    would be futile.  These &quot;heuristics&quot; are normally invisible,
+    and speed program execution.  At this time, we'll defer discussing
+    heuristics, and simply mention that they can be disabled
+    with the statement:
+<PRE>
+    &amp;FULLSCAN = 1
+</PRE>
+      Let's take a break from pattern matching, and examine some
+    other SNOBOL4 data types.
+<H3><A NAME="5.4">
+                               5.4 ARRAYS
+</A></H3>
+<H3><A NAME="5.4.1">
+    5.4.1 Array Concepts
+</A></H3>
+<P>
+      Arrays in SNOBOL4 are similar to arrays in other programming
+    languages.  They allow a single variable name to specify more
+    than one data element; integer subscripts distinguish the individual
+    members of an array.  Each array element may contain any
+    data type, independent of the types in other array elements.
+<P>
+      A one-dimensional array is a &quot;vector;&quot; it is simply a list of I
+    items.  A two-dimensional array is a &quot;grid&quot; composed of several
+    adjacent vectors -- an I by J array has I rows and J columns.  A
+    three-dimensional array, I by J by K in size, is a rectangular
+    solid consisting of K adjacent grids.  There's no limit to the
+    number of dimensions allowed, but such arrays become increasingly
+    difficult to visualize.
+<P>
+      In keeping with SNOBOL4's pliability, an array is defined during
+    program execution, rather than at compilation time.  Its size
+    and shape is specified by a string.  The definition of an array
+    may be changed at any time, or the array may be deleted and its
+    memory reused when it is no longer needed.
+<H3><A NAME="5.4.2">
+    5.4.2 Array Creation
+</A></H3>
+<P>
+      Arrays are created by the SNOBOL4 function ARRAY.  A program
+    calls this function with a &quot;prototype string&quot; which specifies the
+    number of dimensions and their sizes.  The function returns an
+    &quot;array pointer,&quot; which is stored in a variable; the array
+    elements are referenced by applying subscripts to this variable.
+    Here are two statements for use with CODE.SNO.  They create oneand
+    two-dimensional arrays named LIST and BOX respectively:
+<PRE>
+    ?       LIST = ARRAY('25')
+    ?       BOX = ARRAY('12,3')
+</PRE>
+      LIST points to a vector of 25 elements.  BOX points to a grid,
+    12 rows high and 3 columns wide, containing 36 elements.  The
+    ARRAY function initializes all array elements to the null string.
+<H3><A NAME="5.4.3">
+    5.4.3 Array Referencing
+</A></H3>
+<P>
+      Array subscripts are integer valued, and are specified by angular
+    or square brackets (&lt;&gt; or []).  Subscript values range from 1
+    to the size of each dimension.  If you attempt to use a subscript
+    outside this range, the array reference will fail, and the failure
+    may be detected in the GOTO portion of the statement.  Try
+    some array references with CODE.SNO:
+<PRE>
+    ?       LIST&lt;3&gt; = 'MAPLE'
+    ?       BOX[10,2] = 3
+    ?       LIST[33] = 4
+    Failure
+    ?       OUTPUT = LIST[3] LIST[4] BOX&lt;10,2&gt;
+    MAPLE3
+</PRE>
+      Angular and square brackets are interchangeable.  The reference
+    to LIST[33] failed because the largest subscript allowed for that
+    array is 25.  LIST[4] produced its initialized value, the null
+    string, and had no effect on the concatenation.  The array
+    pointer in LIST can be assigned to another variable:
+<PRE>
+    ?       B = LIST
+    ?       OUTPUT = B[3]
+    MAPLE
+    ?       B&lt;3&gt; = 'WILLOW'
+    ?       OUTPUT = LIST&lt;3&gt;
+    WILLOW
+</PRE>
+      Assigning the pointer in LIST to B made both variables point to
+    the same array.  Since there's but one actual array, array references
+    made using LIST or B are equivalent.  The COPY function
+    (see <A HREF="../manual/ch8.htm">Chapter 8 of the Reference Manual</A>) creates a duplicate copy of an entire array.
+<P>
+      Array elements may be used anywhere a variable name is
+    allowed -- expressions, patterns, function arguments, etc.  The
+    fact that an array reference fails if a subscript is out-ofbounds
+    can be used in a simple and natural way when scanning an
+    array.  Rather than having to know an array's size, we simply
+    loop until an array reference fails.  A program segment to display
+    the members of an array SCORE might look like this:
+<PRE>
+   I = 0
+   I = I + 1
+   OUTPUT = SCORE[I]                    :S(PRINT)
+   . . .
+</PRE>
+
+<H3><A NAME="5.4.4">
+    5.4.4 Array Initialization
+</A></H3>
+<P>
+      Arrays may be created with an initial value other than the null
+    string.  ARRAY accepts a second argument which specifies this
+    initial value.  We can create a three-dimensional array with all
+    elements initialized to the string 'PA-18' as follows:
+<PRE>
+    ?       A = ARRAY('2,3,4','PA-18')
+    ?       OUTPUT = A[1,2,3]
+    PA-18
+</PRE>
+
+<H3><A NAME="5.4.5">
+    5.4.5 Other Array Bounds
+</A></H3>
+<P>
+      Ordinarily, subscripts range from 1 to the size of each dimension.
+     However, if you find it more convenient, other subscript
+    ranges may be used.  The prototype string for ARRAY's first
+    argument has the general form:
+<PRE>
+    'L1:H1,L2:H3,...,Ln:Hn'
+</PRE>
+      The L's and H's are integers specifying the lower and upper
+    bounds of each dimension.  If the lower bound and colon are
+    omitted from any dimension, the integer 1 is assumed.  Here is a
+    five element vector, with allowed subscripts -2, -1, 0, 1 and 2:
+<PRE>
+    ?       A = ARRAY('-2:2','PIPER')
+    ?       OUTPUT = A[-1]
+    PIPER
+    ?       OUTPUT = A[3]
+    Failure
+</PRE>
+      Arrays are a traditional computer programming concept.  Now
+    we'll see how SNOBOL4 takes the idea one important step further,
+    with the concept of tables.
+<H3><A NAME="5.5">
+                               5.5 TABLES
+</A></H3>
+<H3><A NAME="5.5.1">
+    5.5.1 Table Creation and Referencing
+</A></H3>
+<P>
+      A &quot;table&quot; is similar to a one-dimensional array, with two
+    important differences.  First, a table's size is not fixed; it
+    extends itself automatically whenever a new element is added to
+    it.  Second, table subscripts are not limited to integers, but
+    may be any SNOBOL4 data type.  Strings and patterns may be used
+    as subscripts.  Tables combine the idea of associative programming
+    with the data grouping of arrays.
+<P>
+      Tables are created by the SNOBOL4 function TABLE.  No arguments
+    are required, since a table's size is not fixed.  The function
+    returns a table pointer, which you store in a variable.  Like
+    arrays, table elements are referenced by applying subscripts to
+    the variable.  Try this example with CODE.SNO:
+<PRE>
+    ?       T = TABLE()
+    ?       T['ROSE'] = 'RED'
+    ?       T['N'] = 6
+    ?       OUTPUT = T['N'] T['THE'] T['ROSE']
+    6RED
+    ?       FLOWER = 'ROSE'
+    ?       T[FLOWER] = T[FLOWER] ',THORNS'
+    ?       OUTPUT = T[FLOWER]
+    RED,THORNS
+</PRE>
+      Here, strings have been used as table subscripts.  The concept
+    of an &quot;out-of-bounds&quot; subscript does not exist with tables.  The
+    reference to T['THE'] created a new entry, and assigned it the
+    null string.  Unlike arrays, no initial value for new entries may
+    be specified in the call to TABLE; new table entries are always
+    initialized to the null string.
+<H3><A NAME="5.5.2">
+    5.5.2 Conversion between Tables and Arrays
+</A></H3>
+<P>
+      In the above example, we know what values were used as table
+    subscripts.  But if the table were constructed from data in a
+    file, how can we determine what items were placed in the table?
+    We need to know the subscripts to view the table, but the subscripts
+    themselves are part of the table.  If this were an array,
+    we could run an integer subscript over the array to see the data.
+    Applying integer subscripts to a table only creates more entries.
+<P>
+      SNOBOL4 provides a simple solution to this dilemma -- a method
+    to convert a table to an array.  An N row by 2 column array can
+    be created from a table.  The first array column contains the
+    subscripts that were used to create the table.  The second column
+    contains the data items stored with the corresponding table subscript.
+     N is the number of table entries with nonnull values.
+<P>
+      Once the table is in array form, integer subscripts can be
+    applied to the array to display the subscripts and their values.
+    A table is converted to an array with the CONVERT function, which
+    accepts a table argument and the word 'ARRAY', and returns a
+    pointer to the new array.  Continuing with the previous example:
+<PRE>
+    ?       A = CONVERT(T, 'ARRAY')
+    Success
+    ?       OUTPUT = A[1,1] '-' A[1,2]
+    ROSE-RED,THORNS
+    ?       OUTPUT = A[2,1] '-' A[2,2]
+    N-6
+</PRE>
+      As you would expect with SNOBOL4, the inverse operation -- conversion
+    of an array to a table -- is also possible.  The array
+    must be rectangular, N rows by 2 columns.  The array entries in
+    the first column become the table subscripts.  The array's second
+    column becomes the table entry values:
+<PRE>
+    ?       W = CONVERT(A, 'TABLE')
+    Success
+    ?       OUTPUT = W['ROSE']
+    RED,THORNS
+</PRE>
+
+<H3><A NAME="5.5.3">
+    5.5.3 Counting Word Usage with a Table
+</A></H3>
+<P>
+      Tables are useful when we want to record a number of pair associations,
+    where each half of the pair might have any data type.
+    A classic example of a table's utility is a word usage program.
+    Earlier, we developed a program to count the total number of
+    words in a file.  We will modify that program to count the number
+    of times each unique word appears.  The program begins like this:
+<PRE>
+    *       Simple word usage program, WORDU.SNO.
+    *
+    *  A word is defined to be a contiguous run of letters,
+    *  digits, apostrophe and hyphen.  This definition of legal
+    *  letters in a word can be altered for specialized text.
+    *
+    *  If the file to be counted is TEXT.IN, run as follows:
+    *       B&gt;SNOBOL4 WORDU /I=TEXT
+    *
+            &amp;TRIM  = 1
+
+    *  Define the characters which comprise a 'word'
+            WORD   = &quot;'-&quot;  '0123456789' &amp;LCASE
+
+    *  Pattern to isolate each word as assign it to ITEM:
+            WPAT   = BREAK(WORD) SPAN(WORD) . ITEM
+
+    *  Create a table to maintain the word counts
+            WCOUNT = TABLE()
+
+    *  Read a line of input and obtain the next word
+    NEXTL   LINE   = REPLACE(INPUT, &amp;UCASE, &amp;LCASE)   :F(DONE)
+    NEXTW   LINE WPAT =                               :F(NEXTL)
+
+    *  Use word as subscript, update its usage count
+            WCOUNT&lt;ITEM&gt; = WCOUNT&lt;ITEM&gt; + 1           :(NEXTW)
+    DONE     . . .
+</PRE>
+      We'll convert the input to lower case, so words like 'The' and
+    'the' are counted together.  WPAT has been changed to store each
+    word in variable ITEM.  When a word is identified, it is used as
+    a subscript for table WCOUNT.  When ITEM contains a new word, the
+    first reference to WCOUNT&lt;ITEM&gt; creates a new table entry and
+    returns the null string.  Integer 1 is added to the null string,
+    and the result, 1, is stored back into WCOUNT&lt;ITEM&gt;.  If the same
+    word is encountered again, WCOUNT&lt;ITEM&gt; for that word will be
+    incremented to 2.
+<P>
+      The program reads the input file, building a table with entries
+    for each unique word.  When End-of-File is read, control transfers
+    to label DONE, where we display the words and their respective
+    counts.  We convert WCOUNT to an array, and use integer
+    subscripts to retrieve the words and their counts.  Conversion
+    fails if the table is empty.  Continuing with this program:
+<PRE>
+    *  Convert table to array.  Fail if table is empty
+    DONE    A = CONVERT(WCOUNT, 'ARRAY')              :F(EMPTY)
+
+    *  Scan array, printing words and counts
+            I = 0
+    PRINT   I = I + 1
+            OUTPUT = A&lt;I,1&gt; '--' A&lt;I,2&gt;     :S(PRINT) F(END)
+
+    EMPTY   OUTPUT = 'No words'
+    END
+</PRE>
+      The table subscripts were the file's words, and have been
+    placed in the first column of the array, A&lt;I,1&gt;.  The count for
+    each word was the table entry, now in the second column, A&lt;I,2&gt;.
+    Tables are very convenient for recording information about data
+    items, while conversion to an array makes it easy to systematically
+    examine the recorded information.
+<H3><A NAME="5.6">
+                          5.6 THE NAME OPERATOR
+</A></H3>
+<P>
+      The unary name operator provides the address or location in
+    memory where a variable is stored.  Its graphic symbol is the
+    period (.).  We'll introduce it here through an example.
+<P>
+      Consider the indirect reference operator mentioned earlier.
+    Suppose we want to use a variable to point to different elements
+    of an array or table.  If we try the following, we immediately
+    discover a problem:
+<PRE>
+    ?       A = ARRAY('10,10')
+    ?       A[4,2] = 'DOG'
+    ?       V = 'A[4,2]'
+    ?       OUTPUT = $V
+</PRE>
+         Success
+<P>
+      The indirect reference operator treats the string 'A[4,2]' as a
+    variable name, rather than an array element.  Remember, any character
+    sequence can be used indirectly to create a variable.
+    SNOBOL4 creates a variable called A[4,2] that has absolutely no
+    connection with array A.  The fact that this character sequence
+    happens to look like an array reference to us is purely coincidental
+    from SNOBOL4's point of view.
+<P>
+      To make this work, the name operator is applied to A[4,2] to
+    obtain the address of that array element.  The address can be
+    stored in variable V, and referenced with the indirect operator:
+<PRE>
+    ?       V = .A[4,2]
+    ?       OUTPUT = $V
+    DOG
+</PRE>
+      The name operator provides a general method for specifying the
+    name of an object.  Both of these statements are correct for
+    specifying the first argument to the INPUT function:
+<PRE>
+    INPUT('INFILE', 1, , 'CAPITAL.DAT')
+    INPUT(.INFILE,  1, , 'CAPITAL.DAT')
+</PRE>
+      Either form, 'INFILE' or .INFILE, tells the INPUT function the
+    name of the variable to be input associated.  However, using the
+    name operator allows us to associate a file with an array or
+    table element:
+<PRE>
+    INPUT('A[4,2]', 1, , 'CAPITAL.DAT')  (incorrect)
+    INPUT(.A[4,2],  1, , 'CAPITAL.DAT')
+</PRE>
+      Note that alternate use of the indirect reference and name
+    operators &quot;cancel&quot; one another, so
+<PRE>
+    ?       OUTPUT = $(.($(.A[4,2])))
+    DOG
+</PRE>
+    is simply a reference to A[4,2].
+
+<P><HR>
+<A HREF="ch4.htm"><IMG SRC="../prev.gif" ALT="Previous" ALIGN=TOP> Previous chapter</A>
+<B>&#183;</B> <A HREF="ch6.htm"><IMG SRC="../next.gif" ALT="Next" ALIGN=TOP> Next chapter</A>
+<B>&#183;</B> <A HREF="contents.htm"><IMG SRC="../toc.gif" ALT="Contents" ALIGN=TOP> Table of Contents</A>
+
+</BODY>
+</HTML>

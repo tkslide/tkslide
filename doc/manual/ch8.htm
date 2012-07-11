@@ -1,0 +1,649 @@
+<HTML>
+<HEAD><TITLE>Snobol4 Reference Manual: Chapter 8</TITLE></HEAD>
+<BODY>
+<!-- From Part III of the Catspaw manual distributed with Vanilla Snobol.
+     HTML markup by John English (je@brighton.ac.uk).
+-->
+
+<A HREF="ch7.htm"><IMG SRC="../prev.gif" ALT="Previous" ALIGN=TOP> Previous chapter</A>
+<B>&#183;</B> <A HREF="ch9.htm"><IMG SRC="../next.gif" ALT="Next" ALIGN=TOP> Next chapter</A>
+<B>&#183;</B> <A HREF="contents.htm"><IMG SRC="../toc.gif" ALT="Contents" ALIGN=TOP> Table of Contents</A>
+<HR>
+
+<H2>Chapter 8 : BUILT-IN FUNCTIONS</H2>
+<P>
+            In this chapter, the following items are used to indicate the
+          required argument type.  Other types may be used, and will be
+          automatically converted to the required type, if possible.  Integer
+          suffixes will be used to distinguish multiple arguments of
+          the same type.
+<PRE>
+    arg              A generic argument of any SNOBOL4 data type.
+
+    array            An array.
+
+    i                An integer number.
+
+    name             The name of a variable, function or label,
+                     such as .VAR or 'VAR'.  When case-folding,
+                     'VAR' and 'var' are equivalent as names.
+
+    s                Any SNOBOL4 string.
+
+    table            A table.
+
+    unit             I/O unit; an integer between 1 and 16.
+</PRE>
+            If an argument is omitted in a function call, SNOBOL4 supplies
+          the null string instead.
+<UL>
+<LI><B>APPLY(name, arg1, arg2,...,argn)</B>&#160;&#160;&#160;&#160;Indirect call to a function
+<P>
+          Call function name with the specified arguments.  Since name may
+          be a variable containing a function name, it allows an indirect
+          call to a function, similar to the :($VAR) construct in the GOTO
+          field.
+<P>
+<LI><B>ARG(name, i)</B>&#160;&#160;&#160;&#160;                    Get dummy argument name from
+                                           function definition
+<P>
+          Returns a string which is the Ith argument from the formal definition
+          of program-defined function name.  ARG fails if i is
+          greater than the number of arguments in name's definition.  ARG
+          is useful when one function is used to trace another.  The trace
+          function can access the actual argument used with the function
+          being traced with an indirect reference: $ARG(name, i).
+<P>
+<LI><B>ARRAY(s, arg)</B>&#160;&#160;&#160;&#160;                   Create an array
+<P>
+          S is a prototype which specifies the dimensions of the array created,
+          and the optional arg is the value used to initialize all
+          array elements.  The form of the prototype string is:
+<PRE>
+    &quot;L1:H1,L2:H2,...,Ln:Hn&quot;
+</PRE>
+          where L and H are integers giving the lower and upper bounds of
+          each dimension.  Blanks are not permitted.  If the lower bound
+          and colon are omitted from any dimension, '1:' is assumed.  ARRAY
+          returns a pointer to the new array, which should be assigned to a
+          variable.  The variable can then be subscripted to access the
+          array elements.
+<P>
+            A common error when defining a multidimensional array is to use
+          integers instead of a string for the prototype:
+<PRE>
+    ARRAY(3,4) instead of ARRAY(&quot;3,4&quot;)
+</PRE>
+            The first example defines a 3-element, one-dimensional array,
+          with elements initialized to integer 4.  The second defines a
+          rectangular array, 3 rows by 4 columns.
+<P>
+<LI><B>CHAR(i)</B>&#160;&#160;&#160;&#160;                         Convert integer to ASCII
+                                           character
+<P>
+          Converts an integer ASCII code to a one-character string.  The
+          argument must be in the range 0 to 255, otherwise the function
+          fails.
+<P>
+<LI><B>CLEAR()</B>&#160;&#160;&#160;&#160;                         Clear all variables
+<P>
+          The null string is assigned to all variables in the system
+          (including primitive patterns, such as ARB.  These patterns and
+          names may be restored from the protected keywords with the same
+          names (e.g., ARB = &amp;ARB).
+<P>
+            CLEAR does not modify variables which are currently saved on
+          the function call stack.
+<P>
+<LI><B>CODE(s)</B>&#160;&#160;&#160;&#160;                         Compile a string
+<P>
+          Returns a pointer to the object code compiled from the SNOBOL4
+          statements in string s.  This pointer can be assigned to a variable,
+          and the code executed with the direct GOTO :&lt;variable&gt;.
+<P>
+          CODE fails if it finds a syntax error, and places an error message
+          string in keyword &amp;ERRTEXT.  Individual statements in s are
+          separated by a semicolon (;).  The first character following a
+          semicolon must be a blank, tab, the start of a label, or a comment.
+           Control and continuation statements are not allowed in s.
+          Statements may be any length; the 120 character limit when compiling
+          from a file does not apply.  Case-folding of names is controlled
+          by keyword &amp;CASE.
+<P>
+<LI><B>COLLECT(i)</B>&#160;&#160;&#160;&#160;                      Regenerate storage
+<P>
+          This function calls SNOBOL4's garbage collection routine, which
+          reclaims all unused storage.  It returns an integer result that
+          is the number of free descriptors remaining in the work space (a
+          descriptor contains 5 bytes of storage).  If there are less than
+          i free descriptors after regeneration, the function fails.
+          SNOBOL4 automatically calls COLLECT whenever memory becomes full.
+<P>
+<LI><B>CONVERT(arg, s)</B>&#160;&#160;&#160;&#160;                 Convert to specified data type
+<P>
+          The argument is converted to the specified data type and returned
+          as the value of the function.  If conversion is not possible, the
+          function fails.  S is a data type name string, such as 'STRING',
+          'TABLE', etc.  Data type names may be lower case if case-folding
+          is active.  <A HREF="ch6.htm">Chapter 7</A>, &quot;Data Types and Conversion,&quot; lists allowable
+          conversions.
+<P>
+<LI><B>COPY(arg)</B>&#160;&#160;&#160;&#160;                       Make copy of argument
+<P>
+          Returns a distinct copy of arg.  The argument may be an array,
+          code block, pattern, or program-defined data type.  If A is an
+          array, the statement
+<PRE>
+    B = COPY(A)
+</PRE>
+          creates a new array B, whose initial contents are the same as
+          array A.  Their elements are independent; altering element A&lt;I&gt;
+          does not affect element B&lt;I&gt;.  In contrast, the assignment B = A
+          makes A and B alternate names for the same array.
+<P>
+<LI><B>DATA(s)</B>&#160;&#160;&#160;&#160;                         Create new data type
+<P>
+          Defines a new data type according to the prototype in string s.
+          The prototype assumes a form similar to a function call, with the
+          data type taking the place of the function name, and the field
+          names replacing the arguments.  The form of the prototype string
+          is
+<PRE>
+    &quot;NEWTYPE(FIELD1,FIELD2,...,FIELDn)&quot;
+</PRE>
+            The DATA function implicitly defines a new function and n new
+          field variables:
+<PRE>
+    NEWTYPE(ARG1,ARG2,...,ARGn)     Object creation function.
+    FIELD1(x)        Reference to field variable 1.
+
+    . . .
+
+    FIELDn(x)        Reference to field variable n.
+</PRE>
+          where x is an object created with the NEWTYPE function.
+<P>
+            The fields may be of any data type, including pointers to other
+          program-defined data items.
+<P>
+<LI><B>DATATYPE(arg)</B>&#160;&#160;&#160;&#160;                   Get data type of argument
+<P>
+          Returns a string specifying the data type of the argument.  Some
+          typical arguments and their data types are:
+<PRE>
+    12               INTEGER
+
+    'ABCD'           STRING
+
+    POS(2) 'C' LEN(3)     PATTERN
+
+    .Q&lt;3&gt;            NAME
+
+    *PAT             EXPRESSION
+</PRE>
+            If the argument is a program-defined data type, the name from
+          the creating DATA() function is returned.
+<P>
+<LI><B>DATE()</B>&#160;&#160;&#160;&#160;                          Get current date and time
+<P>
+          Returns a 20-character string of the form:
+<PRE>
+    'MM-DD-YY HH:MM:SS.CC'
+</PRE>
+          representing month, day, year, hour, minute, second, and centisecond
+          respectively.  The centisecond field can only be approximated,
+          since many personal computer clocks are only updated
+          every 55 milliseconds.
+<P>
+<LI><B>DEFINE(s, name)</B>&#160;&#160;&#160;&#160;                 Create program-defined function
+<P>
+          This function creates a new, program-defined function.  S is a
+          prototype string specifying the function's name, arguments, and
+          local variables, if any.  Name is optional, and specifies a label
+          as the first statement of the function body.  If absent, a label
+          with the same name as the function is the assumed entry point.
+          The form of the prototype string is
+<PRE>
+    &quot;FNAME(ARG1,ARG2,...,ARGn)LOCAL1,LOCAL2,...,LOCALn&quot;
+</PRE>
+          where FNAME is the name of the function, and ARGi are names of
+          formal arguments to the function.  Blanks are not permitted in
+          the prototype.  The values of variables specified in the list of
+          locals are saved prior to function entry, and restored upon function
+          return.
+<P>
+            Functions may return a value or variable name by assigning the
+          result to a variable with the same name as the function.  Functions
+          return by transferring to one of the reserved labels
+          RETURN, NRETURN, or FRETURN to return by value, by name, or to
+          fail respectively.
+<P>
+<LI><B>DETACH(name)</B>&#160;&#160;&#160;&#160;                    Remove I/O association
+<P>
+          Removes any input or output unit associated with the variable
+          name.  The underlying file is not affected in any way.  Remember
+          that name is the address of the variable (e.g. .X or 'X'), not
+          the variable itself.
+<P>
+<LI><B>DIFFER(arg1, arg2)</B>&#160;&#160;&#160;&#160;              Check if arguments are different
+<P>
+          Succeeds and returns the null string if and only if arg1 and arg2
+          are different.  Strings and integers are different if they have
+          unequal values.  Other data types contain pointers to the actual
+          data object, and differ only if the pointers are different.  If
+          arg2 is omitted, DIFFER succeeds if arg1 is not null.
+<P>
+<LI><B>DUMP(i)</B>&#160;&#160;&#160;&#160;                         Dump variables
+<P>
+          This function causes all natural variables with nonnull values to
+          be listed on the file associated with I/O unit 6 (normally
+          OUTPUT).  If i is zero, the dump does not occur.
+<P>
+<LI><B>DUPL(s, i)</B>&#160;&#160;&#160;&#160;                      Duplicate string
+<P>
+          Returns the argument string s repeated i times.  The function
+          returns the null string if i is zero, and fails if i is negative.
+<P>
+<LI><B>ENDFILE(unit)</B>&#160;&#160;&#160;&#160;                   Close file
+<P>
+          The file attached to the specified I/O unit is closed, and the
+          file buffer is flushed and released.  All variables which have
+          been associated with this unit have their association removed.
+          Upon program termination, SNOBOL4 will automatically perform an
+          ENDFILE function on all open units.
+<P>
+<LI><B>EQ(i1, i2)</B>&#160;&#160;&#160;&#160;                      Equality test for numbers
+<P>
+          This function succeeds and returns the null string if the two
+          integer arguments are equal.  I1 and i2 must evaluate to integer
+          values.  The function fails if i1 is not equal to i2.
+<P>
+<LI><B>EVAL(s or n)</B>&#160;&#160;&#160;&#160;                    Compile and evaluate expression
+<P>
+          If the argument is a string, it should contain a valid SNOBOL4
+          expression to be compiled and evaluated.  The evaluation result
+          is returned as the value of the function.  EVAL fails and sets
+          &amp;ERRTEXT to an error message string if s contains a syntactic error.
+           If the argument is a number, i, it is returned unchanged.
+          If the argument is an unevaluated expression, it is evaluated,
+          and the result returned.
+<P>
+<LI><B>FIELD(s, i)</B>&#160;&#160;&#160;&#160;                     Get field name of defined data
+                                           type
+<P>
+          Returns a string which is the Ith field name from the formal definition
+          of the program-defined data type whose name is in string
+          s.  FIELD fails if i is greater than the number of fields in the
+          data type's definition.
+<P>
+<LI><B>GE(i1, i2)</B>&#160;&#160;&#160;&#160;                      Greater than or equal test for
+                                           numbers
+<P>
+          This function succeeds and returns the null string if the two
+          integer arguments satisfy the relationship i1 &gt;= i2.  I1 and i2
+          must evaluate to integer values.  The function fails if i1 is
+          less than i2.
+<P>
+<LI><B>GT(i1,i2)</B>&#160;&#160;&#160;&#160;                       Greater than test for numbers
+<P>
+          This function succeeds and returns the null string if the two integer
+          arguments satisfy the relationship i1 &gt; i2.  I1 and i2 must
+          evaluate to integer values.  The function fails if i1 is less
+          than or equal to i2.
+<P>
+<LI><B>IDENT(arg1, arg2)</B>&#160;&#160;&#160;&#160;               Check if arguments are identical
+<P>
+          Succeeds and returns the null string if and only if arg1 and arg2
+          are identical.  Strings and integers re identical if they have
+          the same values.  Other data types contain pointers to the actual
+          data object, and are identical only if they point to the same
+          object.  If arg2 is omitted, IDENT succeeds if arg1 is the null
+          string.
+<P>
+<LI><B>INPUT(Name, Unit, i, s)</B>&#160;&#160;&#160;&#160;         Open file for input
+<P>
+          This function opens a file for input, and associates it with a
+          variable.  Data may then be read from the file by using the variable
+          in an expression or an assignment statement.
+<P>
+            The file designated by string S is opened for input and given
+          the specified unit number.  I is an optional record length.  The
+          variable specified by Name is associated with this unit.
+<P>
+            The first argument, Name, specifies a SNOBOL4 variable, typically
+          as a quoted string or with the unary period operator:
+<PRE>
+    INPUT('IN', ...
+    INPUT(.IN, ...
+    X = 'IN'
+    INPUT(X, ...
+</PRE>
+            The second argument, Unit, must evaluate to an integer value in
+          the range 0 to 16 inclusive.  Unit 0 (or omitting the unit argument)
+          will select the default input unit, 5.
+<P>
+            The third argument, I, contains the record length in characters.
+           0 &lt; I &lt;= &amp;MAXLNGTH.  If omitted, the default is 80.
+<P>
+            The fourth argument, S, is a string containing the name of the
+          file to be opened.  If the file is a disk file, S may contain an
+          optional drive letter and pathname in addition to the filename.
+          Besides disk files, MS-DOS device names such as NUL:, CON:,
+          COM2:, etc., are permitted.
+<P>
+            If S is absent or null, and this unit is not currently open,
+          the SNOBOL4 command line is searched for a file to use with this
+          unit (/n:file).  If S is absent, but the unit is already open,
+          the INPUT call serves only to establish another association
+          between a variable and the unit.  If S is not null, any file previously
+          associated with this unit number is first closed by
+          SNOBOL4 with an implicit ENDFILE(unit).
+<P>
+            An error message is generated for an illegal unit number.  The
+          INPUT function fails (with no printed error message) if the file
+          cannot be opened.
+<P>
+            The record length I (or its default value, 80), determines the
+          number of characters returned in a string when the associated
+          variable is referenced.  ASCII files will return I characters or
+          less if an end-of-line condition is encountered.  End-of-line is
+          defined as either a carriage return, or a carriage return followed
+          by a line feed.  If I characters are read from an ASCII
+          file without encountering an end-of-line, additional characters
+          are read from the file and discarded until the end-of-line character(s)
+          are found.  That is, long lines are truncated.  If less
+          than I characters are read from an ASCII file, and keyword &amp;TRIM
+          is zero, the line will be padded with blank characters until
+          length i is obtained.
+<P>
+            A read operation will terminate on the last character of a disk
+          file, returning a short record.  Reading past the End-of-File
+          will cause statement failure.  If the file is ASCII, reading a
+          control-Z character will be treated as an End-of-File.
+<P>
+            Note:  When program begins execution, the variable INPUT is
+          associated with unit 5.  Unit 5 is normally device CON:, the keyboard,
+          unless redirected elsewhere by the /I=file command line
+          option, or the MS-DOS redirection operation (&lt;file).
+<P>
+<LI><B>INTEGER(arg)</B>&#160;&#160;&#160;&#160;                    Check if argument is an integer
+<P>
+          Succeeds and returns the null string if arg is an integer, or a
+          string which can be converted to an integer.  If the argument is
+          not an integer, the function fails.
+<P>
+<LI><B>ITEM(array, i1, i2, ..., in)</B>&#160;&#160;&#160;&#160;    Get array element
+<P>
+          ITEM(table, arg)                 Get table element
+<P>
+          Returns the specified array or table element.  I1, i2, ..., in
+          are array subscripts, and arg is a table subscript.  Since the
+          first argument may be a function which returns an array or table
+          name, it allows an indirect reference in situations that would
+          not be syntactically valid.  ITEM is an analog of the APPLY function.
+           For example, if F(X) is a program-defined function which
+          returns an array name,
+<PRE>
+    ITEM(F(X), 20)
+</PRE>
+          references the 20th element of that array, whereas F(X)&lt;20&gt; is
+          not acceptable.
+<P>
+<LI><B>LE(i1, i2)</B>&#160;&#160;&#160;&#160;                      Less than or equal test for
+                                           numbers
+<P>
+          This function succeeds and returns the null string if the two
+          integer arguments satisfy the relationship i1 &lt;= i2.  I1 and i2
+          must evaluate to integer values.  The function fails if i1 is
+          greater than i2.
+<P>
+<LI><B>LGT(s1, s2)</B>&#160;&#160;&#160;&#160;                     Lexically greater than test for
+                                           strings
+<P>
+          This function succeeds and returns the null string if s1 is lexically
+          greater than s2 (according to their alphabetic ordering).
+          The two strings are compared left to right, character by character.
+           If one string is exhausted before the other---with all
+          characters equal---the longer string is lexically greater than
+          the shorter string.  The null string is lexically less than any
+          other non-null string.  If there is a character mismatch at the
+          same position in both strings, the relationship between the characters
+          determines the relationship of the strings.  Strings are
+          equal only if they are the same length, and are identical character
+          by character.
+<P>
+<LI><B>LOCAL(name, i)</B>&#160;&#160;&#160;&#160;                  Get local variable name from
+                                           function definition
+<P>
+          Returns a string which is the Ith local variable from the formal
+          definition of program-defined function name.  LOCAL fails if i is
+          greater than the number of local variables in name's definition.
+          LOCAL is useful when one function is used to trace another.  The
+          trace function can access the local variables used with the funcion
+          being traced with an indirect reference: $LOCAL(name, i).
+<P>
+<LI><B>LPAD(s1, i, s2)</B>&#160;&#160;&#160;&#160;                 Pad left end of string
+<P>
+          This function is useful for right-justifying columnar output.  It
+          returns s1 padded on its left end until its total size is i characters.
+           The pad character used is the first character of s2 if
+          present, otherwise a blank is used if s2 is absent or null.  If i
+          is less than or equal to the length of s1, s1 is returned unchanged.
+<P>
+<LI><B>LT(i1, i2)</B>&#160;&#160;&#160;&#160;                      Less than test for numbers
+<P>
+          This function succeeds and returns the null string if the two integer
+          arguments satisfy the relationship i1 &lt; i2.  I1 and i2 must
+          evaluate to integer values.  The function fails if i1 is greater
+          than or equal to i2.
+<P>
+<LI><B>NE(i1, i2)</B>&#160;&#160;&#160;&#160;                      Not equal test for numbers
+<P>
+          This function succeeds and returns the null string if the two integer
+          arguments are not equal.  I1 and i2 must evaluate to integer
+          values.  The function fails if i1 is equal to i2.
+<P>
+<LI><B>OPSYN(s1, s2, i)</B>&#160;&#160;&#160;&#160;                Create operator synonym
+<P>
+          The function or operator name s1 becomes a synonym for s2.  If i
+          is absent or 0, both strings are assumed to be function names.
+          If i is 1 or 2, then the strings are assumed to be unary or
+          binary operators, respectively.  Other values for i are illegal.
+          Operators are specified by using their graphic symbol in a quoted
+          literal, such as:
+<PRE>
+    OPSYN('#', '/', 2)
+</PRE>
+            The concatenation operator is specified as a one-character
+          string containing a blank: ' '.  The implicit pattern match operator
+          between subject and pattern cannot be OPSYNed.
+<P>
+<LI><B>OUTPUT(name, unit, i, s)</B>&#160;&#160;&#160;&#160;        Open file for output
+<P>
+          This function opens a file for output, and associates it with a
+          variable.  Data may then be written to the file by assigning values
+          to the variable.
+<P>
+            The description of the OUTPUT function parallels that of the
+          INPUT function, and will not be duplicated here.  The following
+          differences are noted below.
+<P>
+            If the output file already exists, it is deleted and recreated
+          anew.  Facilities for updating existing files (direct-access
+          files) are not present in Vanilla SNOBOL4; they are contained in
+          SNOBOL4+, Catspaw's enhanced implementation of the SNOBOL4 language.
+<P>
+                     When an output variable is assigned a string value, the string
+          is written to the associated file.  A carriage return and line
+          feed appended to the string.  If the string is longer than the
+          record length (i, or the default, 80), a carriage return and line
+          feed will be inserted every i characters.  That is, long strings
+          will create multiple output lines.
+<P>
+            Note:  When a program begins execution, the variable OUTPUT is
+          associated with unit 6.  Unit 6 is normally device CON:, the display,
+          unless redirected elsewhere by the /O: command line option
+          or the MS-DOS redirection operation (&gt;file).  The variable SCREEN
+          is associated with unit 7, which is also attached to device CON:.
+<P>
+<LI><B>PROTOTYPE(array)</B>&#160;&#160;&#160;&#160;                Get prototype which created an
+                                           array
+<P>
+          Returns the prototype string of dimensions used to create the
+          specified array.  If the array was created by the ARRAY function,
+          then the string returned is identical to the first argument of
+          the original ARRAY function call.  If the array was produced from
+          a table by the CONVERT function, the string has the form 'N,2',
+          where N is the integer number of rows in the array.
+<P>
+<LI><B>REMDR(i1, i2)</B>&#160;&#160;&#160;&#160;                   Get remainder after division
+<P>
+          REMDR returns the integer remainder resulting from i1 divided by
+          i2, that is, i1 modulus i2.  The result has the same sign as i1.
+<P>
+<LI><B>REPLACE(s1, s2, s3)</B>&#160;&#160;&#160;&#160;             Replace characters in string
+<P>
+          This function returns s1 transformed according to a translation
+          specified by s2 and s3.  Each character of s1 found in s2 is replaced
+          by the corresponding character in s3.  S2 and s3 must be
+          the same length.  If duplicate characters appear in s2, the
+          rightmost one is used to obtain the mapping character from s3.
+          Normally, s2 and s3 are thought of as parameters, and REPLACE
+          performs character substitutions on the variable s1.  For
+          instance:
+<PRE>
+    REPLACE(S, 'aeiouAEIOU', '1234512345')
+</PRE>
+          replaces all upper- and lower-case vowels in S with the digits 1
+          through 5.  It is possible to use REPLACE as a &quot;transposition&quot;
+          function if s1 and s2 are considered parameters, and s3 allowed
+          to vary.  If s1 and s2 are the same length, a simple positional
+          transformation results.  For example,
+<PRE>
+    REPLACE('123456', '214365', S)
+</PRE>
+          returns the six character string S with adjacent pairs of characters
+          interchanged ('ABCDEF' becomes 'BADCFE').  S1 and s2 can be
+          different lengths---only s2 and s3 must be the same size.  If s2
+          contains characters not in s1, the corresponding characters in s3
+          are dropped from the result.  If s1 contains characters not in
+          s2, they will appear in the result.  The function call
+<PRE>
+    REPLACE('Yy/Mm/Dd', 'Mm-Dd-Yy xx:xx:xx.xx', DATE())
+</PRE>
+          returns the date in the form YY/MM/DD (e.g., 87/07/28).  Duplicate
+          characters in s1 are permitted, so:
+<PRE>
+    REPLACE('aaabbbccc', 'abc' '(1)')
+</PRE>
+          produces '(((111)))'.
+<P>
+<LI><B>RPAD(s1, i, s2)</B>&#160;&#160;&#160;&#160;                 Pad right end of string
+<P>
+          This function is useful for left-justifying columnar output.  It
+          returns s1 padded on its right end until its total size is i
+          characters.  The pad character used is the first character of s2
+          if present, otherwise a blank (ASCII character 32) is used if s2
+          is absent or null.  If i is less than or equal to the length of
+          s1, s1 is returned unchanged.
+<P>
+<LI><B>SIZE(s)</B>&#160;&#160;&#160;&#160;                         Get length of string
+<P>
+          The function SIZE returns an integer value which is the number of
+          characters in its argument string.  A null string argument
+          returns 0.
+<P>
+<LI><B>STOPTR(name, type)</B>&#160;&#160;&#160;&#160;              Stop trace
+<P>
+          Discontinues the type of trace of the named item.  Consult the
+          TRACE() function for a list of tracing types available.
+<P>
+<LI><B>TABLE(i1, i2)</B>&#160;&#160;&#160;&#160;                   Create a table
+<P>
+          A table is similar to a one-dimensional array, but the subscripts
+          may be any SNOBOL4 data type.  The TABLE function creates a table
+          and returns a pointer to it.  The integer i1 specifies the initial
+          number of entries in the table.  Integer i2 specifies the
+          size by which the table is increased whenever it becomes full,
+          and additional table space is required.  If either is omitted, 10
+          is used as a default value.
+<P>
+<LI><B>TIME()</B>&#160;&#160;&#160;&#160;                          Get execution time
+<P>
+          Returns the number of tenths of a second elapsed since the start
+          of program execution, including all I/O wait time.
+<P>
+<LI><B>TRACE(name1, type, s, name2)</B>&#160;&#160;&#160;&#160;    Trace an entity
+<P>
+          The item name1 is traced according to the action specified by
+          type.  Trace output is written to the file associated with I/O
+          unit 6.
+<P>
+            Name1 is a the name of a variable, function, statement label,
+          or keyword.  It may appear as a string, or specified with the
+          unary name operator (.).
+<P>
+            Type is a string that determines the type of trace desired.  It
+          must be one of these values:
+<PRE>
+    'VALUE'          When value of name1 is changed (default if
+                     type omitted).
+
+    'CALL'           When function name1 is called.
+
+    'RETURN'         When function name1 returns.
+
+    'FUNCTION'       When function name1 is called, or returns.
+
+    'LABEL'          When control is transferred to label name1.
+
+    'KEYWORD'        When the value of keyword &amp;name1 is changed.
+                     Note that the ampersand character (&amp;) is not
+                     included in the first argument, name1.
+</PRE>
+            S is an optional identifying tag that is added to the trace
+          output line when name1 is a created object, such as an array or
+          table element.
+<P>
+            Name2 is an optional name of a program-defined function.
+<P>
+          Instead of producing a trace output line, this function is called
+          when the trace action occurs.  The function is called with name1
+          as the first argument, and string s as the second argument.
+<P>
+            Tracing will only occur when the keyword &amp;TRACE is nonzero.
+          Each trace will decrement &amp;TRACE by one.  Tracing ends when it
+          becomes zero.
+<P>
+<LI><B>TRIM(s)</B>&#160;&#160;&#160;&#160;                         Remove trailing blanks
+<P>
+          Returns the argument string with trailing blanks removed.  Trailing
+          tab characters are not affected.  If the argument string was
+          read from an input file, it is more efficient to set keyword
+          &amp;TRIM nonzero than to use TRIM(INPUT).
+<P>
+            By combining function TRIM with REPLACE, any trailing character
+          can be removed.  The desired character is temporarily exchanged
+          with blank, trimmed, then exchanged back.  For example, this
+          expression returns string S with trailing zeros removed:
+<PRE>
+    REPLACE(TRIM(REPLACE(S,'0 ',' 0')),'0 ',' 0')
+</PRE>
+<P>
+<LI><B>UNLOAD(name)</B>&#160;&#160;&#160;&#160;                    Remove function definition
+<P>
+          The function name becomes undefined.
+<P>
+<LI><B>VALUE(name)</B>&#160;&#160;&#160;&#160;                     Get value of an object
+<P>
+          The VALUE function returns the value of the variable name,
+          behaving like the unary indirect operator ($).
+</UL>
+
+<P><HR>
+<A HREF="ch7.htm"><IMG SRC="../prev.gif" ALT="Previous" ALIGN=TOP> Previous chapter</A>
+<B>&#183;</B> <A HREF="ch9.htm"><IMG SRC="../next.gif" ALT="Next" ALIGN=TOP> Next chapter</A>
+<B>&#183;</B> <A HREF="contents.htm"><IMG SRC="../toc.gif" ALT="Contents" ALIGN=TOP> Table of Contents</A>
+
+</BODY>
+</HTML>

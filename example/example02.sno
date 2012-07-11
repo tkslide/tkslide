@@ -1,0 +1,8 @@
+* HOST demo
+* commandline parameters
+	output = host(0)
+* OS commands
+	output = host(1,"cd")
+* environment variables
+	output = host(4,"path")
+end

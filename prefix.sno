@@ -1,0 +1,12 @@
+-include 'utf.sno'
+	define("ule(x)")	:(ule_end)
+ule	eval("ule = " dupl("UTF.RUNE ",x))	:s(return)f(freturn)
+ule_end
+
+	opsyn('any','utfany')
+	opsyn('arb','utfarb')
+	opsyn('char','rune')
+	opsyn('len','utflen')
+	opsyn('replace','utfreplace')
+	opsyn('size','utfsize')
+	opsyn('len','ule')

@@ -1,0 +1,7 @@
+Richard Suchenwirth 
+2006-03-17 
+Here's a search (and replace) dialog implemented in a pretty minimal way, yet
+it feels usable to me. (Called with 0 as second argument, it skips the replace
+elements.)
+
+http://wiki.tcl.tk/15612

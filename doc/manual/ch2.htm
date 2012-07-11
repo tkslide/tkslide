@@ -1,0 +1,167 @@
+<HTML>
+<HEAD><TITLE>Snobol4 Reference Manual: Chapter 2</TITLE></HEAD>
+<BODY>
+<!-- From Part III of the Catspaw manual distributed with Vanilla Snobol.
+     HTML markup by John English (je@brighton.ac.uk).
+-->
+
+<A HREF="ch1.htm"><IMG SRC="../prev.gif" ALT="Previous" ALIGN=TOP> Previous chapter</A>
+<B>&#183;</B> <A HREF="ch3.htm"><IMG SRC="../next.gif" ALT="Next" ALIGN=TOP> Next chapter</A>
+<B>&#183;</B> <A HREF="contents.htm"><IMG SRC="../toc.gif" ALT="Contents" ALIGN=TOP> Table of Contents</A>
+<HR>
+
+<H2>Chapter 2 : RUNNING A SNOBOL4 PROGRAM</H2>
+<H3><A NAME="2.1">2.1 BASIC COMMAND LINE FORMAT</A></H3>
+            The format for the command line is:
+<PRE>
+    SNOBOL4  file  options  ;Comments
+</PRE>
+            Options are specified by a slash (/) or minus sign (-), and one
+          or more option letters.  When the option requires a file name, an
+          equal sign may be used between the option letter and file name
+          for readability.
+<UL>
+<LI><B>File</B><P>             The source file contains your SNOBOL4 program.  If
+                     no file is specified, CON: is assumed, and programs
+                     may be entered directly from the keyboard.  Disk files
+                     will have extension .SNO supplied if none is specified.
+</UL>
+            The source and input files may be assigned to any disk file or
+          valid input device.  The listing, output, and error message files
+          may be assigned to any disk file or valid output device.  If the
+          output disk file does not exist, it will be created.
+<UL>
+<LI><B>/I=file</B><P>          The input file is associated with the variable
+                     INPUT when execution begins, as I/O unit 5.
+                     The default is CON:, your keyboard.  Disk
+                     files will have extension .IN supplied if
+                     none is specified.
+
+<P>
+<LI><B>/L=file</B><P>          The listing file receives a listing of your
+                     program, with assigned statement numbers.
+                     Default is NUL:, that is, the listing is
+                     discarded.  If /L appears without a file name,
+                     the source program file name will be used,
+                     with the extension changed to .LST.
+
+<P>
+<LI><B>/O=file</B><P>          The output file is associated with the variable
+                     OUTPUT when execution begins.  This will be I/O
+                     unit 6.  The default is CON:, which is usually
+                     your computer's display screen.  Disk files will
+                     have extension .OUT supplied if none is specified.
+                     Execution dumps and tracings are sent to I/O unit 6.
+
+<P>
+<LI><B>/E=file</B><P>          A list of compilation and runtime error messages
+                     is written to this file.  Default is CON:, that
+                     is, error messages are displayed on the screen.
+                     If /E appears without a file name, the source
+                     program file name will be used, with the extension
+                     changed to .ERR.
+</UL>
+            In addition to the /I and /O options, the INPUT and OUTPUT
+          variables may also be assigned to files by using the MS-DOS redirection
+          operators &lt; and &gt; on the command line.
+<P>
+            Other I/O files may be specified explicitly within the INPUT
+          and OUTPUT functions, or on the command line with a unit number:
+<UL>
+<LI><B>/n=file</B><P>          The specified file becomes associated with
+                     unit number n.  N must be in integer between
+                     1 and 16.  If your program calls the INPUT or
+                     OUTPUT function without a file name, the file
+                     specified here will be used.  This command
+                     line option merely makes an association; the
+                     file is not opened or created until the INPUT
+                     or OUTPUT function is called.
+</UL>
+            File names may be a disk file, or any DOS device, such as NUL:,
+          CON:, LPT2:, etc.
+<P>
+            The remaining option switches alter SNOBOL4's behavior:
+<UL>
+<LI><B>/B</B><P>               Termination messages and statistics are normally
+                     displayed via I/O unit 7 (SCREEN).  The
+                     /B (batch) option instead directs them to I/O
+                     unit 6 (OUTPUT).
+
+<P>
+<LI><B>/C</B><P>               SNOBOL4 defaults to case-folding, making
+                     lower and upper case alphabetics equivalent
+                     for names and labels.  Specifying this option
+                     inhibits case-folding:  upper and lower case
+                     names are unique and distinct.
+
+<P>
+<LI><B>/D</B><P>               Sets the &amp;DUMP keyword to 1.  This is useful
+                     when you decide you want an end-of-run variable
+                     dump, and don't want to edit the source
+                              file.
+
+<P>
+<LI><B>/H</B><P>               Displays summary of options and Vanilla
+                     SNOBOL4 license information.
+
+<P>
+<LI><B>/NX</B><P>              No execution after compilation.
+
+<P>
+<LI><B>/NP</B><P>              Suppress column position information in error
+                     messages.
+
+<P>
+<LI><B>/P</B><P>               Displays additional product information.
+
+<P>
+<LI><B>/S</B><P>               Provide statistics upon termination.
+</UL>
+            Vanilla SNOBOL4 works very nicely with text editors that allow
+          a program to be compiled from within the editor.  If a compilation
+          or runtime error occurs, you are returned to your editor
+          with the cursor positioned on the troublesome statement.  To use
+          with your editor, you will need to use the command line option
+          &quot;/BE-&quot;.  This writes errors messages to standard output, where
+          they can be captured by your text editor.
+<H3><A NAME="2.2">2.2 PROVIDING YOUR OWN PARAMETERS</A></H3>
+            The keyword &amp;PARM contains the command line string.  It begins
+          with the blank following the word SNOBOL4, and contains all characters
+          up to the terminating carriage return.  Since SNOBOL4's
+          command processor ignores all characters after a semicolon, comments
+          placed there can easily communicate additional instructions
+          to your program.  Break them out with the statement:
+<PRE>
+    &amp;PARM ';' REM . INSTRUCTIONS
+</PRE>
+<H3><A NAME="2.3">2.3 COMMAND LINE EXAMPLES</A></H3>
+            The command line:
+<PRE>
+    SNOBOL4 PROG
+</PRE>
+          will compile and run a source program from file PROG.SNO, discard
+          the listing, and run it with keyboard input and screen output.
+          The command line:
+<PRE>
+    SNOBOL4 CONVERT /I=DATA /O=RESULT /2=STYLE.DAT ;DRAFT
+</PRE>
+          will run a program that presumably transforms input file DATA.IN
+          to output file RESULT.OUT according to program option 'DRAFT'.
+          I/O unit number 2 is associated with the file STYLE.DAT.  The
+          program can use the variable SCREEN to post error and status messages
+          to the user, regardless of the reassignment of the input
+          and output files.
+<PRE>
+    SNOBOL4 SOURCE /I=SOURCE.SNO /L=OUTPUT /O=OUTPUT.LST /BCS
+</PRE>
+          sets up a &quot;conventional&quot; batch job, with source program and input
+          data on file SOURCE.SNO (following the END statement), listing
+          and program output to OUTPUT.LST, no case-folding, and end-of-run
+          statistics.
+<P><HR>
+<A HREF="ch1.htm"><IMG SRC="../prev.gif" ALT="Previous" ALIGN=TOP> Previous chapter</A>
+<B>&#183;</B> <A HREF="ch3.htm"><IMG SRC="../next.gif" ALT="Next" ALIGN=TOP> Next chapter</A>
+<B>&#183;</B> <A HREF="contents.htm"><IMG SRC="../toc.gif" ALT="Contents" ALIGN=TOP> Table of Contents</A>
+
+</BODY>
+</HTML>

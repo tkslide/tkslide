@@ -1,0 +1,376 @@
+<HTML>
+<HEAD><TITLE>A Snobol4 Tutorial: Chapter 3</TITLE>
+</HEAD>
+
+<BODY>
+<!-- From Part II of the Catspaw manual distributed with Vanilla Snobol.
+     HTML markup by John English (je@brighton.ac.uk).
+-->
+
+<A HREF="ch2.htm"><IMG SRC="../prev.gif" ALT="Previous" ALIGN=TOP> Previous chapter</A>
+<B>&#183;</B> <A HREF="ch4.htm"><IMG SRC="../next.gif" ALT="Next" ALIGN=TOP> Next chapter</A>
+<B>&#183;</B> <A HREF="contents.htm"><IMG SRC="../toc.gif" ALT="Contents" ALIGN=TOP> Table of Contents</A>
+<HR>
+
+<H2>Chapter 3 : INPUT/OUTPUT AND KEYWORDS</H2>
+<H3><A NAME="3.1">
+                            3.1 INPUT/OUTPUT
+</A></H3>
+<P>
+      We've already performed simple input and output with variables
+    INPUT and OUTPUT.  In this chapter, you'll learn more about
+    SNOBOL4's I/O capabilities.
+<P>
+      SNOBOL4 can communicate with up to 16 different files at once.
+    A &quot;file&quot; is either a disk file or a device, such as a printer.
+    Every file is identified by a &quot;unit number,&quot; which is an integer
+    between 1 and 16.  You chose the numbers when you select the
+    files you wish to use.  The particular numbers chosen have no
+    special significance; they just distinguish one file from
+    another.
+<P>
+      Actual input or output of data is performed by &quot;associating&quot; a
+    variable with a unit number and a direction.  When a statement
+    tries to use the variable's value, a line is read from the associated
+    file.  When a value is stored in the variable, a line is
+    written to the associated file.  INPUT and OUTPUT are variables
+    whose association with the keyboard and screen were preset by
+    SNOBOL4.  For historical reasons, they use unit numbers 5 and 6
+    respectively.
+<P>
+      Strings are the only data type which can be transferred to and
+    from files.  A successful input operation always returns a
+    string.  During output, nonstring objects, such as integers, are
+    automatically converted to their string form.
+<P>
+      The functions INPUT and OUTPUT (not to be confused with the
+    variables INPUT and OUTPUT) are provided to attach a unit number
+    to a variable, and optionally, to a particular file.  Their names
+    are distinguished from the variables of the same names by appearing
+    as functions, that is, with parentheses and an argument list.
+<H3><A NAME="3.1.1">
+    3.1.1 Associating File Names and Units
+</A></H3>
+<P>
+      There are two ways to tell SNOBOL4 what file will be used with
+    a particular unit number:
+<OL>
+      <LI>As an option on the SNOBOL4 command line, like this:
+<PRE>
+    B&gt;SNOBOL4 PROGRAM /2=ADDRESS.TXT /8=RESULT.DAT
+</PRE>
+         Here, unit number 2 is associated with the file named
+         'ADDRESS.TXT', and unit number 8 with file 'RESULT.DAT'.  It
+         will still be necessary to use the INPUT or OUTPUT function
+         described below to associate variables with these unit numbers.
+     This method works best when different files will be
+         used each time the program is run.
+<P>
+      <LI>Use a string containing the file name as the fourth argument
+         to the INPUT or OUTPUT function, as in:
+<PRE>
+    INPUT(..., 2, ..., 'ADDRESS.TXT')
+</PRE>
+         This method is better when the file name will not change, or
+         is a string derived from a dialogue with the user, or is
+         produced from a string calculation.
+<P>
+         A file name consisting of a single hyphen (&quot;-&quot;) is reserved,
+         and specifies the MS-DOS standard input file when used with
+         the INPUT function, or the standard output file when used
+         with the OUTPUT function.  These standard input or output
+         files may be redirected on the command line using the MS-DOS
+         redirection operators (&quot;&lt;filename&quot; and &quot;&gt;filename&quot;).
+</OL><P>
+
+<H3><A NAME="3.1.2">
+    3.1.2 Input
+</A></H3>
+<P>
+      This function associates a variable with data read from a file:
+<PRE>
+    INPUT('variable', unit, length, 'file')
+</PRE>
+      It succeeds and returns the null string if the file was found
+    and successfully opened, and fails otherwise.  Length is an
+    optional integer that specifies the line length.  If the file
+    name argument is omitted, SNOBOL4 consults the command line to
+    find the file to use with this unit.
+<P>
+      For example, to open file TEXT.IN for input as unit 1, and associate
+    variable READLINE with it, we would say
+<PRE>
+            INPUT('READLINE', 1, , 'TEXT.IN')    :S(OK)
+            OUTPUT = 'Could not find file'       :(END)
+    OK       . . .
+</PRE>
+      If the file name were specified on the command line as
+    /1=TEXT.IN, we only need the first two arguments to INPUT:
+<PRE>
+            INPUT('READLINE', 1)            :S(OK)
+            OUTPUT = 'Could not find file'  :(END)
+    OK       . . .
+</PRE>
+      To read a line from the file, we simply use READLINE in a
+    statement.  The statement fails when the End-of-File is read:
+<PRE>
+    LINE = READLINE                 :F(END.OF.FILE)
+</PRE>
+      Each file-associated variable will have a line length associated
+    with it (80 characters unless SNOBOL4 is told otherwise in
+    the length argument).  Normally, reading stops at each end-ofline
+    character (carriage return).  If more than the line length
+    has been read, the extra characters are discarded.  If a short
+    line is encountered, SNOBOL4 pads the line with blanks to produce
+    the full line length.  The end-of-line character is not included
+    in the string returned.
+<P>
+      Blank padding is another historic feature from the days when
+    most input was on punch cards.  The next section, &quot;Keywords,&quot;
+    will show you how to disable it.  You can also use the TRIM function
+    to remove superfluous trailing blanks.  The previous statement
+    then becomes:
+<PRE>
+    LINE = TRIM(READLINE)      :F(END.OF.FILE)
+</PRE>
+      When READLINE encounters the End-of-File, its failure signal is
+    propagated outward, causing function TRIM to fail.  This failure
+    is detected in the GOTO field in the usual manner.
+<H3><A NAME="3.1.3">
+    3.1.3 Output
+</A></H3>
+<P>
+      This function associates a variable with data written to a
+    file.  If the file does not exist, it is created.  If it already
+    exists, its previous contents are discarded.
+<PRE>
+    OUTPUT('variable', unit, length, 'file')
+</PRE>
+      The function succeeds and returns the null string if the file
+    was successfully opened for output, and fails otherwise.
+<P>
+      We write data to the file by assigning it to the associated
+    variable.  In this example, we will use a variable called PRINT,
+    and the DOS device PRN: with a line length of 132 characters:
+<PRE>
+   OUTPUT('PRINT', 2, 132, 'PRN:')   :S(PRTOK)
+   OUTPUT = 'Could not attach printer'  :(END)
+   PRINT  = 'Text Listing - ' DATE()
+   . . .
+</PRE>
+      If the string assigned to an output variable is longer than the
+    line length, SNOBOL4 will output as many lines as necessary of
+    the standard line length to accommodate the string.  SNOBOL4 supplies
+    the carriage return and line feed characters at the end of
+    each line.
+<P>
+      Once again, the output file name could be given on the command
+    line (/2=PRN:).  The function call would then look like this:
+<PRE>
+   OUTPUT('PRINT', 2, 132)           :S(PRTOK)
+    . . .
+</PRE>
+
+<H3><A NAME="3.1.4">
+    3.1.4 Changing I/O Defaults
+</A></H3>
+<P>
+      Having INPUT and OUTPUT associated with the keyboard and screen
+    may be altered in the SNOBOL4 command line.  A surprising number
+    of programs can be written this way, using only the variables
+    INPUT and OUTPUT for I/O.  The command line phrase /I=FILENAME,
+    associates INPUT with the named file, and /O=FILENAME does the
+    same for OUTPUT.  SNOBOL4 makes all the associations for you; no
+    call to the INPUT or OUTPUT function is required.
+<P>
+      SNOBOL4 also provides the pre-associated variable SCREEN.
+    Using SCREEN allows your program to post messages to the display
+    even if OUTPUT has been redirected elsewhere.
+<P>
+      If we have a program written in terms of variables INPUT and
+    OUTPUT, it can be run without alteration with different data
+    files.  For example, the following program will copy INPUT to
+    OUTPUT, and place the line length and a blank in front of each
+    line:
+<PRE>
+    LOOP    S = TRIM(INPUT)                 :F(END)
+            OUTPUT = SIZE(S) ' ' S          :(LOOP)
+    END
+</PRE>
+      Suppose we associate file TEXT.IN with INPUT, and TEXT.OUT with
+    OUTPUT.  We've supplied the morning song from Shakespeare's
+    Cymbeline in file TEXT.IN, and the program above in file
+    LENGTH.SNO.  You can run it like this:
+<PRE>
+   B&gt;SNOBOL4 LENGTH /I=TEXT.IN /O=TEXT.OUT
+
+   Vanilla SNOBOL4      Version 2.14.
+   (c) Copyright 1984,1988 Catspaw, Inc. All Rights Reserved.
+
+   No errors
+
+   B&gt;TYPE TEXT.OUT
+   44 Hark! hark! the lark at heaven's gate sings,
+    . . .
+</PRE>
+      SNOBOL4 will supply the default file name extensions .IN and
+    .OUT for the /I and /O options, so the command line could be
+    shortened to:
+<PRE>
+    B&gt;SNOBOL4 LENGTH /I=TEXT /O=TEXT
+</PRE>
+
+<H3><A NAME="3.2">
+                              3.2 KEYWORDS
+</A></H3>
+<P>
+      Input/Output allows your program to communicate with the outside
+    world.  Your program may also communicate with the SNOBOL4
+    system itself.  Keywords allow you to modify SNOBOL4's behavior,
+    and to obtain information from the system.  A keyword consists of
+    the ampersand character (&amp;) followed by an alphabetic name.  They
+    are used in a statement in the same way as a variable.  They
+    either provide values or have values assigned to them.  Numeric
+    keywords are restricted to integer values.
+<UL>
+    <LI><B>&amp;TRIM</B>&#160;&#160;&#160;&#160;Remove trailing blanks
+<P>
+      Normally, short lines read from a file are padded with blank
+    characters to the standard line length.  In LENGTH.SNO, we used
+    the function TRIM(INPUT) to remove those blanks.  A simpler
+    method assigns an integer value to keyword &amp;TRIM to control
+    padding.  If &amp;TRIM is set to a nonzero value, blanks are not
+    appended, and any trailing blanks are removed.  A statement to do
+    this looks like this:
+<PRE>
+    &amp;TRIM = 1
+</PRE>
+      Since trailing blanks are usually not desired, you'll often see
+    this statement at the beginning of many SNOBOL4 programs.
+<P>
+    <LI><B>&amp;MAXLNGTH</B>&#160;&#160;&#160;&#160;Maximum string length
+<P>
+      This keyword controls the maximum permissible string length.
+    Its initial value is 5000, but it may be set to any positive
+    integer from 0 to 32767.  Setting it to 0 is going to severly restrict
+    what you can do, since only the null string will be available
+    to you!
+<P>
+    <LI><B>&amp;DUMP</B>&#160;&#160;&#160;&#160;Termination dump of variables
+<P>
+      This keyword is useful for debugging programs because it tells
+    SNOBOL4 to display the values of your variables when your program
+    terminates.  Setting &amp;DUMP to a positive, nonzero integer causes
+    the variable names to be sorted alphabetically.  A negative integer
+    produces a unsorted dump.  Zero is the default value, inhibiting
+    the dump.  Only variables with nonnull values are displayed.
+<P>
+    <LI><B>&amp;ALPHABET</B>&#160;&#160;&#160;&#160;Complete character set
+<P>
+      This keyword contains a 256 character string, the computer's
+    entire character set in ascending sequence.  It is called a protected
+    keyword because it cannot be modified by your program.
+<P>
+    <LI><B>&amp;LCASE</B>&#160;&#160;&#160;&#160;Lower case letters
+<P>
+      This keyword contains the 26 lower case alphabetic characters,
+    &quot;abcdefghijklmnopqrstuvwxyz&quot;.
+<P>
+    <LI><B>&amp;UCASE</B>&#160;&#160;&#160;&#160;Upper case letters
+<P>
+      This keyword contains the 26 upper case alphabetic characters,
+    &quot;ABCDEFGHIJKLMNOPQRSTUVWXYZ&quot;.
+</UL><P>
+
+<H3><A NAME="3.3">
+                  3.3 PROGRAMS WITHOUT PATTERN MATCHING
+</A></H3>
+<P>
+      You now have the ingredients to create some simple programs.
+    However, if this were all of the SNOBOL4 language, there would be
+    very little reason to use it.  We'll get to pattern matching
+    shortly, where you'll find many new, challenging concepts.
+    First, however, you should be comfortable with the preceding
+    material.
+<P>
+      Take a few minutes to examine and run the following programs.
+<H3><A NAME="3.3.1">
+    3.3.1 File Counts - FCOUNTS.SNO
+</A></H3>
+<P>
+      This program counts the number of characters and lines in a
+    file.  Because real numbers are not available in Vanilla SNOBOL4,
+    you should only use this program with input files smaller than
+    32,767 characters.
+<PRE>
+            &amp;TRIM  = 1
+            CHARS  = 0
+    NEXTL   CHARS  = CHARS + SIZE(INPUT)    :F(DONE)
+            LINES  = LINES + 1              :(NEXTL)
+    DONE    OUTPUT = CHARS ' characters'
+            OUTPUT = +LINES ' lines read'
+    END
+</PRE>
+      In such a small program, it's permissible to rely upon the fact
+    that the system initializes LINES to the null string.  The first
+    use of the statement:
+<PRE>
+    LINES  = LINES + 1              :(NEXTL)
+</PRE>
+    converts LINES from the null string to an integer value.  We used
+    the expression +LINES in the last statement to produce an integer
+    0 (instead of the null string), if the input file were empty.  To
+    count the characters and lines in a file, use the /I= option, as
+    in:
+<PRE>
+    B&gt;SNOBOL4 FCOUNTS.SNO /I=TEXT.IN
+</PRE>
+
+<H3><A NAME="3.3.2">
+    3.3.2 Formatting Text - TRIPLET.SNO
+</A></H3>
+<P>
+      This program reformats a file by centering the lines and arranging
+    them in groups of three.  Note that statements containing
+    an asterisk in column one are considered comments by SNOBOL4.
+<PRE>
+    * Trim input, count input lines:
+            &amp;TRIM = 1
+            N = 0
+
+    * Read next input line, all done if End-of-File.
+    LOOP    S = INPUT                       :F(END)
+
+    * Precede with blanks to center within 80 character line:
+            OUTPUT = DUPL(' ', (80 - SIZE(S)) / 2) S
+
+    * Increment count, but reset to 0 every third line.
+    * Also, output a blank line when count resets:
+            N = REMDR(N + 1, 3)
+            OUTPUT = EQ(N, 0)               :(LOOP)
+    END
+</PRE>
+      This program uses the DUPL function to produce the leading
+    blanks required to center a line.  A simple calculation based on
+    each line's width determines the number of blanks needed.
+<P>
+      The last two statements break the file lines into triplets.
+    The REMDR function returns the integer remainder (modulus) when
+    the first argument is divided by the second.  In this case,
+    assigning the result to variable N causes N to continually cycle
+    through the values 0, 1, 2, 0, 1, ....  When N is 0, the last
+    statement assigns the null string to OUTPUT, producing a blank
+    line.  If N is 1 or 2, EQ fails, and the assignment fails.
+<P>
+      Try running the program with the sample text file:
+<PRE>
+    B&gt;SNOBOL4 TRIPLET /I=TEXT
+</PRE>
+
+<P><HR>
+<A HREF="ch2.htm"><IMG SRC="../prev.gif" ALT="Previous" ALIGN=TOP> Previous chapter</A>
+<B>&#183;</B> <A HREF="ch4.htm"><IMG SRC="../next.gif" ALT="Next" ALIGN=TOP> Next chapter</A>
+<B>&#183;</B> <A HREF="contents.htm"><IMG SRC="../toc.gif" ALT="Contents" ALIGN=TOP> Table of Contents</A>
+
+</BODY>
+</HTML>

@@ -1,0 +1,70 @@
+TkS*LIDE Readme
+===============
+0. What does it mean?
+TkS*LIDE = Snobol/Spitbol (S*L) Integrated Development Environment (IDE) in
+TCL/Tk (Tk).
+
+1. Why TkS*LIDE?
+Because I like Snobol4. 
+Because Snobol4 had no IDE[0] and no GUI capabilites.
+Because not everybody likes vim.
+Because users are lazy.
+Because it's fun.
+
+2. Philosophy
+- Open source
+With enough eyes all bugs are shallow. 
+
+- Simple
+A simple and elegant language deserves simple and elegant IDE.
+It may lack some buzzword-compliant features but won't distract beginners
+trying to learn SNOBOL4.
+
+- Intuitive
+Learn Snobol4, not the (mostly useless) features and (exotic) keybindings of
+the IDE. One who wants to learn S4 had already contact with computers and other
+software. 
+
+- Portable
+I'm UNIX man. I can work with Windows, but I definitely prefer Unices.  But
+openess and portability is a part of a Unix mind too. Windows users are
+punished enough with the pathetic excuse for operating system they (have to)
+use.
+Why should I deny them (easier) access to one of the most wonderful programming
+languages?
+
+- Configurable
+Time spent on (re)configuration can be used more efficiently for learning.
+Configure once, use many times.
+
+- Free as in "free beer"
+I received so much, I can give something away.
+
+Credits
+-------
+The basic idea of a simple, efficient, user-friendly IDE comes from the
+DrScheme and its documentation. There is a very interesting paper on design
+guidelines[1]
+
+My warmest thanks to (in alphabetical order):
+- Bruce M. Axtens - for testing and ideas
+- Phil Budne - for his great CSnobol4 interpreter
+- Howard Bussey - for testing, elaborate comments and many ideas 
+- Dave Feustel - for his ideas
+- Guido Milanese - for testing S*LIDE, ideas and requests
+- Philip Thomas - testing
+
+Online help system: curtesy of M. Emmer from Catspaw (of SPITBOL fame) and J.
+English (HTMLization of original documents)
+
+TkS*LIDE uses the ctext widget implemented by George Peter Staplin.
+The search and replace box is based on a wiki.tcl.tk article by R. Suchenwirth
+
+
+0. At least no usable (YMMV) one. I always wanted to test the M. Livnehs
+(windows only :-( ) Snopad, but I couldn't start it. Well, I must admit, I
+stole some of M.L. ideas ;-)
+
+1. "Implications on the Learning of Programming Through the Implementation of
+Subset s in Program Development Environments"
+Peter J. DePasquale III 

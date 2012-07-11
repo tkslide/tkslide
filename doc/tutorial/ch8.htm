@@ -1,0 +1,506 @@
+<HTML>
+<HEAD><TITLE>A Snobol4 Tutorial: Chapter 8</TITLE>
+</HEAD>
+
+<BODY>
+<!-- From Part II of the Catspaw manual distributed with Vanilla Snobol.
+     HTML markup by John English (je@brighton.ac.uk).
+-->
+
+<A HREF="ch7.htm"><IMG SRC="../prev.gif" ALT="Previous" ALIGN=TOP> Previous chapter</A>
+<B>&#183;</B> <A HREF="ch9.htm"><IMG SRC="../next.gif" ALT="Next" ALIGN=TOP> Next chapter</A>
+<B>&#183;</B> <A HREF="contents.htm"><IMG SRC="../toc.gif" ALT="Contents" ALIGN=TOP> Table of Contents</A>
+<HR>
+
+<H2>Chapter 8 : DEBUGGING AND PROGRAM EFFICIENCY</H2>
+<H3><A NAME="8.1">
+                       8.1 DEBUGGING AND TRACING
+</A></H3>
+<P>
+      You are probably well aware of the diversity of potential errors
+    when writing computer programs.  They range from simple
+    typographical errors made while entering a program, to subtle design
+    problems which may only be revealed by unexpected input
+    data.
+<P>
+      Debugging a SNOBOL4 program is not fundamentally different than
+    debugging programs written in other languages.  However,
+    SNOBOL4's syntactic flexibility and lack of type declarations for
+    variables produce some unexpected problems.  By way of compensation,
+    an unusually powerful trace capability is provided.
+<P>
+      Of course, there may come a time when you can't explain your
+    program's behavior, and decide &quot;the system&quot; is at fault.  No
+    guarantee can ever be made that SNOBOL4 is completely free of
+    errors.  However, its internal algorithms have been in use in
+    other SNOBOL4 systems since 1967, and all known errors have been
+    removed.  Often the problem is a misunderstanding of how a function
+    works with exceptional data, and a close reading of the reference
+    section clears the problem up.  In short, suspect the
+    system last.
+<H3><A NAME="8.1.1">
+    8.1.1 Compilation Errors
+</A></H3>
+<P>
+      Compilation errors are the simplest to find; SNOBOL4 displays
+    the erroneous line on your screen with its statement number, and
+    places a marker below the point where the error was encountered.
+    The source file name, line number, and column number of the error
+    are displayed for use by your text editor.  Only the first error
+    in a statement is identified, so you should also carefully check
+    the remainder of the statement.  A typical line looks like this:
+<PRE>
+    32              ,OUTPUT = CNT+ 1
+                     ^
+    test.sno(57,10) : Compilation Error : Erroneous statement
+</PRE>
+      Here, the comma preceding the word OUTPUT is misplaced.  The
+    message indicates that &quot;,OUTPUT&quot; is not a valid language element.
+<P>
+      Programs containing compilation errors can still be run, at
+    least until a statement containing an error is encountered.  When
+    that happens, SNOBOL4 will produce an execution error message,
+    and stop.
+<P>
+      A complete description of error messages is provided in <A HREF="../manual/ch9.htm">Chapter
+    9 of the Reference Manual</A>, &quot;System Messages.&quot;
+<H3><A NAME="8.1.2">
+    8.1.2 Execution Errors
+</A></H3>
+<P>
+      Once a program compiles without error, testing can begin.  Two
+    kinds of errors are possible: SNOBOL4 detectable errors, such an
+    incorrect data type or calling an undefined function, and program
+    logic errors that produce incorrect results.
+<P>
+      With the first type of error, you'll get a SNOBOL4 error message
+    with statement and line numbers.  Inspecting the offending
+    line will often reveal typing errors, such as a misspelled function
+    name, keyword, or label.  If the error is due to incorrect
+    data in a variable -- such as trying to perform arithmetic on a
+    non-numeric string -- you'll have to start debugging to discover
+    how the incorrect data was created.  Placing output statements in
+    your program, or using the trace techniques described below, will
+    usually find such errors.
+<P>
+      Here are some common errors to look for first:
+<OL>
+      <LI>Setting keywords &amp;ANCHOR, &amp;FULLSCAN, and &amp;TRIM improperly.
+         We may have written a program with anchored pattern matching
+         in mind, but let an unanchored match slip in inadvertently.
+         Forgetting to set &amp;TRIM to 1 causes blanks to be appended to
+         input lines, and they usually interfere with pattern matching
+    and conversion of a string to an integer.
+<P>
+      <LI>Misspelled variable names.  Using PUTPUT instead of OUTPUT,
+         as in:
+<PRE>
+    PUTPUT = LINE1
+</PRE>
+         creates a new variable and assigns LINE1 to it.  Worse still
+         is using a misspelled name as a value source, since it will
+         return a null string value.
+<P>
+         The first type of error is relatively easy to find -- produce
+         an end-of-run dump by using the SNOBOL4 command line option
+         /D.  You can study the list of variables for an unexpected
+         name.  The second type of error is naturally much harder to
+         find, because variables with null string values are omitted
+         from the end-of-run dump.  In this case, you will have to
+         study the source program closely for misspellings.
+<P>
+      <LI>Spurious spaces between a function name and its argument
+         list.  A line like:
+<PRE>
+    LINE = TRIM (INPUT)
+</PRE>
+         is not a call to the TRIM function.  The blank between TRIM
+         and the left parenthesis is interpreted as concatenating
+<P>
+         variable TRIM with the expression (INPUT).  TRIM used as a
+         variable is likely to be the null string, so INPUT is
+         returned unchanged.
+<P>
+      <LI>No blank space after a binary operator.   SNOBOL4 sees a
+         unary operator instead, with completely unexpected results.
+         For instance:
+<PRE>
+    X = Y -Z
+</PRE>
+         concatenates Y with the expression -Z.
+<P>
+      <LI>Confusion occurring when a variable contains a number in
+         string form.  When used as an argument to most functions,
+         conversion from string to number is automatic, and proper
+         execution results.  However, functions IDENT and DIFFER do
+         not convert their arguments, and seemingly equal values are
+         thought to be different.  For example, if we want to test an
+         input line for the number 3, the statements:
+<PRE>
+    N = INPUT
+    IDENT(N, 3)                               :S(OK)
+</PRE>
+         are not correct.  N contains a string, which is a different
+         data type from the integer 3.  This could be corrected by
+         using IDENT(+N, 3), or EQ(N, 3).  Once again, &amp;TRIM should
+         be 1, or the blanks appended to N will prevent its conversion
+    to an integer.
+<P>
+      <LI>Omitting the assignment operator when we wish to remove the
+         matching substring from a subject, resulting in a program
+         which loops forever.  For example, our word-counting program
+         replaced each word with the null string:
+<PRE>
+    NEXTWRD LINE WRDPAT =                        :F(READ)
+</PRE>
+         However, by omitting the equal sign we would repeatedly find
+         the same first word in LINE:
+<PRE>
+    NEXTWRD LINE WRDPAT                          :F(READ)
+</PRE>
+      <LI>Unexpected statement failure, with no provision for detecting
+    it in the GOTO field.  For example, the CONVERT function
+         fails if the table being converted is empty:
+<PRE>
+    RESULT = CONVERT(TALLY, &quot;ARRAY&quot;)
+</PRE>
+         RESULT will not be set if CONVERT fails, and a subsequent
+         array reference to RESULT would produce an execution error.
+<P>
+      <LI>Failure can be detected but misinterpreted when there are
+         several causes for it in a statement.  This statement fails
+         when an End-of-File is read, or if the input line does not
+         contain any digits:
+<PRE>
+    INPUT SPAN('0123456789') . N         :F(EOF)
+</PRE>
+         In the latter case, if we want to generate an error message,
+         the statement should be split in two:
+<PRE>
+    N = INPUT                            :F(EOF)
+    N SPAN('0123456789') . N             :F(WARN)
+</PRE>
+      <LI>Using operators such as alternation (|) and conditional assignment
+    (.) for purposes other than pattern construction.
+         Using them in the subject field will produce an 'Illegal
+         data type' error message.  Using them in the replacement
+         field produces a pattern, intended for subsequent use in a
+         pattern match statement.  For example, this statement sets N
+         to a pattern; it does not replace it with the words 'EVEN'
+         or 'ODD', as was probably intended:
+<PRE>
+    N = EQ(REMDR(N,2),0) 'EVEN' | 'ODD'
+</PRE>
+         We note in passing that SNOBOL4+, Catspaw's professional
+         SNOBOL4 package, provides language extensions that allow
+         just that:
+<PRE>
+    N = (EQ(REMDR(N,2),0) 'EVEN', 'ODD')
+</PRE>
+      <LI>Forgetting that functions like TAB and BREAK bind subject
+         characters.  This won't matter for simple pattern matching,
+         but for matching with replacement, problems can appear.  For
+         example, suppose we wanted to replace the 50th character in
+         string S with '*'.  If we used:
+<PRE>
+    S TAB(49) LEN(1) = '*'
+</PRE>
+         we would find the first 50 characters replaced by a single
+         asterisk.  Instead, we should say:
+<PRE>
+    S POS(49) LEN(1) = '*'
+</PRE>
+         or, even more efficiently:
+<PRE>
+    S TAB(49) . FRONT LEN(1) = FRONT '*'
+</PRE>
+      <LI>Omitting the unevaluated expression operator when defining a
+         pattern containing variable arguments.  For example, the
+         pattern
+<PRE>
+    NTH_CHAR = POS(*N - 1) LEN(1) . CHAR
+</PRE>
+         will copy the Nth subject character to variable CHAR.  The
+         pattern adjusts automatically if N's value is subsequently
+         changed.  Omitting the asterisk would capture the value of N
+         at the time the pattern is defined (probably the null
+         string).
+</OL><P>
+
+<H3><A NAME="8.1.3">
+    8.1.3 Simple Debugging
+</A></H3>
+<P>
+      These simple methods should find a majority of your bugs:
+<OL>
+      <LI>Set keyword &amp;DUMP nonzero, or use command line option /D to
+         get an end-of-run dump.  Examine it closely for reasonable
+         values and variable names.  Dumps can also be produced at
+         any time during execution by calling the built-in function
+         DUMP.
+<P>
+      <LI>Use keyword &amp;STLIMIT to end execution after a fixed number
+         of statements.
+<P>
+      <LI>Use the keyboard Control-C key to interrupt a program which
+         is looping endlessly, and record the statement number.
+<P>
+      <LI>Use the GOTO :F(ERROR) to detect unexpected failures and
+         data errors.  Do not define the label ERROR -- SNOBOL4 will
+         display the statement number of the error if an attempt is
+         made to transfer to label ERROR.
+<P>
+      <LI>Assign values to OUTPUT to monitor data values.  Use immediate
+    assignment and cursor assignment (to OUTPUT) to observe
+         the operation of a pattern match.
+<P>
+      <LI>Produce end-of-run statistics with the command line option
+         /S.  Are the number and kind of operations reasonable?
+<P>
+      <LI>Use the CODE.SNO program to setup simple test cases.  This
+         is particularly useful when pattern-matching statements do
+         not behave as expected.
+</OL><P>
+      More subtle errors can be pinpointed using SNOBOL4's trace facility,
+    described below.
+<H3><A NAME="8.2">
+                         8.2 EXECUTION TRACING
+</A></H3>
+<P>
+      Tracing the flow of control and data in a program is usually
+    the best way to find difficult problems.  SNOBOL4 allows tracing
+    of data in variables and some keywords, transfers of control to
+    specified labels, and function calls and returns.  Two keywords
+    control tracing: &amp;FTRACE and &amp;TRACE.
+<H3><A NAME="8.2.1">
+    8.2.1 Function Tracing
+</A></H3>
+<P>
+      Keyword &amp;FTRACE is set nonzero to produce a trace message each
+    time a program-defined function is called or returns.  The trace
+    message displays the statement number where the action occurred,
+    the name of the function, and the values of its arguments.  Function
+    returns display the type of return and value, if any.  Each
+    trace message decrements &amp;FTRACE by one, and tracing ends when
+    &amp;FTRACE reaches zero.  A typical trace messages looks like this:
+<PRE>
+    STATEMENT 39: LEVEL 0 CALL OF SHIFT('SKYBLUE',3),TIME = 140
+    STATEMENT 12: LEVEL 1 RETURN OF SHIFT = 'BLUESKY',TIME = 141
+</PRE>
+      The level number is the overall function call depth.  The program
+    execution time in tenths of a second is also provided.
+<H3><A NAME="8.2.2">
+    8.2.2 Selective Tracing
+</A></H3>
+<P>
+      Keyword &amp;TRACE will also produce trace messages when it is set
+    nonzero.  However, the TRACE function must be called to specify
+    what is to be traced.  Tracing can be selectively ended by using
+    the STOPTR function.  The TRACE function call takes the form:
+<PRE>
+    TRACE(name, type, string, function)
+</PRE>
+      The name of the item being traced is specified using a string
+    or the unary name operator.  Besides variables, it is also possible
+    to trace a particular element of an array or table:
+<PRE>
+    TRACE('VAR1', ...
+    TRACE(.A&lt;2,5&gt;, ...
+    TRACE('SHIFT', ...
+</PRE>
+      &quot;Type&quot; is a string describing the kind of trace to be performed.
+     If omitted, a VALUE trace is assumed:
+<TABLE CELLPADDING=5>
+<TR VALIGN=TOP>
+       <TD><B>'VALUE'</B>          <TD>Trace whenever name has a value assigned to
+                        it.  Assignment statements, as well as conditional
+                        and immediate assignments within pattern
+                        matching will all produce trace messages.
+<TR VALIGN=TOP>
+       <TD><B>'CALL'</B>           <TD>Produce a trace whenever function name is
+                        called.
+<TR VALIGN=TOP>
+       <TD><B>'RETURN'</B>         <TD>Produce a trace whenever function name
+                        returns.
+<TR VALIGN=TOP>
+       <TD><B>'FUNCTION'</B>       <TD>Combine the previous two types: trace both
+                        calls and returns of function name.
+<TR VALIGN=TOP>
+       <TD><B>'LABEL'</B>          <TD>Produce a trace when a GOTO transfer to
+                        statement name occurs.  Flowing sequentially
+                        into the labeled statement does not produce a
+                        trace.
+<TR VALIGN=TOP>
+       <TD><B>'KEYWORD'</B>        <TD>Produce a trace when keyword name's value is
+                        changed by the system.  The name is specified
+                        without an ampersand.  Only keywords
+                        &amp;ERRTYPE, &amp;FNCLEVEL, &amp;STCOUNT, and &amp;STFCOUNT
+                        may be traced.
+</TABLE>
+      When the first argument is specified with the unary name operator,
+    the third argument, string, will be displayed to identify
+    the item being traced:
+<PRE>
+    TRACE(.T&lt;&quot;zip&quot;&gt;, &quot;VALUE&quot;, &quot;Table entry 'zip'&quot;)
+</PRE>
+      The last argument, function, is usually omitted.  Its use is
+    described in the next section.
+<P>
+      The form of trace message displayed for each type of trace is
+    listed in <A HREF="../manual/ch9.htm">Chapter 9 of the Reference Manual</A>, &quot;System Messages.&quot;
+<P>
+      Each time a trace is performed, keyword &amp;TRACE is decreased by
+    one.  Tracing stops when it reaches zero.  Tracing of a particular
+    item can also be stopped by function STOPTR:
+<PRE>
+    STOPTR(name, type)
+</PRE>
+
+<H3><A NAME="8.2.4">
+    8.2.4 Program Trace Functions
+</A></H3>
+<P>
+      Normally, each trace action displays a descriptive message,
+    such as:
+<PRE>
+    STATEMENT 371: SENTENCE = 'Ed ran to town',TIME = 810
+</PRE>
+      Instead, we can instruct SNOBOL4 to call our own programdefined
+    function.  This allows us to perform whatever trace
+    actions we wish.  We define the trace function in the normal way,
+    using DEFINE, and then specify its name as the fourth argument of
+    TRACE.  For example, if we want function TRFUN called whenever
+    variable COUNT is altered, we would say:
+<PRE>
+   &amp;TRACE = 10000
+   TRACE('COUNT', 'VALUE', , 'TRFUN')
+   DEFINE('TRFUN(NAME,ID)')             :(TRFUN_END)
+    . . .
+</PRE>
+      TRFUN will be called with the name of the item being traced,
+    'COUNT', as its first argument.  If a third argument was provided
+    with TRACE, it too is passed to your trace function, as ID.
+    (Here the argument was omitted.)  To use trace functions effectively,
+    we must pause to describe a few more SNOBOL4 keywords:
+<TABLE CELLPADDING=5>
+<TR VALIGN=TOP>
+       <TD><B>&amp;LASTNO          </B><TD>The statement number of the previous SNOBOL4
+                        statement executed.
+<P>
+<TR VALIGN=TOP>
+       <TD><B>&amp;STCOUNT         </B><TD>The total number of statements executed.
+                        Incremented by one as each statement begins
+                        execution.
+<P>
+<TR VALIGN=TOP>
+       <TD><B>&amp;ERRTYPE         </B><TD>Error message number of the last execution
+                        error.
+<P>
+<TR VALIGN=TOP>
+       <TD><B>&amp;ERRLIMIT        </B><TD>Number of nonfatal execution errors allowed
+                        before SNOBOL4 will terminate.
+</TABLE>
+      The first three keywords are continuously updated by SNOBOL4 as
+    a program is executed.
+<P>
+      Now, let's consider debugging a program where variable COUNT is
+    inexplicably being set to a negative number.  Continuing with the
+    previous example, the function body would look like this:
+<PRE>
+            &amp;TRACE = 10000
+            TRACE('COUNT', 'VALUE', , 'TRFUN')
+            DEFINE('TRFUN(NAME,ID)TEMP')         :(TRFUN_END)
+
+    TRFUN   TEMP = &amp;LASTNO
+            GE($NAME, 0)                         :S(RETURN)
+            OUTPUT = 'COUNT negative in statement ' TEMP  :(END)
+    TRFUN_END
+</PRE>
+      The first statement of the function captures the number of the
+    last statement executed -- the statement that triggered the trace.
+    We then check COUNT, and return if it is satisfactory.  If it is
+    negative, we print an error message and stop the program.
+<P>
+      When a trace function is invoked, keywords &amp;TRACE and &amp;FTRACE
+    are temporarily set to zero.  Their values are restored when the
+    trace function returns.  There is no limit to the number of functions
+    or items which may be traced.
+<P>
+      Tracing keyword &amp;STCOUNT will call your trace function before
+    every program statement is executed.
+<P>
+      Program CODE.SNO traces keyword &amp;ERRTYPE to trap nonfatal execution
+    errors from your sample statements, and produce an error
+    message.  Keyword &amp;ERRLIMIT must be set nonzero to prevent
+    SNOBOL4 from terminating when an error occurs.
+<H3><A NAME="8.3">
+                         8.3 PROGRAM EFFICIENCY
+</A></H3>
+<P>
+      To a greater extent than other languages, SNOBOL4 programs are
+    sensitive to programming methods.  Often, there are many different
+    ways to formulate a pattern match, and some will require many
+    more match attempts than others.
+<P>
+      As you work with SNOBOL4, you will develop an intuitive feel
+    for the operation of the pattern matcher, and will write more
+    efficient patterns.  I can, however, start you off with some general
+    rules:
+<OL>
+      <LI>Try to use anchored, quickscan, and trim modes when possible.
+     If operating unanchored, artificially anchor whenever
+         possible by using POS(0) or FENCE as the first subpattern.
+<P>
+      <LI>Try to use BREAK and SPAN instead of ARB.
+<P>
+      <LI>Use ANY instead of an explicit list of one-character strings
+         and the alternation operator.
+<P>
+      <LI>LEN, TAB and RTAB are faster than POS and RPOS.  The former
+         &quot;step over&quot; subject characters in one operation; the latter
+         continually fail until the subject cursor is positioned correctly.
+     But be careful of misusing them with replacement
+         and replacing more than you expected.
+<P>
+      <LI>Use conditional assignment instead of immediate assignment
+         in pattern matching.
+<P>
+      <LI>Use IDENT and DIFFER to compare strings for equality,
+         instead of pattern matching.  Since each unique string is
+         stored only once in SNOBOL4, these functions merely compare
+         one-word pointers, regardless of string length.  By contrast,
+         pattern matching and functions such as LGT must
+         perform character by character comparisons.
+<P>
+      <LI>Avoid ARBNO and recursion if possible.
+<P>
+      <LI>Pattern construction is time-consuming.  Preconstruct patterns
+        and store them in variables whenever possible.
+<P>
+      <LI>Keep strings modest in length.  Although SNOBOL4 allows
+         strings to be thousands of characters long, operating upon
+         them is very time-consuming.  They use large amounts of
+         memory, and force SNOBOL4 to frequently rearrange storage.
+<P>
+      <LI>Use functions to modularize a program and make it easier to
+         understand and maintain.
+<P>
+      <LI>Avoid algorithms that make a linear search of an array or
+         list.  The algorithms can usually be rewritten using tables
+         and indirect references for associative programming.
+</OL><P>
+      Efficiency should not be measured purely in terms of program
+    execution time.  With the relatively low cost of microcomputers,
+    the larger picture of time spent designing, coding, and debugging
+    a program also must be considered.  A direct approach, emphasizing
+    simplicity, robustness, and ease of understanding usually
+    outweighs the advantages of tricky algorithms and shortcut techniques.
+     (But we admit that tricky pattern matching is fun!)
+
+<P><HR>
+<A HREF="ch7.htm"><IMG SRC="../prev.gif" ALT="Previous" ALIGN=TOP> Previous chapter</A>
+<B>&#183;</B> <A HREF="ch9.htm"><IMG SRC="../next.gif" ALT="Next" ALIGN=TOP> Next chapter</A>
+<B>&#183;</B> <A HREF="contents.htm"><IMG SRC="../toc.gif" ALT="Contents" ALIGN=TOP> Table of Contents</A>
+
+</BODY>
+</HTML>

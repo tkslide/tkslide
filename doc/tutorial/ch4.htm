@@ -1,0 +1,988 @@
+<HTML>
+<HEAD><TITLE>A Snobol4 Tutorial: Chapter 4</TITLE>
+</HEAD>
+
+<BODY>
+<!-- From Part II of the Catspaw manual distributed with Vanilla Snobol.
+     HTML markup by John English (je@brighton.ac.uk).
+-->
+
+<A HREF="ch3.htm"><IMG SRC="../prev.gif" ALT="Previous" ALIGN=TOP> Previous chapter</A>
+<B>&#183;</B> <A HREF="ch5.htm"><IMG SRC="../next.gif" ALT="Next" ALIGN=TOP> Next chapter</A>
+<B>&#183;</B> <A HREF="contents.htm"><IMG SRC="../toc.gif" ALT="Contents" ALIGN=TOP> Table of Contents</A>
+<HR>
+
+<H2>Chapter 4 : PATTERN MATCHING</H2>
+<H3><A NAME="4.1">
+                            4.1 INTRODUCTION
+</A></H3>
+<P>
+      Pattern matching examines a &quot;subject&quot; string for some combination
+    of characters, called a &quot;pattern.&quot;  The matching process may
+    be very simple, or extremely complex.  For example:
+<OL>
+      <LI>The subject contains several color names.  The pattern is
+         the string &quot;BLUE&quot;.  Does the subject string contain the word
+         &quot;BLUE&quot;?
+<P>
+      <LI>The subject contains a nucleic acid (DNA) sequence.  The
+         pattern searches for a subsequence that is replicated in two
+         other places in the string.
+<P>
+      <LI>The subject contains a paragraph of English text.  The
+         pattern describes the spacing rules to be applied after
+         punctuation.  Does the subject string conform to the
+         punctuation rules?
+<P>
+      <LI>The subject string represents the current board position in
+         a game of Tick-Tack-Toe.  The pattern examines this string
+         and determines the next move.
+<P>
+      <LI>The subject contains a program statement from a prototype
+         computer language.  The pattern contains the grammar of that
+         language.  Is the statement properly formed according to the
+         grammar?
+</OL><P>
+      Most programming languages provide rudimentary facilities to
+    examine a string for a specific character sequence.  SNOBOL4 patterns
+    are far more powerful, because they can specify complex
+    (and convoluted) interrelationships.  The colors of a painting,
+    the words of a sentence, the notes of a musical score have limited
+    significance in isolation.  It is their &quot;relationship&quot; with
+    one another which provides meaning to the whole.  Likewise,
+    SNOBOL4 patterns can specify &quot;context;&quot; they may be qualified by
+    what precedes or follows them, or by their position in the
+    subject.
+<H3><A NAME="4.1.1">
+    4.1.1 Knowns and Unknowns
+</A></H3>
+<P>
+      Patterns are composed of &quot;known&quot; and &quot;unknown&quot; components.
+<P>
+      &quot;Knowns&quot; are specific character strings, such as the string
+    &quot;BLUE&quot; in the first example above.  We are looking for a yes/no
+    answer to the question: &quot;Does this known item appear in the subject
+    string?&quot;
+<P>
+      &quot;Unknowns&quot; specify the &quot;kind&quot; of subject characters we are
+    looking for; the specific characters are not identifiable in
+    advance.  We might want to match only characters from a
+    restricted alphabet, or any substring of a certain length, or
+    some arbitrary number of repetitions of a string.  If the pattern
+    matches, we can then &quot;capture&quot; the particular subject substring
+    matched.
+<H3><A NAME="4.2">
+                     4.2 SPECIFYING PATTERN MATCHING
+</A></H3>
+<P>
+      A pattern match requires a subject string and a pattern.  The
+    subject is the first statement element after the label field (if
+    any).  The pattern appears next, separated from the subject by
+    white space (blank or tab).  If SUBJECT is the subject string,
+    and PATTERN is the pattern, it looks like this:
+<PRE>
+    label   SUBJECT PATTERN
+</PRE>
+      The pattern match &quot;succeeds&quot; if the pattern is found in the
+    subject string; otherwise it fails.  This success or failure may
+    be tested in the GOTO field:
+<PRE>
+    label   SUBJECT PATTERN            :S(label1) F(label2)
+</PRE>
+      A real point of confusion is the distinction between pattern
+    matching and concatenation.  How do you tell the difference?
+    Where does the subject end and the pattern begin?  In this case,
+    parentheses should be placed around the subject, since SNOBOL4
+    always uses the first &quot;complete&quot; statement element as the
+    subject.  In the statement
+<PRE>
+    X Y Z
+</PRE>
+    X is the subject, and Y concatenated with Z is the pattern.
+    Whereas
+<PRE>
+    (X Y) Z
+</PRE>
+    indicates the subject is string X concatenated with string Y, and
+    the pattern is Z.
+<H3><A NAME="4.3">
+                           4.3 SUBJECT STRING
+</A></H3>
+<P>
+      The subject string may be a literal string, a variable, or an
+    expression.  If it is not a string, its string equivalent will be
+    produced before pattern matching begins.  For example, if the
+    subject is the integer 48, integer to string conversion produces
+    the character string &quot;48&quot;.  Remember, if the subject includes
+    concatenated elements, they should be enclosed in parentheses.
+<H3><A NAME="4.4">
+                 4.4 PATTERN SUBSEQUENTS AND ALTERNATES
+</A></H3>
+<P>
+      Arithmetic expressions are composed of elements and simpler
+    subexpressions.  Similarly, patterns are composed of simpler subpatterns
+    which are joined together as &quot;subsequents&quot; and &quot;alternates.&quot;
+     If P1 and P2 are two subpatterns, the expression
+<PRE>
+    P1 P2
+</PRE>
+    is also a pattern.  The subject must contain whatever P1 matches,
+    immediately followed by whatever P2 matches.  P2 is the &quot;subsequent&quot;
+    of P1.  The white space (blank or tab) between P1 and P2
+    is the same binary concatenation operator previously used to join
+    strings; its use with patterns is completely analogous.  The preceding
+    pattern matches pattern P1 &quot;followed by pattern&quot; P2.
+<P>
+      The binary &quot;alternation&quot; operator is the vertical bar (|).  As
+    it is a binary operator, it must have white space on each side.
+    The pattern
+<PRE>
+    P1 | P2
+</PRE>
+    matches whatever P1 matches, &quot;or&quot; whatever P2 matches.  SNOBOL4
+    tries the various alternatives from left to right.
+<P>
+      Normally, concatenation is performed before alternation, so the
+    pattern
+<PRE>
+    P1 | P2 P3
+</PRE>
+    matches P1 alone, or P2 &quot;followed by&quot; P3.  Parentheses can be
+    used to alter the grouping of subpatterns.  For example:
+<PRE>
+    (P1 | P2) P3
+</PRE>
+    matches P1 &quot;or&quot; P2, followed by P3.
+<P>
+      When a pattern successfully matches a portion of the subject,
+    the matching subject characters are &quot;bound&quot; to it.  The next pattern
+    in the statement must match beginning with the very next
+    subject character.  If a subsequent fails to match, SNOBOL4 backtracks,
+    unbinding patterns until another alternative can be
+    tried.  A pattern match fails when SNOBOL4 cannot find an alternative
+    that matches.
+<P>
+      The null string may appear in a pattern.  It always matches,
+    but does not bind any subject characters.  We can think of it as
+    matching the invisible space &quot;between&quot; two subject characters.
+    One possible use is as the last of a series of alternatives.  For
+    example, the pattern
+<PRE>
+    ROOT ('S' | 'ES' | '')
+</PRE>
+    matches the pattern in ROOT, with an optional suffix of 'S' or
+    'ES'.  If ROOT matches, but is not followed by 'S' or 'ES', the
+    null string matches and successfully completes the clause.  Its
+    presence gives the pattern match a successful escape.
+<P>
+      The conditional functions of the previous chapter may appear in
+    patterns.  If they fail when evaluated, the current alternative
+    fails.  If they succeed, they match the null string, and so do
+    not consume any subject characters.  They behave like a gate,
+    allowing the match to proceed beyond them only if they are true.
+    This pattern will match 'FOX' if N is 1, or 'WOLF' if N is 2:
+<PRE>
+    EQ(N,1) 'FOX' | EQ(N,2) 'WOLF'
+</PRE>
+      Parentheses may be used to factor a pattern.  The strings
+    'COMPATIBLE', 'COMPREHENSIBLE', and 'COMPRESSIBLE' are matched by
+    the pattern:
+<PRE>
+    'COMP' ('AT' | 'RE' ('HEN' | 'S') 'S') 'IBLE'
+</PRE>
+
+<H3><A NAME="4.5">
+                       4.5 SIMPLE PATTERN MATCHES
+</A></H3>
+<P>
+      Here are examples of pattern matches using a string literal or
+    variable for the subject.  The patterns consist entirely of known
+    elements.  Use the CODE.SNO program to experiment with them:
+<PRE>
+    ?       'BLUEBIRD' 'BIRD'
+    Success
+    ?       'BLUEBIRD' 'bird'
+    Failure
+    ?       B = 'THE BLUEBIRD'
+    ?       B 'FISH'
+    Failure
+    ?       B 'FISH' | 'BIRD'
+    Success
+    ?       B ('GOLD' | 'BLUE') ('FISH' | 'BIRD')
+    Success
+</PRE>
+      The first statement shows that the matching substring ('BIRD')
+    need not begin at the start of the subject string.  This is
+    called &quot;unanchored&quot; matching.  The second statement fails because
+    strings are case sensitive, unlike names and labels.  The third
+    statement creates a variable to be used as the subject.  The
+    fifth statement employs an alternate: we are matching for 'FISH'
+    or 'BIRD'.
+<P>
+      The last statement uses subsequents and alternates.  We are
+    looking for a substring in B that contains 'GOLD' or 'BLUE', followed
+    by 'FISH' or 'BIRD'.  It will match 'GOLDFISH', 'GOLDBIRD',
+    'BLUEFISH' or 'BLUEBIRD'.  If the parentheses were omitted, concatenation
+    of 'BLUE' and 'FISH' would be performed before alternation,
+    and the pattern would match 'GOLD', 'BLUEFISH', or
+    'BIRD'.
+<H3><A NAME="4.6">
+                        4.6 THE PATTERN DATA TYPE
+</A></H3>
+<P>
+      If we execute the statement
+<PRE>
+    ?       COLOR = 'BLUE'
+</PRE>
+    the variable COLOR contains the string 'BLUE', and could appear
+    in the pattern portion of a statement:
+<PRE>
+    ?       B COLOR
+    Success
+</PRE>
+      Even though it is used as a pattern, COLOR has the &quot;string&quot;
+    data type.  However, complicated patterns may be stored in a
+    variable just like a string or numeric value.  The statement
+<PRE>
+    ?       COLOR = 'GOLD' | 'BLUE'
+</PRE>
+    will create a &quot;structure&quot; describing the pattern, and store it in
+    the variable COLOR.  COLOR now has the &quot;pattern&quot; data type.  The
+    preceding example can now be written as:
+<PRE>
+    ?       CRITTER = 'FISH' | 'BIRD'
+    ?       BOTH = COLOR CRITTER
+    ?       B BOTH
+    Success
+</PRE>
+
+<H3><A NAME="4.7">
+                       4.7 CAPTURING MATCH RESULTS
+</A></H3>
+<P>
+      If the pattern match
+<PRE>
+    B BOTH
+</PRE>
+    succeeds, we may want to know which of the many pattern alternatives
+    were used in the match.  The binary operator &quot;conditional
+    assignment&quot; assigns the matching subject substring to a variable.
+    The operator is called conditional, because assignment occurs
+    ONLY if the entire pattern match is successful.  Its graphic
+    symbol is a period (.).  It assigns the matching substring on its
+    left to the variable on its right.  Note that the direction of
+    assignment is just the opposite of the statement assignment operator
+    (=).  Continuing with the previous example, we'll redefine
+    COLOR and CRITTER to use conditional assignment:
+<PRE>
+    ?       COLOR = ('GOLD' | 'BLUE') . SHADE
+    ?       CRITTER = ('FISH' | 'BIRD') . ANIMAL
+    ?       BOTH = COLOR CRITTER
+    ?       B BOTH
+    Success
+    ?       OUTPUT = SHADE
+    BLUE
+    ?       OUTPUT = ANIMAL
+    BIRD
+</PRE>
+      The substrings that match the subpatterns COLOR and CRITTER are
+    assigned to SHADE and ANIMAL respectively.  The statement
+<PRE>
+    BOTH = COLOR CRITTER
+</PRE>
+    had to be reexecuted because its previous execution captured the
+    old values of COLOR and CRITTER, without the conditional assignment
+    operators.  The redefinition of COLOR and CRITTER was not
+    reflected in BOTH until the statement was reexecuted.
+<P>
+      Conditional assignment may appear at any level of pattern nesting,
+    and may include other conditional assignments within its
+    embrace.  The pattern
+<PRE>
+    (('B' | 'F' | 'N') . FIRST 'EA' ('R' | 'T') . LAST) . WORD
+</PRE>
+    matches 'BEAR', 'FEAR', 'NEAR', 'BEAT', 'FEAT', or 'NEAT',
+    assigning the first letter matched to FIRST, the last letter to
+    LAST, and the entire result to WORD.
+<P>
+      The variable OUTPUT may be used as the target of conditional
+    assignment.  Try:
+<PRE>
+    ?       'B2' ('A' | 'B') . OUTPUT (1 | 2 | 3) . OUTPUT
+    B
+    2
+    Success
+</PRE>
+
+<H3><A NAME="4.8">
+                              4.8 UNKNOWNS
+</A></H3>
+<P>
+      All of the previous examples used patterns created from literal
+    strings.  We may also want to specify the &quot;qualities&quot; of a match
+    component, rather than its specific characters.  Using unknowns
+    greatly increases the power of pattern matching.  There are two
+    types, primitive patterns and pattern functions.
+<H3><A NAME="4.8.1">
+    4.8.1 Primitive Patterns
+</A></H3>
+<P>
+      There are seven primitive patterns built into the SNOBOL4
+    system.  The two used most frequently will be discussed here.
+    <A HREF="ch7.htm">Chapter 7</A>, &quot;Advanced Topics,&quot; introduces the remaining five.
+<UL>
+    <LI><B>REM</B>&#160;&#160;&#160;&#160;Match remainder of subject
+<P>
+      REM is short for the REMainder pattern.  It will match zero or
+    more characters at the end of the subject string.  Try the
+    following:
+<PRE>
+    ?       'THE WINTER WINDS' 'WIN' REM . OUTPUT
+    TER WINDS
+    Success
+</PRE>
+      The subpattern 'WIN' matched its first occurrence in the subject,
+    at the beginning of the word 'WINTER'.  REM matched from
+    there to the end of the subject string -- the characters 'TER
+    WINDS' -- and assigned them to the variable OUTPUT.  If we change
+    the pattern slightly, to:
+<PRE>
+    ?       'THE WINTER WINDS' 'WINDS' REM . OUTPUT
+    Success
+</PRE>
+    then 'WINDS' matches at the end of the subject string, leaving a
+    null remainder for REM.  REM matches this null string, assigns it
+    to OUTPUT, and a blank line is displayed.
+<P>
+      The pattern components to the left of REM must successfully
+    match some portion of the subject string.  REM begins where they
+    left off, matching all subject characters through the end of
+    string.  There are no restrictions on the particular characters
+    matched.
+<P>
+    <LI><B>ARB</B>&#160;&#160;&#160;&#160;Match arbitrary characters
+<P>
+      ARB matches an ARBitrary number of characters from the subject
+    string.  It matches the shortest possible substring, including
+    the null string.  The pattern components on either side of ARB
+    determine what is matched.  Try the statements
+<PRE>
+    ?       'MOUNTAIN' 'O' ARB . OUTPUT 'A'
+    UNT
+    Success
+    ?       'MOUNTAIN' 'O' ARB . OUTPUT 'U'
+    Success
+</PRE>
+      In the first statement, the ARB pattern is constrained on
+    either side by the known patterns 'O' and 'A'.  ARB expands to
+    match the subject characters between, 'UNT'.  In the second
+    statement, there is nothing between 'O' and 'U', so ARB matches
+    the null string.  ARB behaves like a spring, expanding as needed
+    to fill the gap defined by neighboring patterns.
+</UL><P>
+
+<H3><A NAME="4.8.2">
+    4.8.2 Cursor Position
+</A></H3>
+<P>
+      During a pattern match, the &quot;cursor&quot; is SNOBOL4's pointer into
+    the subject string.  It is integer valued, and points &quot;between&quot;
+    two subject characters.  The cursor is set to zero when a pattern
+    match begins, corresponding to a position immediately to the left
+    of the first subject character.  As the pattern match proceeds,
+    the cursor moves right and left across the subject to indicate
+    where SNOBOL4 is attempting a match.  The value of the cursor
+    will be used by some of the pattern functions that follow.
+<P>
+      The &quot;cursor position&quot; operator assigns the current cursor value
+    to a variable.  It is a unary operator whose graphic symbol is
+    the &quot;at sign&quot; (@).  It appears within a pattern, preceding the
+    name of a variable.  By using OUTPUT as the variable, we can
+    display the cursor position on the screen.  For instance:
+<PRE>
+    ?       'VALLEY' 'A' @OUTPUT ARB 'E' @OUTPUT
+    2
+    5
+    Success
+    ?       'DOUBT' @OUTPUT 'B'
+    0
+    1
+    2
+    3
+    Success
+    ?       'FIX' @OUTPUT 'B'
+    0
+    1
+    2
+    Failure
+</PRE>
+      Cursor assignment is performed whenever the pattern match
+    encounters the operator, including retries.  It occurs even if
+    the pattern ultimately fails.  The element @OUTPUT behaves like
+    the null string -- it doesn't consume subject characters or interfere
+    with the match in any way.
+<H3><A NAME="4.8.3">
+    4.8.3 Integer Pattern Functions
+</A></H3>
+<P>
+      These functions return a pattern based on their integer argument.
+     The pattern produced can be used directly in a pattern
+    match statement, or stored in a variable for later retrieval.
+<UL>
+    <LI><B>LEN(integer)</B>&#160;&#160;&#160;&#160;Match fixed-length string
+<P>
+      LEN(I) produces a pattern which matches a string exactly I
+    characters long.  I must be an integer greater than or equal to
+    zero.  Any characters may appear in the matched string.  For
+    example, LEN(5) matches any 5-character string, and LEN(0)
+    matches the null string.  LEN may be constrained to certain portions
+    of the subject by other adjacent patterns:
+<PRE>
+    ?       S = 'ABCDA'
+    ?       S LEN(3) . OUTPUT
+    ABC
+    ?       S LEN(2) . OUTPUT 'A'
+    CD
+</PRE>
+      The first pattern match had only one constraint -- the subject
+    had to be at least three characters long -- so LEN(3) matched its
+    first three characters.  The second case imposes the additional
+    restriction that LEN(2)'s match be followed immediately by the
+    letter 'A'.  This disqualifies the intermediate match attempts
+    'AB' and 'BC'.
+<P>
+      Using keyword &amp;ALPHABET as the subject provides a simple way to
+    convert a decimal character code between 0 and 255 to its one
+    character equivalent.  For example, by consulting an ASCII character
+    code chart we find that the BEL character is decimal 7.  We
+    can load that character into variable BEEP with one statement:
+<PRE>
+    ?       &amp;ALPHABET LEN(7) LEN(1) . BEEP
+</PRE>
+    and produce five beeps on the speaker with:
+<PRE>
+    ?       OUTPUT = DUPL(BEEP,5)
+</PRE>
+      &amp;ALPHABET contains all 256 members of the computer's character
+    set, in ascending order.  LEN(7) matches the first seven characters
+    (codes 0 - 6), leaving BEL as the next match position for
+    LEN(1).  This operation is analogous to the CHR$ function in
+    BASIC.
+<P>
+      The inverse operation, obtaining the numerical value of a character
+    code, is also possible.  If variable CHAR contains a one
+    character string, variable N will be set to its decimal equivalent
+    with the second statement below:
+<P>
+         ?       CHAR = 'A'
+         ?       &amp;ALPHABET @N CHAR
+         ?       OUTPUT = N
+         65
+<P>
+      In <A HREF="ch6.htm">Chapter 6</A>, &quot;Program Defined Objects,&quot; I'll demonstrate how
+    you can define your own functions to encapsulate each of these
+    operations.
+<P>
+    <LI><B>POS(integer)</B>, <B>RPOS(integer)</B>&#160;&#160;&#160;&#160;Verify cursor position
+<P>
+      The POS(I) and RPOS(I) patterns do not match subject characters.
+     Instead, they succeed only if the &quot;current&quot; cursor position
+    is a specified value.  They often are used to tie points of
+    the pattern to specific character positions in the subject.
+<P>
+      POS(I) counts from the left end of the subject string, succeeding
+    if the current cursor position is equal to I.  RPOS(I) is
+    similar, but counts from the right end of the subject.  If the
+    subject length is N characters, RPOS(I) requires the cursor be
+    (N - I).  If the cursor is not the correct value, these functions
+    fail, and SNOBOL4 tries other pattern alternatives, perhaps
+    extending a previous substring matched by ARB, or beginning the
+    match further along in the subject.
+<P>
+      Continuing with CODE.SNO:
+<PRE>
+    ?       S = 'ABCDA'
+    ?       S POS(0) 'B'
+    Failure
+    ?       S LEN(3) . OUTPUT RPOS(0)
+    CDA
+    ?       S POS(3) LEN(1) . OUTPUT
+    D
+    ?       S POS(0) 'ABCD' RPOS(0)
+    Failure
+</PRE>
+      The first example requires a 'B' at cursor position 0, and
+    fails for this subject.  POS(0) &quot;anchors&quot; the match, forcing it
+    to begin with the first subject character.  Similarly, RPOS(0)
+    anchors the end of the pattern to the tail of the subject.  The
+    next example matches at a specific mid-string character position,
+    POS(3).  Finally, enclosing a pattern between POS(0) and RPOS(0)
+    forces the match to use the ENTIRE subject string.
+<P>
+      At first glance these functions appear to be &quot;setting&quot; the
+    cursor to a specified value.  Actually, they never alter the
+    cursor, but instead wait for the cursor to &quot;come to them&quot; as
+    various match alternatives are attempted.  This, in turn, allows
+    other patterns in the statement to be processed in an orderly
+    fashion.  You can demonstrate this &quot;waiting for the cursor&quot;
+    behavior like this:
+<PRE>
+    ?       S @OUTPUT POS(3)
+    0
+    1
+    2
+    3
+    Success
+</PRE>
+<P>
+    <LI><B>TAB(integer)</B>, <B>RTAB(integer)</B>&#160;&#160;&#160;&#160;Match to fixed position
+<P>
+      These patterns are hybrids of ARB, POS(), and RPOS().  They use
+    specific cursor positions, like POS and RPOS, but bind (match)
+    subject characters, like ARB.  TAB(I) matches any characters from
+    the current cursor position up to the specified position I.
+    RTAB(I) does the same, except, as in RPOS(), the target position
+    is measured from the end of the subject.
+<P>
+      TAB and RTAB will match the null string, but will fail if the
+    current cursor is to the right of the target.  They also fail if
+    the target position is past the end of the subject string.
+<P>
+      These patterns are useful when working with tabular data.  For
+    example, if a data file contains name, street address, city and
+    state in columns 1, 30, 60, and 75, this pattern will break out
+    those elements from a line:
+<PRE>
+    P = TAB(29) . NAME TAB(59) . STREET TAB(74) . CITY REM . STATE
+</PRE>
+      The pattern RTAB(0) is equivalent to primitive pattern REM.
+    One potential source of confusion is just what it is that RTAB
+    matches.  It counts from the right end of the subject, but
+    matches to the left of its target cursor.  Try:
+<PRE>
+    ?       'ABCDE' TAB(2) . OUTPUT RTAB(1) . OUTPUT
+    AB
+    CD
+    Success
+</PRE>
+      TAB(2) matches 'AB', leaving the cursor at 2, between 'B' and
+    'C'.  The subject is 5 characters long, so RTAB(1) specifies a
+    target cursor of 5 - 1, or 4, which is between the 'D' and 'E'.
+    RTAB matches everything from the current cursor, 2, to the
+    target, 4.
+</UL><P>
+
+<H3><A NAME="4.8.4">
+    4.8.4 Character Pattern Functions
+</A></H3>
+<P>
+      These functions produce a pattern based on a string-valued
+    argument.  Once again, the pattern may be used directly or stored
+    in a variable.
+<UL>
+    <LI><B>ANY(string)</B>, <B>NOTANY(string)</B>&#160;&#160;&#160;&#160;Match one character
+<P>
+      Each function produces a pattern which matches one character
+    based upon the subject string.  ANY(S) matches the next subject
+    character IF it appears in the string S, and fails otherwise.
+    NOTANY(S) matches a subject character only if it does NOT appear
+    in S.  Here are some sample uses of each:
+<PRE>
+    ?       VOWEL = ANY('AEIOU')
+    ?       DVOWEL = VOWEL VOWEL
+    ?       NOTVOWEL = NOTANY('AEIOU')
+    ?       'VACUUM' VOWEL . OUTPUT
+    A
+    ?       'VACUUM' DVOWEL . OUTPUT
+    UU
+    ?       'VACUUM' (VOWEL NOTVOWEL) . OUTPUT
+    AC
+</PRE>
+      The argument string specifies a set of characters to be used in
+    creating the ANY or NOTANY pattern.  It may contain duplicate
+    characters, and the order of characters in S is immaterial.
+<P>
+    <LI><B>SPAN(string)</B>, <B>BREAK(string)</B>&#160;&#160;&#160;&#160;Match a run of characters
+<P>
+      These are multicharacter versions of ANY and NOTANY.  Each
+    requires a nonnull argument to specify a set of characters.
+<P>
+      SPAN(S) matches one or more subject characters from the set in
+    S.  SPAN must match at least one subject character, and will
+    match the LONGEST subject string possible.
+<P>
+      BREAK(S) matches &quot;up to but not including&quot; any character in S.
+    The string matched must always be followed in the subject by a
+    character in S.  Unlike SPAN and NOTANY, BREAK will match the
+    null string.
+<P>
+      These two functions are called &quot;stream&quot; functions because each
+    streams by a series of subject characters.  SPAN is most useful
+    for matching a group of characters with a common trait.  For
+    example, we can say an English word is composed of one or more
+    alphabetic characters, apostrophe, and hyphen.  The statements
+<PRE>
+    ?       LETTERS = &quot;ABCDEFGHIJKLMNOPQRSTUVWXYZ'-&quot;
+    ?       WORD = SPAN(LETTERS)
+</PRE>
+    produce a suitable pattern in WORD.  To match the material
+    between words (white space, punctuation, etc.), use the pattern:
+<PRE>
+    ?       GAP = BREAK(LETTERS)
+</PRE>
+      SPAN and BREAK are two of the most useful SNOBOL4 functions.
+    Try some examples using CODE.SNO:
+<PRE>
+    ?       'SAMPLE LINE' WORD . OUTPUT
+    SAMPLE
+    ?       'PLUS TEN DEGREES' ' ' WORD . OUTPUT
+    TEN
+    ?       GAPO = GAP . OUTPUT
+    ?       WORDO = WORD . OUTPUT
+    ?       ': ONE, TWO, THREE' GAPO WORDO GAPO WORDO
+    :
+    ONE
+    ,
+    TWO
+            DIGITS = '0123456789'
+    ?       INTEGER = (ANY('+-') | '') SPAN(DIGITS)
+    ?       'SET -43 VOLTS' INTEGER . OUTPUT
+    -43
+    ?       REAL = INTEGER '.' (SPAN(DIGITS) | '')
+    ?       'SET -43.625 VOLTS' REAL . OUTPUT
+    -43.625
+    ?       S = '0ZERO,1ONE,2TWO,3THREE,4FOUR,5FIVE,'
+    ?       S 4 BREAK(',') . OUTPUT
+    FOUR
+</PRE>
+      If you require a version of SPAN which WILL match the null
+    string, or a BREAK which will NOT match the null string, you can
+    use the following constructions:
+<PRE>
+    (SPAN(S) | '')
+    (NOTANY(S) BREAK(S))
+</PRE>
+</UL><P>
+      We need to introduce one more fundamental concept -- replacement -- before
+    we can write some meaningful programs.
+<H3><A NAME="4.9">
+                  4.9 PATTERN MATCHING WITH REPLACEMENT
+</A></H3>
+<P>
+      Pattern matching identifies a subject substring with a particular
+    trait, specified by the pattern.  We used conditional assignment
+    to copy that substring to a variable.  Replacement moves in
+    the other direction, letting you alter the substring in the subject.
+     The space occupied by the matching substring may be enlarged
+    or contracted (or removed entirely), leaving adjacent subject
+    characters undisturbed.  If the pattern matched the entire
+    subject, replacement behaves like a simple assignment statement.
+<P>
+      Replacement appears in a form similar to assignment:
+<PRE>
+    SUBJECT PATTERN = REPLACEMENT
+</PRE>
+      First, the pattern match is attempted on the subject.  If it
+    fails, execution of the statement ends immediately, and replacement
+    does not occur.  If the match succeeds, any conditional
+    assignments within the pattern are performed.  The replacement
+    field is then evaluated, converted to a string, and inserted in
+    the subject in place of the matching substring.  If the replacement
+    field is empty, the null string replaces the matched substring,
+    effectively deleting it.  Try a few examples with
+    CODE.SNO:
+<PRE>
+    ?       T = 'MUCH ADO ABOUT NOTHING'
+    ?       T 'ADO' = 'FUSS'
+    Success
+    ?       OUTPUT = T
+    MUCH FUSS ABOUT NOTHING
+    ?       T 'NOTHING' =
+    Success
+    ?       OUTPUT = T
+    MUCH FUSS ABOUT
+    ?       'MASH' 'M' = 'B'
+    Execution error #8, Variable not present where required
+    Failure
+</PRE>
+      The first replacement searches for 'ADO' in the subject string,
+    replacing it with 'FUSS'.  The second replacement has a null
+    string replacement value, and deletes the matching substring.
+    The last example demonstrates that a variable must be the subject
+    of replacement.  Variables can be changed; string literals -- like
+    'MASH' -- cannot.
+<P>
+      The following will replace the 'M' in 'MASH' with a 'B':
+<PRE>
+    ?       VERB = 'MASH'
+    ?       VERB 'M' = 'B'
+    ?       OUTPUT = VERB
+    BASH
+</PRE>
+      If the matched substring appears more than once in the subject,
+    only the first occurrence is changed.  The remaining substrings
+    must be found with a program loop.  For example, a statement to
+    eliminate all occurrences of the letter 'A' from the subject
+    looks like this:
+<PRE>
+    ALOOP   SUBJECT 'A' =                   :S(ALOOP)
+</PRE>
+      Here ALOOP is the statement label, SUBJECT is some variable
+    containing the subject string, 'A' is the pattern, and the
+    replacement field is empty.  If an 'A' is found, it is deleted by
+    replacing it with the null string, and the statement succeeds.
+    The success GOTO branches back to ALOOP, and another search for
+    'A' is performed.  The loop continues until no 'A's remain in the
+    subject, and the pattern match fails.  Of course, the pattern and
+    replacement can be as complex as desired.
+<P>
+      Simple loops like this can be tried in CODE.SNO by appending a
+    semicolon after the GOTO field.  (Semicolon is used with GOTO in
+    CODE.SNO only; you would not use it in normal programs.)  Continuing
+    with the previous example:
+<PRE>
+    ?       VOWEL = ANY('AEIOU')
+    ?VL     T VOWEL = '*'                   :S(VL);
+    ?       OUTPUT = T
+    M*CH F*SS *B**T
+</PRE>
+      Since conditional assignment is performed before replacement,
+    its results are available for use in the replacement field of the
+    same statement.  Here's an example of removing the first item
+    from a list, and placing it on the end:
+<PRE>
+    ?       RB = 'RED,ORANGE,YELLOW,GREEN,BLUE,INDIGO,VIOLET,'
+    ?       CYCLE = BREAK(',') . ITEM LEN(1) REM . REST
+    ?       RB CYCLE = REST ITEM ','
+    Success
+    ?       OUTPUT = ITEM
+    RED
+    ?       OUTPUT = RB
+    ORANGE,YELLOW,GREEN,BLUE,INDIGO,VIOLET,RED,
+</PRE>
+      Pattern CYCLE matches the entire subject, placing the first
+    color into ITEM, bypassing the comma with LEN(1), and placing the
+    remainder of the subject into REST.  REST and ITEM are then
+    transposed in the replacement field, and stored back into RB.
+<H3><A NAME="4.10">
+                          4.10 SAMPLE PROGRAMS
+</A></H3>
+<P>
+      I've introduced a lot of concepts in this chapter; it's time to
+    see how they fit together into programs.  They're supplied on the
+    Vanilla SNOBOL4 diskette.
+<H3><A NAME="4.10.1">
+    4.10.1 Word Counting
+</A></H3>
+<P>
+      The first program counts the number of words in the input file.
+    Lines with an asterisk in the first column are comment lines -- 
+    their contents are ignored by SNOBOL4.
+<PRE>
+    *   Simple word counting program, WORDS.SNO.
+    *
+    *   A word is defined to be a contiguous run of letters,
+    *   digits, apostrophe and hyphen.  This definition of
+    *   legal letters in a word can be altered for specialized
+    *   text.
+    *
+    *   If the file to be counted is TEXT.IN, run this program
+    *   by typing:
+    *       B&gt;SNOBOL4 WORDS /I=TEXT
+    *
+            &amp;TRIM  =  1
+            WORD   =  &quot;'-&quot;  '0123456789' &amp;UCASE &amp;LCASE
+            WPAT   =  BREAK(WORD) SPAN(WORD)
+
+    NEXTL   LINE   =  INPUT                      :F(DONE)
+    NEXTW   LINE WPAT =                          :F(NEXTL)
+            N      =  N + 1                      :(NEXTW)
+
+    DONE    OUTPUT =  +N ' words'
+    END
+</PRE>
+      After defining the acceptable characters in a word, the real
+    work of the program is performed in the three lines beginning
+    with label NEXTL.  A line is read from the input file, and stored
+    in variable LINE.  The next statement attempts to find the next
+    word with pattern WPAT.  BREAK streams by any blanks and punctuation,
+    stopping just short of the word, which SPAN then matches.
+    Both the word and any preceding punctuation are removed from LINE
+    by replacement with the null string.
+<P>
+      When no more words remain in LINE, the failure transfer to
+    NEXTL reads the next line.  If the match succeeds, N is incremented,
+    and the program goes back to NEXTW to search for another
+    word.  When the End-of-File is encountered, control transfers to
+    DONE and the number of words is displayed.
+<P>
+      It's simple to alter pattern WPAT to search for other things.
+    For instance, if we wanted to count occurrences of double vowels,
+    we could use:
+<PRE>
+    WPAT = ANY('AEIOUaeiou') ANY('AEIOUaeiou')
+</PRE>
+      To count the occurrences of integers with an optional sign
+    character, use:
+<PRE>
+    WPAT = (ANY('+-') | '') SPAN('0123456789')
+</PRE>
+      Perhaps we want to count violations of simple punctuation
+    rules: period with only one blank, or comma and semicolon followed
+    by more than one blank:
+<PRE>
+    WPAT = '. ' NOTANY(' ') | ANY(',;') ' ' SPAN(' ')
+</PRE>
+      Notice how closely WPAT parallels the English language description
+    of the problem.
+<H3><A NAME="4.10.2">
+    4.10.2 Word Crossing
+</A></H3>
+<P>
+      This program asks for two words, and displays all intersecting
+    letters between them.  For example, given the words LOOM and
+    HOME, the program output is:
+<PRE>
+     H
+    LOOM
+     M
+     E
+
+      H
+    LOOM
+      M
+      E
+
+       H
+       O
+    LOOM
+       E
+</PRE>
+      A pattern match like this would find the first intersecting
+    character:
+<PRE>
+    HORIZONTAL ANY(VERTICAL) . CHAR
+</PRE>
+      However, we want to find all intersections, so will have to
+    iterate our search.  In conventional programming languages, we
+    might use numerical indices to remember which combinations were
+    tried.  Here, we'll use place-holding characters like '*' and '#'
+    to remove solutions from future consideration.  As seems to be
+    the case with SNOBOL4, there are more comments than program
+    statements:
+<PRE>
+    * CROSS.SNO - Print all intersections between two words
+
+            &amp;TRIM = 1
+
+    *  Get words from user
+    *
+    AGAIN   OUTPUT = 'ENTER HORIZONTAL WORD:'
+            H      = INPUT                       :F(END)
+
+            OUTPUT = 'ENTER VERTICAL WORD:'
+            V      = INPUT                       :F(END)
+
+    *       Make copy of horizontal word to track position.
+            HC     = H
+
+    *  Find next intersection in horizontal word.  Save
+    *  the number of preceding horizontal characters in NH.
+    *  Save the intersecting character in CROSS.
+    *  Replace with '*' to remove from further consideration.
+    *  Go to AGAIN to get new words if horizontal exhausted.
+    *
+    NEXTH   HC @NH ANY(V) . CROSS = '*'          :F(AGAIN)
+
+    *  For each horizontal hit, iterate over possible
+    *  vertical ones.  Make copy of vertical word to track
+    *  vertical position.
+    *
+            VC     = V
+
+    *  Find where the intersection was in the vertical word.
+    *  Save the number of preceding vertical characters in NV.
+    *  Replace with '#' to prevent finding it again in that
+    *  position.  When vertical exhausted, try horizontal again.
+    *
+    NEXTV   VC @NV CROSS = '#'                   :F(NEXTH)
+
+    *  Now display this particular intersection.
+    *  We make a copy of the original vertical word,
+    *  and mark the intersecting position with '#'.
+    *
+            OUTPUT =
+            PRINTV = V
+            PRINTV POS(NV) LEN(1) = '#'
+
+    *  Peel off the vertical characters one-by-one.  Each will
+    *  be displayed with NH leading blanks to get it in the
+    *  correct column.  When the '#' is found, display the full
+    *  horizontal word instead.
+    *  When done, go to NEXTV to try another vertical position.
+    *
+    PRINT   PRINTV LEN(1) . C =                   :F(NEXTV)
+            OUTPUT = DIFFER(C,'#') DUPL(' ',NH) C :S(PRINT)
+            OUTPUT = H                            :(PRINT)
+    END
+</PRE>
+
+<H3><A NAME="4.11">
+                  4.11 ANCHORED AND UNANCHORED MATCHING
+</A></H3>
+<P>
+      Most of the examples above match substrings which do not begin
+    at the first subject character.  This is the &quot;unanchored&quot; mode of
+    pattern matching.  Alternately, we can &quot;anchor&quot; the pattern match
+    by requiring it to include the first subject character.  Setting
+    keyword &amp;ANCHOR to a nonzero value produces anchored matching.
+    Anchored matching is usually faster than unanchored, because many
+    futile attempts to match are eliminated.
+<P>
+      Even when the desired item is not at the beginning of the subject,
+    it is often possible to simulate anchored matching by prefixing
+    the pattern with a subpattern which will stream out to the
+    desired object.  The stream function spans the gap from the first
+    subject character to the desired item.  Use CODE.SNO to experiment
+    with &amp;ANCHOR:
+<PRE>
+    ?       DIGITS = '0123456789'
+    ?       &amp;ANCHOR = 1
+    ?       'THE NEXT 43 DAYS' BREAK(DIGITS) SPAN(DIGITS) . N
+</PRE>
+      This will assign substring '43' to N, even in anchored mode.
+    In unanchored mode, the test lines:
+<PRE>
+    ?       &amp;ANCHOR = 0
+    ?       'THE NEXT 43 DAYS' SPAN(DIGITS) . N
+</PRE>
+    would ultimately succeed, but only after SPAN failed on each of
+    the characters preceding the '4'.  The efficiency difference is
+    more pronounced if the subject does not contain any digits.  In
+    the first formulation, BREAK(DIGITS) fails and the anchored match
+    then fails immediately.  The second construction fails only after
+    SPAN is tried at each subject character position.
+<P>
+      When your program first begins execution, SNOBOL4 sets keyword
+    &amp;ANCHOR to zero, the unanchored mode.  If you can construct all
+    your patterns as anchored patterns, you should set &amp;ANCHOR
+    nonzero for anchored matching.  Setting and resetting &amp;ANCHOR
+    throughout your program is error prone and not advised.  Another
+    alternative is to leave &amp;ANCHOR set to 0, but to 'pseudo-anchor'
+    patterns by using POS(0) as the first pattern element.
+<P>
+      It always takes less time for a pattern to succeed than to
+    fail.  Failure implies an exhaustive search of all combinations,
+    whereas success stops the pattern match early.  You should try to
+    construct patterns with direct routes to success, such as the use
+    of BREAK above.  Wherever possible, impose restrictions on the
+    number of alternatives to be tried.  Combinatorial explosion is
+    the price of loose pattern programming.
+
+<P><HR>
+<A HREF="ch3.htm"><IMG SRC="../prev.gif" ALT="Previous" ALIGN=TOP> Previous chapter</A>
+<B>&#183;</B> <A HREF="ch5.htm"><IMG SRC="../next.gif" ALT="Next" ALIGN=TOP> Next chapter</A>
+<B>&#183;</B> <A HREF="contents.htm"><IMG SRC="../toc.gif" ALT="Contents" ALIGN=TOP> Table of Contents</A>
+
+</BODY>
+</HTML>

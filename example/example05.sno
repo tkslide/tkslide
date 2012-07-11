@@ -1,0 +1,6 @@
+* sum all values of 'a' between 1 and 35
+*
+	a = 0
+loop	output = lt(a,35) output + (a = a + 1)	:s(loop)
+end
+

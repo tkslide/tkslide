@@ -1,0 +1,9 @@
+-include "tcp.sno"
+	tcp.open(.conn,'www.rosettacode.org','http')	:s(cont1)
+	terminal = "cannot open"	:(end)
+cont1	conn = "GET http://rosettacode.org/mw/index.php?title=Special:Categories&limit=500 HTTP/1.0" char(10) char(10)
+while	l = conn	:f(stop1)
+	terminal = l
+	l '<a' break(">") ">" break("<") . output rem	:(while)
+stop1	tcp.close(.conn)
+end

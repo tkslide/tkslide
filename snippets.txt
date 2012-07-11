@@ -1,0 +1,13 @@
+# SNOBOL4 snippet v. 0.1
+# Use left-right click for instant paste
+# (or the context menu)
+#
+# Read all lines
+
+while	output = trim(input)	:s(while)
+
+# replace all occurences of pattern with replacement"
+
+repl	line pattern = "replacement"	:s(repl)
+
+#

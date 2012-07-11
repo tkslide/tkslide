@@ -1,0 +1,494 @@
+<HTML>
+<HEAD><TITLE>A Snobol4 Tutorial: Chapter 7</TITLE>
+</HEAD>
+
+<BODY>
+<!-- From Part II of the Catspaw manual distributed with Vanilla Snobol.
+     HTML markup by John English (je@brighton.ac.uk).
+-->
+
+<A HREF="ch6.htm"><IMG SRC="../prev.gif" ALT="Previous" ALIGN=TOP> Previous chapter</A>
+<B>&#183;</B> <A HREF="ch8.htm"><IMG SRC="../next.gif" ALT="Next" ALIGN=TOP> Next chapter</A>
+<B>&#183;</B> <A HREF="contents.htm"><IMG SRC="../toc.gif" ALT="Contents" ALIGN=TOP> Table of Contents</A>
+<HR>
+
+<H2>Chapter 7 : ADVANCED TOPICS</H2>
+<P>
+      The material presented so far allows you to write powerful
+    SNOBOL4 programs.  In this chapter, we will examine other interesting
+    and useful features of the language.
+<H3><A NAME="7.1">
+                         7.1 THE ARBNO FUNCTION
+</A></H3>
+<P>
+      This function produces a pattern which will match zero or more
+    consecutive occurrences of the pattern specified by its argument.
+    As its name implies, ARBNO is useful when an arbitrary number of
+    instances of a pattern may occur.  For example, ARBNO(LEN(3))
+    matches strings of length 0, 3, 6, 9, ....  There is no restriction
+    on the complexity of the pattern argument.
+<P>
+      Like the ARB pattern, ARBNO is shy, and tries to match the
+    shortest possible string.  Initially, it simply matches the null
+    string.  If a subsequent pattern component fails to match,
+    SNOBOL4 backs up, and asks ARBNO to try again.  Each time ARBNO
+    is retried, it supplies another instance of its argument pattern.
+    In other words, ARBNO(PAT) behaves like
+<PRE>
+    ( '' |  PAT | PAT PAT | PAT PAT PAT | ... )
+</PRE>
+      Also like ARB, ARBNO is usually used with adjacent patterns to
+    &quot;draw it out.&quot;  Let's consider a simple example.  We want to
+    write a pattern to test for a list.  We'll define a list as being
+    one or more numbers separated by comma, and enclosed by parentheses.
+     Use CODE.SNO to try this definition:
+<PRE>
+    ?       ITEM = SPAN('0123456789')
+    ?       LIST = POS(0) '(' ITEM  ARBNO(',' ITEM) ')' RPOS(0)
+    ?       '(12,345,6)' LIST
+    Success
+    ?       '(12,,34)' LIST
+    Failure
+</PRE>
+      ARBNO is retried and extended until its subsequent, ')', finally
+    matches.  POS(0) and RPOS(0) force the pattern to be applied
+    to the entire subject string.
+<P>
+      Alternation may be used within ARBNO's argument.  This pattern
+    matches any number of pairs of certain letters:
+<PRE>
+    ?       PAIRS = POS(0) ARBNO('AA' | 'BB' | 'CC') RPOS(0)
+    ?       'CCBBAAAACC' PAIRS
+    Success
+    ?       'AABBB' PAIRS
+    Failure
+</PRE>
+
+<H3><A NAME="7.2">
+                         7.2 RECURSIVE PATTERNS
+</A></H3>
+<P>
+      This is the pattern analogue of a recursive function -- a pattern
+    is defined in terms of itself.  The unevaluated expression
+    operator makes the definition possible.
+<P>
+      Suppose we wanted to expand the previous definition of a list
+    to say that a list item may be a span of digits, or another list.
+    The definition proceeds as before, except that the unevaluated
+    expression operator is used in the first statement; the concept
+    of a list has not yet been defined:
+<PRE>
+    ?       ITEM = SPAN('0123456789') | *LIST
+    ?       LIST = '(' ITEM  ARBNO(',' ITEM) ')'
+    ?       TEST = POS(0) LIST RPOS(0)
+    ?       '(12,(3,45,(6)),78)' TEST
+    Success
+    ?       '(12,(34)' TEST
+    Failure
+</PRE>
+      Recursion occurs because LIST is defined in terms of ITEM,
+    which is defined in terms of LIST, and so on.  Note that functions
+    POS(0) and RPOS(0) were &quot;moved out one level,&quot; to TEST, because
+    LIST must now match substrings within the subject.
+<P>
+      In our previous discussion of recursive functions, we said they
+    work because successive calls present the function with progressively
+    simpler problems, until the problem can be solved without
+    further recursion.  Similarly, patterns ITEM and LIST are applied
+    to successively smaller substrings, until ITEM can use its SPAN()
+    alternative instead of invoking LIST again.
+<P>
+      In general, you will need an alternative somewhere in the recursive
+    loop to allow the pattern matcher &quot;a way out.&quot;  Also, you
+    should place recursive objects last in a series of alternatives,
+    so that the simpler, nonrecursive patterns are attempted first
+    and &quot;recursive plunges&quot; can be avoided.
+<P>
+      SNOBOL4 saves information on a &quot;pattern stack&quot; during the pattern
+    match process.  Heavily recursive patterns and long subject
+    strings can sometimes result in stack overflow.  If this occurs,
+    you should break the problem apart into several smaller pattern
+    matches.
+<P>
+      As recursive patterns use the unevaluated expression operator,
+    it is sometimes necessary to disable SNOBOL4's heuristics by
+    setting &amp;FULLSCAN = 1.
+<H3><A NAME="7.3">
+                       7.3 QUICKSCAN AND FULLSCAN
+</A></H3>
+<P>
+      Pattern matching can be very time-consuming because of the number
+    of possibilities which must be attempted.  In the normal
+    &quot;quickscan&quot; mode, SNOBOL4 stops searching for a match when it
+<P>
+    thinks further efforts would be futile.  The heuristics are complex,
+    but can be summarized as follows: pattern matching fails
+    when there are insufficient subject characters to satisfy the remaining
+    pattern components.
+<P>
+      The cursor operator can be used to demonstrate at what point
+    SNOBOL4 gives up.  For example, in the pattern match
+<PRE>
+    ?       'ABCD' @OUTPUT 'X' LEN(3)
+    0
+    Failure
+</PRE>
+      SNOBOL4 does not attempt to match 'X' against 'B' because fewer
+    than 3 subject characters remain after it, and LEN(3) could never
+    succeed.
+<P>
+      A second type of heuristic is the &quot;one character assumption&quot;
+    for unevaluated expressions.  SNOBOL4 assumes that unevaluated
+    expressions will match at least one character.  This heuristic
+    was originally provided to break recursive loops, but can cause
+    programming problems when an unevaluated expression must match
+    the null string.  Consider a pattern which succeeds if 'B' is at
+    least 4 character positions beyond an 'A' in the subject:
+<PRE>
+    ?       P = 'A' ARB $ X 'B' *GE(SIZE(X), 4)
+    ?       'A12345BC' P
+    Success
+    ?       'A12345B' P
+    Failure
+</PRE>
+      The characters between 'A' and 'B' are matched by ARB, and immediately
+    assigned to X.  The size of X is then compared to 4 by
+    the GE function, which succeeds and returns the null string.
+    This null string result should not interfere with the pattern
+    match, but we find the pattern misbehaves when 'B' is the last
+    character of the subject.  The unevaluated expression operator
+    made SNOBOL4 assume a one character length for the GE function,
+    and matching 'B' against the last subject character was never attempted.
+<P>
+               For most pattern matching, heuristics are invisible.  However,
+    there are circumstances when we would like SNOBOL4 to be exhaustive
+    in its match attempts.  We can disable heuristics and enter
+    &quot;fullscan&quot; mode by setting keyword &amp;FULLSCAN nonzero:
+<PRE>
+    ?       &amp;FULLSCAN = 1
+    ?       'A12345B' P
+    Success
+    ?       'ABCD' @OUTPUT 'X' LEN(3)
+    0
+    1
+    2
+    3
+    4
+    Failure
+</PRE>
+      The quickscan mode can be reinstated by setting &amp;FULLSCAN = 0.
+<H3><A NAME="7.4">
+                      7.4 OTHER PRIMITIVE PATTERNS
+</A></H3>
+<P>
+      We can accomplish quite a lot with just the primitive patterns
+    ARB and REM.  However, there are five additional patterns which
+    you should be aware of:
+<UL>
+    <LI><B>ABORT</B>&#160;&#160;&#160;&#160;End pattern match
+<P>
+      The ABORT pattern causes immediate failure of the entire pattern
+    match, without seeking other alternatives.  Usually a match
+    succeeds when we find a subject sequence which satisfies the pattern.
+     The ABORT pattern does the opposite: if we find a certain
+    pattern, we will abort the match and fail immediately.  For example,
+    suppose we are looking for an 'A' or 'B', but want to fail
+    if '1' is encountered first:
+<PRE>
+    ?       '--AB-1-' (ANY('AB') | '1' ABORT)
+    Success
+    ?       '--1B-A-' (ANY('AB') | '1' ABORT)
+    Failure
+</PRE>
+      The last example may be confusing because the ANY function appears
+    as the first alternative, fostering the illusion that it
+    will find the 'B' in the subject before the other pattern alternative
+    is tried.  However, that is not the order of pattern
+    matching; ALL pattern alternatives are tried at cursor position
+    zero in the subject.  If none succeed, the cursor is advanced by
+    one, and all alternatives are tried again.  When the cursor is in
+    front of subject character '1', ANY still does not match, but the
+    second alternative now does.  As the '1's match, ABORT is
+    reached, causing failure.
+<P>
+    <LI><B>BAL</B>&#160;&#160;&#160;&#160;Match balanced string
+<P>
+      The BAL pattern matches the shortest nonnull string in which
+    parentheses are balanced.  (A string without parentheses is also
+    considered to be balanced.)  These strings are balanced:
+<PRE>
+    (X)      Y      (A!(C:D))      (AB)+(CD)      9395
+</PRE>
+      These are not:
+<PRE>
+    )A+B     (A*(B+)      (X))
+</PRE>
+      BAL is concerned only with left and right parentheses.  The
+    matching string does not have to be a well-formed expression in
+    the algebraic sense; in fact, it needn't be an algebraic expression
+    at all.  Like ARB, BAL is most useful when constrained on
+    both sides by other pattern components.
+<P>
+    <LI><B>FAIL</B>&#160;&#160;&#160;&#160;Seek other alternatives
+<P>
+      The FAIL pattern signals failure of this portion of the pattern
+    match, causing the pattern matcher to backtrack and seek other
+    alternatives.  FAIL will also suppress a successful match, which
+    can be very useful when the match is being performed for its side
+    effects, such as immediate assignment.  For example, in unanchored
+    mode, this statement will display the subject characters,
+    one per line:
+<PRE>
+    SUBJECT LEN(1) $ OUTPUT FAIL
+</PRE>
+      LEN(1) matches the first subject character, and immediately assigns
+    it to OUTPUT.  FAIL tells the pattern matcher to try again,
+    and since there are no other alternatives, the entire match is
+    retried at the next subject character.  Forced failure and retries
+    continue until the subject is exhausted.
+<P>
+    <LI><B>FENCE</B>&#160;&#160;&#160;&#160;Prevent match retries
+<P>
+      Pattern FENCE matches the null string and has no effect when
+    the pattern matcher is moving left to right in a pattern.  However,
+    if the pattern matcher is backing up to try other alternatives,
+    and encounters FENCE, the match fails.
+<P>
+      FENCE can be used to &quot;lock in&quot; an earlier success.  Suppose we
+    want to succeed if the first 'A' or 'B' in the subject is followed
+    by a plus sign.  In the following example, the 'A's match,
+    we go through the FENCE, and find '+' does not match the next
+    subject character, 'B'.  SNOBOL4 tries to backtrack, but is
+    stopped by the FENCE and fails:
+<PRE>
+    ?       '1AB+' ANY('AB') FENCE '+'
+    Failure
+</PRE>
+      If FENCE were omitted, backtracking would match ANY to 'B', and
+    then proceed forward again to match '+'.
+<P>
+      If FENCE appears as the first component of a pattern, SNOBOL4
+    cannot back up through it to try another subject starting position.
+     This results in an anchored pattern, even if the &amp;ANCHOR
+    keyword specifies unanchored mode:
+<PRE>
+    ?       'ABC' FENCE 'B'
+    Failure
+</PRE>
+    <LI><B>SUCCEED</B>&#160;&#160;&#160;&#160;Match always
+<P>
+      This pattern matches the null string and always succeeds.  If
+    the scanner is backtracking when it encounters SUCCEED, it reverses
+    and starts forward again.  Placing a pattern between
+    SUCCEED and FAIL causes the pattern matcher to oscillate.
+</UL><P>
+
+<H3><A NAME="7.5">
+                           7.5 OTHER FUNCTIONS
+</A></H3>
+<P>
+      I'd like to briefly point out a few more built-in functions.
+    See <A HREF="../manual/ch8.htm">Chapter 8 of the Reference Manual</A> for a complete description of their use.
+<TABLE CELLPADDING=5>
+<TR VALIGN=TOP>
+    <TD><B>APPLY</B>            <TD>Allows an indirect call to a function through
+                     a variable.
+
+<TR VALIGN=TOP>
+    <TD><B>CONVERT</B>          <TD>Provides explicit conversion from one data
+                     type to another.  <A HREF="../manual/ch6.htm">Chapter 6 of the Reference Manual</A>, &quot;Data Types and
+                     Conversion,&quot; describes the conversions
+                     possible.
+
+<TR VALIGN=TOP>
+    <TD><B>ENDFILE</B>          <TD>Closes a file and detaches all variables
+                     associated with it.
+
+<TR VALIGN=TOP>
+    <TD><B>ITEM</B>             <TD>Allows an indirect reference to an array or
+                     table.
+
+<TR VALIGN=TOP>
+    <TD><B>LPAD</B> &amp; <B>RPAD</B>      <TD>These are padding functions, which will pad a
+                     string on its left or right side with blanks
+                     or a given character.  Padding is provided to
+                     a specified width, and is useful when producing
+                     columnar output.
+</TABLE>
+
+<H3><A NAME="7.6">
+                        7.6 OTHER UNARY OPERATORS
+</A></H3>
+<TABLE CELLPADDING=5>
+    <TR><TD><B>Operation:</B>     <TD>Negation
+    <TR><TD><B>Symbol:</B>        <TD>~ (tilde)
+</TABLE>
+<UL>
+      The negation operator, or tilde (~), inverts the success or
+    failure result of its operand.  If the expression X succeeds,
+    then ~X fails.  Conversely, if X fails, ~X succeeds and returns
+    the null string.
+</UL><P>
+<TABLE CELLPADDING=5>
+    <TR><TD><B>Operation:</B>     <TD>Interrogation
+    <TR><TD><B>Symbol</B>         <TD>? (question mark)
+</TABLE>
+<UL>
+      Unary question mark is called the interrogation operator, although
+    &quot;value annihilation&quot; might be more descriptive.  If X is
+    an expression which fails, ?X also fails.  However, if X succeeds,
+    ?X also succeeds, and returns the null string.  In other
+    words, any value component of X is replaced by the null string.
+</UL><P>
+
+<H3><A NAME="7.7">
+                        7.7 RUN-TIME COMPILATION
+</A></H3>
+<P>
+      The two functions described below are among the most esoteric
+    features, not just of SNOBOL4, but of all programming languages
+    in existence.  While your program is executing, the entire
+    SNOBOL4 compiler is just a function call away.
+<P>
+      A SNOBOL4 program is nothing more than a string of characters.
+    The functions EVAL and CODE let you supply the compiler with
+    character strings from within the program itself.
+<H3><A NAME="7.7.1">
+    7.7.1 The EVAL Function
+</A></H3>
+<P>
+      This function is used to evaluate an expression.  Its argument
+    may take a number of forms:
+<OL>
+      <LI>If the argument is an integer, or a number in string form,
+         the number is returned as the function result:
+<PRE>
+    ?       OUTPUT = EVAL(19)
+    19
+</PRE>
+<P>
+      <LI>If the argument is an unevaluated expression, it is evaluated
+    using current values for any variables it might contain.
+     EVAL returns the expression's value as its result:
+<PRE>
+    ?       E = *('N SQUARED IS ' N ** 2)
+    ?       N = 15
+    ?       OUTPUT = EVAL(E)
+    N SQUARED IS 225
+</PRE>
+         This is similar to our earlier use of unevaluated expressions
+    with patterns.  In this case, however, the unevaluated
+         expression operator (*) must be applied to the entire expression
+    to create an object with the EXPRESSION data type.
+<P>
+      <LI>If the argument is a string (other than a simple number),
+         EVAL tries to compile it as a SNOBOL4 expression.  Only an
+         expression is permitted -- not an entire SNOBOL4 statement:
+<PRE>
+    ?       OUTPUT = EVAL('3 * N + 2')
+    47
+</PRE>
+         If the string compiles without error, EVAL then evaluates
+         the expression and returns the result.
+</OL><P>
+      It is this last use of EVAL -- to compile a string -- which is
+    the most interesting.  Here is a trivial program which behaves
+    like a simple desk calculator.
+<PRE>
+    LOOP    OUTPUT = EVAL(INPUT)                 :S(LOOP)
+    END
+</PRE>
+      You can easily try it by placing a semicolon after the GOTO to
+    protect it from CODE.SNO's own machinations:
+<PRE>
+    ?LOOP   OUTPUT = EVAL(INPUT)                 :S(LOOP);
+    4 * (5 - 2) / 2
+    6
+    N + 1
+    16
+    ^Z
+</PRE>
+      The program reads a line of input, compiles and evaluates it,
+    and displays the result.  Each expression you enter must be wellformed
+    according to SNOBOL4's syntax rules.  In particular, this
+    means there must be blanks around the binary operators.
+<P>
+      The BNF program included with Vanilla SNOBOL4 demonstrates that
+    EVAL's power is useful even if the input data does not conform to
+    SNOBOL4 syntax.  It reads a definition of a grammar from a file,
+    and converts it to SNOBOL4 patterns.
+<P>
+      EVAL fails if evaluation of the argument fails, or if the argument
+    contains a syntax error.  The SNOBOL4 keyword &amp;ERRTEXT will
+    contain a string describing the error.
+<P>
+      The expressions used with EVAL may return any SNOBOL4 data
+    type, not just numbers.  For instance, the expression might construct
+    a new pattern, and return it as the result:
+<PRE>
+    ITEM = EVAL('SPAN(&quot;0123456789&quot;) | *LIST')
+</PRE>
+      Note that EVAL can only call the compiler with a string argument.
+     If we used a pattern as the argument, we would produce an
+    execution error:
+<PRE>
+    ITEM = EVAL(SPAN(&quot;0123456789&quot;) | *LIST)  (incorrect)
+</PRE>
+
+<H3><A NAME="7.7.2">
+    7.7.2 The CODE Function
+</A></H3>
+<P>
+      CODE accepts a string argument containing one or more statements
+    to be compiled.  Multiple statements are separated by
+    semicolons (;).  Statements may be labeled, and can include all
+    the usual components -- subject, pattern, replacement, and GOTO.
+    However, comment and continuation statements are not permitted.
+<P>
+      The CODE function compiles the statements, and returns a pointer
+    to the resulting object code.  It fails if any statement
+    contains an error, and places an error message in &amp;ERRTEXT.
+<P>
+      There are two ways to execute the new object code.
+<OL>
+      <LI>Transfer to a label which is defined in the new code:
+<PRE>
+    *  Compile a sample piece of code:
+            S = 'L OUTPUT = N; N = LT(N,10) N + 1  :S(L)F(DONE)'
+            CODE(S)
+    *  Transfer to a label in it:
+                                                   :(L)
+    *  Come here when the new code transfers back.
+    DONE     . . .
+</PRE>
+         Notice how we placed a GOTO from the new code back to label
+         DONE in the main program.  If we had not done this, SNOBOL4
+         would terminate when execution &quot;fell out of the bottom&quot; of
+         the new code block.
+<P>
+      <LI>The pointer returned by the CODE function can be used in a
+         &quot;direct GOTO&quot; to transfer to the first statement in the code
+         block.  A direct GOTO is performed by enclosing the pointer
+         in angular brackets in the GOTO field:
+<PRE>
+    *  Compile a sample piece of code:
+            S = 'L OUTPUT = N; N = LT(N,10) N + 1  :S(L)F(DONE)'
+            C = CODE(S)
+    *  Transfer to the first statement in the block:
+                                                   :&lt;C&gt;
+    DONE     . . .
+</PRE>
+</OL><P>
+      Labels contained in the new program fragment override any
+    labels of the same name in your main program.  This provides the
+    ability to write self-modifying SNOBOL4 programs, and makes the
+    division between &quot;code&quot; and &quot;data&quot; far less distinct than in
+    other high-level languages.
+
+<P><HR>
+<A HREF="ch6.htm"><IMG SRC="../prev.gif" ALT="Previous" ALIGN=TOP> Previous chapter</A>
+<B>&#183;</B> <A HREF="ch8.htm"><IMG SRC="../next.gif" ALT="Next" ALIGN=TOP> Next chapter</A>
+<B>&#183;</B> <A HREF="contents.htm"><IMG SRC="../toc.gif" ALT="Contents" ALIGN=TOP> Table of Contents</A>
+
+</BODY>
+</HTML>

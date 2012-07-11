@@ -1,0 +1,381 @@
+<HTML>
+<HEAD><TITLE>Snobol4 Reference Manual: Chapter 6</TITLE></HEAD>
+<BODY>
+<!-- From Part III of the Catspaw manual distributed with Vanilla Snobol.
+     HTML markup by John English (je@brighton.ac.uk).
+-->
+
+<A HREF="ch5.htm"><IMG SRC="../prev.gif" ALT="Previous" ALIGN=TOP> Previous chapter</A>
+<B>&#183;</B> <A HREF="ch7.htm"><IMG SRC="../next.gif" ALT="Next" ALIGN=TOP> Next chapter</A>
+<B>&#183;</B> <A HREF="contents.htm"><IMG SRC="../toc.gif" ALT="Contents" ALIGN=TOP> Table of Contents</A>
+<HR>
+
+<H2>Chapter 6 : DATA TYPES AND CONVERSION</H2>
+<P>
+            Most other programming languages require the user to explicitly
+          declare the type of data to be stored in a variable.  In SNOBOL4,
+          any variable may contain any data type.  Furthermore, the variable's
+          type may be freely altered during program execution.
+          SNOBOL4 remembers what kind of data is in each variable.
+<H3><A NAME="6.1">6.1 DATA TYPE NAMES</A></H3>
+            The formal name of a data type is specified by an upper-case
+          string (or lower-case if case-folding is in effect), such as
+          'INTEGER', or 'ARRAY'.  It is used with the CONVERT function to
+          specify the data type conversion desired.  The formal name is
+          also the string returned when the DATATYPE() function is used to
+          determine an object's type.
+<P>
+<UL>
+<LI><B>ARRAY</B>&#160;&#160;&#160;&#160;                           N-dimensional array
+<P>
+          The primitive function ARRAY() creates an array storage area, and
+          returns a pointer with this data type.  If this pointer is stored
+          in a variable, the variable is said to be of type ARRAY, and may
+          then be subscripted to access the elements of the array.
+<P>
+<LI><B>CODE</B>&#160;&#160;&#160;&#160;                            Compiled SNOBOL4 code
+<P>
+          The primitive function CODE() compiles a string containing
+          SNOBOL4 statements, and returns a pointer to the resulting object
+          code block.  If this pointer is stored in a variable, the variable
+          is said to be of type CODE.  The variable may then be used
+          with a direct GOTO by enclosing it in angle brackets.
+<P>
+<LI><B>EXPRESSION</B>&#160;&#160;&#160;&#160;                      Unevaluated expression
+<P>
+          When the unevaluated expression operator (*) is applied to an expression,
+          the result has the data type EXPRESSION.  Such expressions
+          are not evaluated when they are defined, only when they are
+          referenced.
+<PRE>
+    E = *(LEN(K) POS(M))
+</PRE>
+          defines E as an unevaluated expression.  When this statement is
+          executed, the code to concatenate two function calls is compiled,
+          but not executed.  It is only when E is referenced in a subsequent
+          pattern match or appears as the argument of the EVAL
+          function that the code is executed to produce a pattern.
+<P>
+            The unevaluated expression operator must be at the outermost
+          level to create an object of type EXPRESSION.  If buried with the
+          expression, the execution results may appear to be similar, but
+          the object's data type is different.  That is, the two statements
+<PRE>
+    P = *LEN(N)
+    P = LEN(*N)
+</PRE>
+          produce identical results when P is used in a pattern match (if
+          LEN is not redefined).  However, the first statement produces P
+          as type EXPRESSION, while the second produces P as type PATTERN.
+          Expressions may also be produced explicitly with the CONVERT()
+          function (see below).
+<P>
+<LI><B>EXTERNAL</B>&#160;&#160;&#160;&#160;                        Created by external function
+<P>
+          External assembly language functions may create new data types
+          whose structure is known only to them.  This feature is only
+          available in SNOBOL4+, Catspaw's enhanced implementation of the
+          SNOBOL4 language.
+<P>
+<LI><B>INTEGER</B>&#160;&#160;&#160;&#160;                         Integer number
+<P>
+          A decimal number in the range -32767 to +32767.  No fractional
+          part may appear.  One computer word (16 bits) is used to contain
+          an integer value.
+<P>
+<LI><B>NAME</B>&#160;&#160;&#160;&#160;                            Name of a variable
+<P>
+          When the unary name operator (.) is applied to a variable, two
+          results are possible.  If the variable's name is a simple string
+          (a &quot;natural variable&quot;), such as ABC, the variable's name is
+          returned as type STRING.  For example, .ABC has the value 'ABC'.
+          However, if the variable is a created variable, such as a table
+          or array element, the NAME data type results.  In either case,
+          the result of the name operator can be thought of as the
+          &quot;address&quot; or &quot;storage location&quot; of the variable.  When the indirect
+          reference operator ($) is applied to such a result, the
+          original, underlying object is obtained.  That is, $(.A) is the
+          same as using the variable A.
+<P>
+            For natural variables, SNOBOL4 has the surprising property that
+          the string 'XYZ' is the address (or name) of variable XYZ, so
+          $'XYZ' is equivalent to XYZ.
+<P>
+<LI><B>PATTERN</B>&#160;&#160;&#160;&#160;                         Pattern match structure
+<P>
+          A pattern is created by an expression containing any of the following:
+           other patterns, primitive patterns, pattern functions,
+          the alternation operator (|), the conditional or immediate assignment
+          operator (. or $), or the cursor position operator (@).
+          A simple string is not a pattern data type, even though it may
+          appear in the pattern portion of a statement.  The following are
+          examples of the pattern data type:
+<PRE>
+    POS(0) &quot;A&quot; LEN(1)
+    &quot;COLUMN A&quot; | &quot;COLUMN B&quot;
+    &quot;ZIP&quot; . X
+    &quot;MATCH&quot; @Y
+</PRE>
+<LI><B>Program-defined data type</B>&#160;&#160;&#160;&#160;        Created by DATA() function
+<P>
+          Up to 899 new data types may be created with the primitive function
+          DATA.  The name specified in the prototype string becomes a
+          new data type in SNOBOL4.  Any object created with the data
+          type's creation function is given this name as its data type.
+<PRE>
+    DATA('COMPLEX(REAL, IMAG)')      ;* Define new type COMPLEX
+    NUM = COMPLEX(2, -4)             ;* Create a COMPLEX object
+    OUTPUT = DATATYPE(NUM)           ;* Print string 'COMPLEX'
+</PRE>
+<LI><B>REAL</B>&#160;&#160;&#160;&#160;                            Real number
+<P>
+          A floating-point decimal number in the range 2.3E-308 to
+          1.7E+308.  Reals are only available in SNOBOL4+, Catspaw's
+          enhanced implementation of the SNOBOL4 language.
+<P>
+<LI><B>STRING</B>&#160;&#160;&#160;&#160;                          Character string
+<P>
+          A sequence of characters.  Each character occupies one memory
+          byte, and may contain any of the 256 possible bit combinations.
+          A string of length zero is called the null string.  Maximum
+          length of a string is determined by the keyword &amp;MAXLNGTH
+          (default 5000).  Memory restrictions in Vanilla SNOBOL4 will
+          limit the longest string possible to less than the 32767
+          characters allowed in SNOBOL4+, Catspaw's enhanced SNOBOL4
+          implementation.
+<P>
+<LI><B>TABLE</B>&#160;&#160;&#160;&#160;                           Associatively referenced table
+<P>
+          The primitive function TABLE() creates a table storage area, and
+          returns a pointer with this data type.  If this pointer is stored
+          in a variable, the variable is said to be of type TABLE.  The
+          variable may then be subscripted to access the elements of the
+          table.  A table may be thought of as a one dimensional array in
+          which the array subscripts may be any SNOBOL4 data type.  Arrays
+          require integer subscripts, but table subscripts such as
+          T&lt;&quot;TALLY&quot;&gt; or T&lt;13.52&gt; are acceptable.
+</UL>
+<H3><A NAME="6.2">6.2 DATA TYPE CONVERSION</A></H3>
+            Data may be implicitly or explicitly converted from one type to
+          another.
+<H4>6.2.1 Implicit Conversion</H4>
+            Implicit conversion occurs automatically when SNOBOL4 requires
+          a certain data type, and your program provides it in another
+          form.  Conversion to the correct data type will be attempted, and
+          an error message given if conversion is not possible.
+<H4>6.2.2 Explicit Conversion</H4>
+            A program may use the CONVERT() function to explicitly convert
+          an object to another data type.  The first argument is the object
+          to be converted; the second is a string containing the formal
+          name of the desired data type.  The formal name must be in uppercase
+          (lower-case allowed if case-folding).  If conversion is
+          possible, the function succeeds and returns the converted object.
+          If not, the function fails.  The call looks like this:
+<PRE>
+    NEWTYPE = CONVERT(OBJECT, &quot;DESIRED TYPE&quot;)
+</PRE>
+<H4>6.2.3 Permissible Conversions</H4>
+<DL>
+<DT><B>ARRAY to STRING</B><P>
+<DD>
+          The formal name &quot;ARRAY&quot; is produced.  The defining array dimension
+          string is appended if less than 20 characters:
+<PRE>
+    A = ARRAY('1:50,6')
+    OUTPUT = A
+</PRE>
+          produces the string &quot;ARRAY('1:50,6')&quot;.
+<P>
+<DT><B>CODE to STRING</B><P>
+<DD>
+          The formal name &quot;CODE&quot; is produced:
+<PRE>
+    C = CODE(' PIT2 = .OPPIT4 :(RETURN)')
+    OUTPUT = C
+</PRE>
+          displays the string &quot;CODE&quot;.
+<P>
+<DT><B>EXPRESSION to PATTERN</B><P>
+<DD>
+          This occurs implicitly within a pattern match, or by using the
+          EVAL function.  The deferred expression is evaluated, using
+          current values for any variables which appear.  Example:
+<PRE>
+    LASTN = *(RTAB(N) REM . LCHARS)
+     . . .
+    N = 4
+    SUBJECT LASTN                        :F(TOO_SHORT)
+</PRE>
+<DT><B>EXPRESSION to STRING</B><P>
+<DD>
+          The formal name &quot;EXPRESSION&quot; is produced.  For example,
+<PRE>
+    LASTN = *(RTAB(N) REM . LCHARS)
+    OUTPUT = LASTN
+</PRE>
+          produces the string &quot;EXPRESSION&quot;.
+<P>
+<DT><B>INTEGER to PATTERN</B><P>
+<DD>
+          This only occurs implicitly within a pattern match.  The integer
+          is converted to a string, and the string converted to a pattern.
+          Example:
+<PRE>
+    SUBJECT 19 = ''
+</PRE>
+<DT><B>INTEGER to STRING</B><P>
+<DD>
+          Leading zeros are suppressed, and a minus sign appears if the
+          integer was negative.  Integer zero is converted to the string
+          &quot;0&quot;.  For example,
+<PRE>
+    A = -23;  B = 0;  C = 92
+    OUTPUT = A B C
+</PRE>
+          produces the string &quot;-23092&quot;.
+<P>
+<DT><B>NAME to STRING</B><P>
+<DD>
+          The formal name &quot;NAME&quot; is produced:
+<PRE>
+    N = .A[2]
+    OUTPUT = N
+</PRE>
+          displays the string &quot;NAME&quot;.
+<P>
+<DT><B>PATTERN to STRING</B><P>
+<DD>
+          The formal name &quot;PATTERN&quot; is produced.  For example,
+<PRE>
+    WPAT = BREAK(LETTERS) SPAN(LETTERS) . WORD
+    OUTPUT = WPAT
+</PRE>
+          produces the string &quot;PATTERN&quot;.
+<P>
+<DT><B>DEFINED</B>&#160;&#160;&#160;&#160;DATA TYPE to STRING      
+<DD>
+          The formal name from the defining DATA function call is returned.
+<PRE>
+    DATA('COMPLEX(REAL,IMAG)')
+    R1 = COMPLEX(2, 3)
+    OUTPUT = R1
+</PRE>
+          produces the string &quot;COMPLEX&quot;.
+<P>
+<DT><B>STRING to INTEGER</B><P>
+<DD>
+          The string must not have any leading or trailing blanks.  A leading
+          plus or minus sign is allowed, but must be followed by at
+          least one digit.  Leading zeros are allowed, and the resulting
+          value must be in the legal range for integer values.  A null
+          string is converted to integer zero.
+<PRE>
+    RESULT = (&quot;-14&quot; + &quot;&quot;) / &quot;2&quot;
+</PRE>
+          stores integer -7 in RESULT.
+<P>
+<DT><B>STRING to PATTERN</B><P>
+<DD>
+          This only occurs implicitly within a pattern match.  The pattern
+          created will match the specified substring:
+<PRE>
+    SUBJECT &quot;HOPE&quot;
+</PRE>
+<DT><B>TABLE to ARRAY</B><P>
+<DD>
+          This only occurs when using the CONVERT function.  The table is
+          converted to a two dimensional array.  Example:
+<PRE>
+    T = TABLE(100)
+     . . .
+    A = CONVERT(T, &quot;ARRAY&quot;)         :F(EMPTY)
+</PRE>
+            The table is converted to a rectangular array.  Null table
+          entries are omitted, and there must be at least one nonnull entry
+          or the function fails.  An N by 2 array is created, where N is
+          the number of nonnull table values.  The first array column contains
+          the table subscripts, the second column contains the entry
+          values.
+<P>
+<DT><B>TABLE to STRING</B><P>
+<DD>
+          The formal name &quot;TABLE&quot; is returned with the present size of the
+          table and its expansion increment.  For example,
+<PRE>
+            T = TABLE(10,10)
+             . . .
+    ; Insert 45 nonnull elements into T
+             . . .
+            OUTPUT = T
+</PRE>
+          produces the string &quot;TABLE(50,10)&quot; (because table segments in
+          this case are allocated in multiples of 10).
+<P>
+            The following matrix indicates conversions with CONVERT():
+<PRE>
+               |      Result Type            E
+               |                             X
+               |                             P
+               |     I   P                   R   D
+               | S   N   A                   E   E
+               | T   T   T       A   T       S   F
+               | R   E   T   N   R   A   C   S   I
+               | I   G   E   A   R   B   O   I   N
+      Argument | N   E   R   M   A   L   D   O   E
+        Type   | G   R   N   E   Y   E   E   N   D
+    -----------+-----------------------------------
+        STRING | *   I   P               C   E
+       INTEGER | S   *   P
+       PATTERN | F       *
+          NAME | F           *
+         ARRAY | A               *   1
+         TABLE | T               2   *
+          CODE | F                       *
+    EXPRESSION | F       P                   *
+       DEFINED | F                               *
+</PRE>
+<TABLE CELLPADDING=5>
+<TR VALIGN=TOP>
+    <TD><TT>*</TT><TD>  The argument object is returned unchanged.
+<TR VALIGN=TOP>
+    <TD><TT>A</TT><TD>  The formal data type name &quot;ARRAY&quot; is returned with the
+               defining prototype string if it is less than 20 characters.
+<TR VALIGN=TOP>
+    <TD><TT>C</TT><TD>  CONVERT(string,&quot;CODE) behaves exactly like CODE(string).
+<TR VALIGN=TOP>
+    <TD><TT>E</TT><TD>  Produces an unevaluated expression, that may be subsequently
+               used in a pattern, or evaluated with the EVAL() function.
+<TR VALIGN=TOP>
+    <TD><TT>F</TT><TD>  The formal data type name is returned.
+<TR VALIGN=TOP>
+    <TD><TT>I</TT><TD>  Numeric conversion is conditioned on magnitude and syntax
+               restrictions. No leading or trailing blanks are permitted.
+<TR VALIGN=TOP>
+    <TD><TT>P</TT><TD>  Occurs implicitly within a pattern match.
+<TR VALIGN=TOP>
+    <TD><TT>S</TT><TD>  A number may always be converted to its string form.
+<TR VALIGN=TOP>
+    <TD><TT>T</TT><TD>  The string &quot;TABLE&quot; is returned with the present size of the
+               table and its expansion increment:  &quot;TABLE(50,10)&quot;.
+<TR VALIGN=TOP>
+    <TD><TT>1</TT><TD>  The array must be rectangular, with a second dimension of 2
+               (N rows by 2 columns).  A table with N entries is created.
+               The table subscripts are taken from the first column of the
+               array; the table values are copied from the second column.
+<TR VALIGN=TOP>
+    <TD><TT>2</TT><TD>  The table is converted to a rectangular array.  Null table
+               entries are omitted, and there must be at least one nonnull
+               entry or the function fails.  An N by 2 array is created,
+               where N is the number of nonnull table values.  The first
+               array column contains the table subscripts, the second column
+               contains the entry values.
+</TABLE>
+</DL>
+
+<P><HR>
+<A HREF="ch5.htm"><IMG SRC="../prev.gif" ALT="Previous" ALIGN=TOP> Previous chapter</A>
+<B>&#183;</B> <A HREF="ch7.htm"><IMG SRC="../next.gif" ALT="Next" ALIGN=TOP> Next chapter</A>
+<B>&#183;</B> <A HREF="contents.htm"><IMG SRC="../toc.gif" ALT="Contents" ALIGN=TOP> Table of Contents</A>
+
+</BODY>
+</HTML>

@@ -1,0 +1,428 @@
+<HTML>
+<HEAD><TITLE>Snobol4 Reference Manual: Chapter 9</TITLE></HEAD>
+<BODY>
+<!-- From Part III of the Catspaw manual distributed with Vanilla Snobol.
+     HTML markup by John English (je@brighton.ac.uk).
+-->
+
+<A HREF="ch8.htm"><IMG SRC="../prev.gif" ALT="Previous" ALIGN=TOP> Previous chapter</A>
+<B>&#183;</B> <IMG SRC="../next.gif" ALT="Next" ALIGN=TOP> Next chapter
+<B>&#183;</B> <A HREF="contents.htm"><IMG SRC="../toc.gif" ALT="Contents" ALIGN=TOP> Table of Contents</A>
+<HR>
+
+<H2>Chapter 9 : SYSTEM MESSAGES</H2>
+<P>
+            This chapter lists all messages displayed by SNOBOL4.
+<H3><A NAME="9.1">9.1 INITIAL MESSAGES</A></H3>
+            When SNOBOL4 begins execution, this title is displayed:
+<PRE>
+    Vanilla SNOBOL4      Version 2.14.
+    (c) Copyright 1984,1988 Catspaw, Inc. All Rights Reserved.
+</PRE>
+            Additional messages which may appear:
+<DL>
+<DT><B>Cannot open file: name</B>
+<DD>
+          The file specified in the command line cannot be opened.
+<P>
+<DT><B>Command line error:</B>
+<DD>
+          A syntactic error was detected in the SNOBOL4 command line.  The
+          command line is displayed on two lines.  The line break shows
+          where the error occurred.
+<P>
+<DT><B>Errors detected in source program</B>
+<DD>
+          There were compilation errors in the source program.  Execution
+          will proceed until a statement with a compilation error is
+          encountered.
+<P>
+<DT><B>Insufficient storage for initialization</B>
+<DD>
+          Not enough memory was available to initialize the SNOBOL4 system.
+<P>
+<DT><B>No errors</B>
+<DD>
+          Compilation is complete, and without error.  Execution begins
+          immediately.
+</DL>
+
+<H3><A NAME="9.2">9.2 TERMINATION MESSAGES</A></H3>
+            Termination messages are normally produced on I/O unit 7, which
+          defaults to the user's display screen.  If the /B option was used
+          in the invoking command line, they are produced on I/O unit 6,
+          associated with variable OUTPUT.  Dump messages are always produced
+          to unit 6.
+<DL>
+<DT><B>Normal termination at level LL</B>
+<DD>
+          The program transferred to the label END.  LL is the current
+          program-defined function call depth.  This message is produced
+          only if the /S command line option (statistics) was used.
+<P>
+<DT><B>filename(XXX) : Last statement executed was NNN</B>
+<DD>
+          NNN is the statement number of the last statement executed, XXX
+          is its source line number.  It is the statement that transferred
+          to the END statement.  If this was a normal termination, it is
+          only displayed if the /S option was used.
+<P>
+<DT><B>filename(XXX) : Warning: Interrupted in statement NNN at level LL</B>
+<DD>
+          Execution was interrupted when you pressed the BREAK or control-C
+          key.  The interruption occurred before the specified statement
+          was executed.  LL is the current call depth of program-defined
+          functions.
+<P>
+<DT><B>Incomplete storage regeneration.  Terminal dump not possible</B>
+<DD>
+          Stack overflow occurred during storage regeneration, and the
+          &amp;DUMP keyword was nonzero.  Memory is in an indeterminate form,
+          and a dump listing cannot be produced.
+<P>
+<DT><B>Dump of variables at termination</B>
+<DD>
+          Natural variables
+          Unprotected keywords
+          These headings will appear if a termination dump was requested by
+          setting the &amp;DUMP keyword nonzero.  Variables are listed only if
+          they contain a nonnull value.  The variable names will be sorted
+          if the &amp;DUMP keyword is positive; they are unsorted if it is
+          negative.
+</DL>
+
+<H4>9.2.1 Job Statistics</H4>
+            End-of-run statistics on program execution are provided if the
+          /S command line option is used.  Compilation and execution times
+          are in tenths of a second.  Times are wall-clock values, and
+          include all I/O wait time, such as delays for keyboard input:
+<PRE>
+    SNOBOL4 statistics summaryNN
+
+    tenths of a second compilation time
+                 NN tenths of a second execution time
+                 NN statements executed, NN failed
+                 NN arithmetic operations performed
+                 NN pattern matches performed
+                 NN regenerations of dynamic storage
+                 NN reads performed
+                 NN writes performed
+</PRE>
+
+<H3><A NAME="9.3">9.3 COMPILATION MESSAGES</A></H3>
+            SNOBOL4 syntax errors are detected during compilation.  Statement
+          compilation ceases at the point where the error was detected.
+           The error message contains a marker which indicates the
+          valid portion of the statement accepted by the compiler---the
+          error occurred after this point.  Only the first error in a
+          statement is detected.  The erroneous statement is compiled with
+          an internal error code which produces an error message if the
+          statement is executed.  Compilation resumes with the next statement.
+           Compilation ceases and SNOBOL4 terminates if more than 50
+          errors are found.
+<P>
+          When compiling without a list file (/L: command line option),
+          the compiler will attempt to display the erroneous line on your
+          screen.  If a statement is continued over several lines, only the
+          line in error is displayed.  Several errors cannot be detected
+          until the absolute end-of-statement is found.  This may require
+          reading the next line, and finding it is NOT a continuation
+          statement.  In this case, the single line displayed will be the
+          NEXT line, with the error marker in the first character position.
+<P>
+          The CODE function may be used to compile SNOBOL4 statements
+          that have been concatenated into a long string.  The CODE function
+          fails if a syntax error is found, and the keyword &amp;ERRTEXT
+          contains the error message string for the error encountered.
+<DL>
+<DT><B>Binary operators must be surrounded by blanks</B>
+<DD>
+          Omitting a blank will often cause this error.  An illegal or
+          undefined binary operator will also produce this error.
+<P>
+<DT><B>Error in GOTO</B>
+<DD>
+          There is a syntactic error in the GOTO field.
+<P>
+<DT><B>Erroneous END statement</B>
+<DD>
+          The END statement contains a syntactic error, or the label specified
+          in the subject field for initial transfer could not be
+          found.
+<P>
+<DT><B>Erroneous integer</B>
+<DD>
+          An integer number appears which is too large for the SNOBOL4 system.
+           The allowable range for magnitude values is 0 to 32767.
+<P>
+<DT><B>Erroneous label</B>
+<DD>
+          The first character of a statement must be blank, tab, alphanumeric,
+          * (comment), + or . (continuation), or - (control).
+<P>
+<DT><B>Erroneous or missing break character</B>
+<DD>
+          A character which separates language elements occurs in an illegal
+          context, or an expression is not balanced with respect to
+          parentheses.
+<P>
+<DT><B>Erroneous subject</B>
+<DD>
+          A compiler break character appears before the statement subject
+          field.  The break characters are comma, equal sign, right parenthesis,
+          right square bracket (]), and right angular bracket (&gt;).
+<P>
+<DT><B>Illegal character in element</B>
+<DD>
+          A character was found which was incorrect for the type of language
+          object being compiled.  This often occurs when a blank is
+          omitted between elements, causing them to run together.
+<P>
+<DT><B>Improperly terminated statement</B>
+<DD>
+          The source statement terminated with an incomplete language construction.
+<P>
+<DT><B>Limit on compilation errors exceeded</B>
+<DD>
+          More than 50 compilation errors were found in the source program.
+<P>
+<DT><B>No END statement in source file</B>
+<DD>
+          End-of-File was encountered in the source file without an END
+          statement.
+<P>
+<DT><B>Previously defined label</B>
+<DD>
+          A duplicate label appears.  The first definition is retained;
+          subsequent definitions are discarded.
+<P>
+<DT><B>Unclosed literal</B>
+<DD>
+          The closing quotation mark from a literal string is missing.
+          This error also occurs if the closing quotation mark (single or
+          double) was different from the opening mark.
+</DL>
+
+<H3><A NAME="9.4">9.4 EXECUTION ERROR MESSAGES</A></H3>
+            Most program logic errors can only be detected during program
+          execution.  Some are unconditionally fatal, and cause the SNOBOL4
+          system to terminate.  Others are conditionally fatal---the system
+          terminates if the value of the keyword &amp;ERRLIMIT is zero.  If
+          &amp;ERRLIMIT is nonzero, the keyword &amp;ERRTYPE is set to the error
+          message number, &amp;ERRTEXT is set to the message text, &amp;ERRLIMIT is
+          decremented, and execution continues.
+<P>
+          The protected keyword &amp;ERRTYPE may be traced, permitting a
+          program-defined function to gain control when a conditional error
+          occurs.  THe program CODE.SNO provides an example of how to do
+          this.  The initial value of the unprotected keyword &amp;ERRLIMIT is
+          zero, forcing program termination upon any error.
+<P>
+          Errors 1-16 are conditionally fatal.  Errors 17-28 are unconditionally
+          fatal.  When execution terminates due to an error, the
+          following is displayed:
+<PRE>
+    filename(XXX) : Error NN, -- description --
+    In statement NNN, at level LL
+</PRE>
+          NN is the error number below.  NNN is the statement number
+          assigned in the compiler list file, XXX is the absolute line
+          number in the source file.  LL specifies the current programdefined
+          function call depth (0 is the normal main-program level).
+<DL>
+<DT><B>1. Illegal data type</B>
+<DD>
+          The data type of an operand was incorrect for the type of operation
+          attempted.  This occurs most frequently with arithmetic operations,
+          when one operand is a string which cannot be converted
+          to a number.
+<P>
+<DT><B>2. Error in arithmetic operation</B>
+<DD>
+          An arithmetic operation upon integer values produced a result
+          which was out of range, or was undefined, such as division by
+          zero.
+<P>
+<DT><B>3. Erroneous array or table reference</B>
+<DD>
+          An array or table reference was made to a variable which did not
+          contain an array or table pointer.
+<P>
+<DT><B>4. Null string in illegal context</B>
+<DD>
+          The null string appeared where it is not permitted, such as the
+          object of an indirect reference.
+<P>
+<DT><B>5. Undefined function or operation</B>
+<DD>
+          A function was called before it was defined, or an undefined
+          operator was used.
+<P>
+<DT><B>6. Erroneous prototype</B>
+<DD>
+          A syntactic error occurred in the prototype string used with the
+          functions ARRAY, DATA or DEFINE.  Note that the blank and tab
+          characters are not permitted within the prototype string.
+<P>
+<DT><B>7. Unknown keyword</B>
+<DD>
+          The keyword specified is unknown to the SNOBOL4 system.
+<P>
+<DT><B>8. Variable not present where required</B>
+<DD>
+          A variable name must be used as the subject of an assignment
+          statement, or as the argument of the unary cursor, name, or keyword
+          operator (@, ., &amp;), or the binary pattern match assignment
+          operators (., $).
+<P>
+<DT><B>9. Entry point of function not label</B>
+<DD>
+          At the time a program-defined function was first called, its
+          entry point label did not appear as the label of any SNOBOL4
+          statement.
+<P>
+<DT><B>10. Illegal argument to primitive function</B>
+<DD>
+          An illegal value was used as an argument to the function ARG,
+          FIELD, LOCAL, OPSYN, STOPTR, or TRACE, or an illegal value was
+          specified in the third argument to INPUT or OUTPUT.
+<P>
+<DT><B>11. Reading error</B>
+<DD>
+          An error condition was returned when reading from a file.
+<P>
+<DT><B>12. Illegal I/O unit</B>
+<DD>
+          Allowable unit numbers are 1 through 16 (inclusive).  (Unit 0 is
+          allowed in functions INPUT and OUTPUT, and is converted to units
+          5 and 6 respectively.)
+<P>
+<DT><B>13. Limit on defined data types exceeded</B>
+<DD>
+          SNOBOL4 allows 899 different program-defined data types.
+<P>
+<DT><B>14. Negative number in illegal context</B>
+<DD>
+          A negative number was used incorrectly as the argument of the
+          function LEN, POS, TAB, or RTAB.
+<P>
+<DT><B>15. String overflow</B>
+<DD>
+          The program attempted to create a string larger than &amp;MAXLNGTH
+          characters.
+<P>
+<DT><B>16. Overflow during pattern matching</B>
+<DD>
+          The internal SNOBOL4 stack overflowed during pattern matching.
+          This can happen when a recursive or looping pattern is incorrectly
+          specified.
+<P>
+<DT><B>17. Error in SNOBOL4 system</B>
+<DD>
+          This message indicates an internal SNOBOL4 system error.
+<P>
+<DT><B>18. Return from level zero</B>
+<DD>
+          An attempt was made to transfer to the function return label
+          RETURN, FRETURN, or NRETURN outside of any function call.
+<P>
+<DT><B>19. Failure during GOTO evaluation</B>
+<DD>
+          The expression used for an indirect transfer within the GOTO
+          field failed when evaluated.
+<P>
+<DT><B>20. Insufficient storage to continue</B>
+<DD>
+          All available memory has been used.  Vanilla SNOBOL4 is limited
+          to 30K bytes for program and data.  SNOBOL4+, Catspaw's enhanced
+          version, allocates 300K bytes for program and data.
+<P>
+<DT><B>21. Stack overflow</B>
+<DD>
+          The SNOBOL4 internal stack has overflowed.  This may be caused by
+          excessive function recursion, or occur during memory garbage
+          collection.
+<P>
+<DT><B>22. Limit on statement execution exceeded</B>
+<DD>
+          The number of statements executed was greater than the value in
+          the keyword &amp;STLIMIT.  &amp;STLIMIT is initially -1, specifying
+          unlimited execution.
+<P>
+<DT><B>23. Object exceeds size limit</B>
+<DD>
+          The program attempted to create an object larger than the maximum
+          size allowed.
+<P>
+<DT><B>24. Undefined or erroneous GOTO</B>
+<DD>
+          A transfer was attempted to an undefined label, or an expression
+          in a GOTO field evaluated to a string, rather than a label
+          name---usually the result of omitting the indirect operator ($).
+<P>
+<DT><B>25. Incorrect number of arguments</B>
+<DD>
+          A primitive function was called with too many arguments.
+<P>
+<DT><B>28. Execution of statement with compilation error</B>
+<DD>
+          Execution proceeded to a statement that contained a compilation
+          error.
+</DL>
+<H3><A NAME="9.5">9.5 EXECUTION TRACE MESSAGES</A></H3>
+            Tracing is provided for variables, certain keywords, label
+          transfers, and function calls and returns.  A trace message is
+          output to I/O unit 6 for each trace occurrence.  Program execution
+          time, in tenths of a second, is appended to each message.
+<DL>
+<DT><B>Tracing normally occurs only if the keyword &amp;TRACE is nonzero.</B>
+<DD>
+          However, another keyword, &amp;FTRACE, may be set nonzero to trace
+          all function calls and returns independently of keyword &amp;TRACE.
+<P>
+<DT><B>STATEMENT NN: &lt;vname&gt; = &lt;value&gt;,TIME = TT</B>
+<DD>
+          Value trace; produced by the function call TRACE('vname',
+          'VALUE'), where vname is the name of the variable to be traced.
+<P>
+<DT><B>STATEMENT NN: &amp;&lt;keyname&gt; = &lt;value&gt;,TIME = TT</B>
+<DD>
+          Keyword trace; produced by the function call TRACE('keyname',
+          'KEYWORD'), where keyname is the upper case keyword name, without
+          the leading ampersand.
+<P>
+<DT><B>STATEMENT NN: TRANSFER TO &lt;labname&gt;,TIME = TT</B>
+<DD>
+          Label trace; produced by the function call TRACE('labname',
+          'LABEL'), where labname is the desired label name.  Tracing only
+          occurs on a transfer of control; it does not occur if the labeled
+          statement is flowed into.
+<P>
+<DT><B>STATEMENT NN: LEVEL LL CALL OF &lt;fname&gt;(arg1,...,argn),TIME = TT</B>
+<DD>
+          Call trace; produced by the function call TRACE('fname', 'CALL'),
+          where fname is the name of the function to be traced.  The function's
+          arguments at the time of the call are evaluated and displayed.
+<P>
+<DT><B>STATEMENT NN: LEVEL LL RETURN OF &lt;fname&gt; = &lt;value&gt;,TIME = TT</B>
+<DD>
+          STATEMENT NN: LEVEL LL NRETURN OF &lt;fname&gt; = &lt;value&gt;,TIME = TT
+          STATEMENT NN: LEVEL LL FRETURN OF &lt;fname&gt;,TIME = TT
+          Return trace; produced by the function call TRACE('fname',
+          'RETURN'), where fname is the name of the function whose return
+          is to be traced.  The type of return that occurred is displayed
+          in the trace message.
+<P>
+<DT><B>***Print request too long***</B>
+<DD>
+          An internal buffer is used to display trace messages, and variable
+          values during dumps.  If the required display is longer than
+          1,800 characters, this error message is produced instead.
+</DL>
+<P><HR>
+<A HREF="ch8.htm"><IMG SRC="../prev.gif" ALT="Previous" ALIGN=TOP> Previous chapter</A>
+<B>&#183;</B> <IMG SRC="../next.gif" ALT="Next" ALIGN=TOP> Next chapter
+<B>&#183;</B> <A HREF="contents.htm"><IMG SRC="../toc.gif" ALT="Contents" ALIGN=TOP> Table of Contents</A>
+
+</BODY>
+</HTML>

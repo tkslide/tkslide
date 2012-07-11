@@ -1,0 +1,330 @@
+<HTML>
+<HEAD><TITLE>A Snobol4 Tutorial: Chapter 2</TITLE>
+</HEAD>
+
+<BODY>
+<!-- From Part II of the Catspaw manual distributed with Vanilla Snobol.
+     HTML markup by John English (je@brighton.ac.uk).
+-->
+
+<A HREF="ch1.htm"><IMG SRC="../prev.gif" ALT="Previous" ALIGN=TOP> Previous chapter</A>
+<B>&#183;</B> <A HREF="ch3.htm"><IMG SRC="../next.gif" ALT="Next" ALIGN=TOP> Next chapter</A>
+<B>&#183;</B> <A HREF="contents.htm"><IMG SRC="../toc.gif" ALT="Contents" ALIGN=TOP> Table of Contents</A>
+<HR>
+
+<H2>Chapter 2 : CONTROL FLOW AND FUNCTIONS</H2>
+<H3><A NAME="2.1">
+                         2.1 SUCCESS AND FAILURE
+</A></H3>
+<P>
+      Success and failure are as important in SNOBOL4 as they are in
+    life.  Success and failure are unmistakable signals; something
+    either worked, or it didn't.  Significant program conciseness is
+    achieved by recognizing that data values and signals are fundamentally
+    different entities.
+<P>
+      The elements of a statement provide values and signals as computation
+    proceeds.  SNOBOL4 accumulates both, and stops executing
+    a particular statement when it finds it cannot succeed.  Program
+    flow can be altered based upon this success or failure.
+<P>
+      The success signal will have a value result associated with it.
+    In situations in which the signal itself is the desired object,
+    the result value may only be the null string.  The failure signal
+    has no associated value.  (In some instances, it may be helpful
+    to view failure as meaning &quot;failure to produce a result.&quot;)
+<P>
+      Previously, we introduced the variable INPUT, which reads a
+    line from the keyboard.  In general, INPUT can be made to read
+    from any disk file.  The line read may be any character string,
+    including the null string if it is an empty line.  If any string
+    might appear, then there is no special value we can test for to
+    detect End-of-File.  Success and failure provide an elegant
+    alternative to testing for special values.
+<P>
+      When we retrieve a value from INPUT, we normally get a string
+    and a success signal.  But when End-of-File is encountered, we
+    get a failure signal instead, and no value.
+<P>
+      Since control-Z (or function key 6) allows you to enter an Endof-File
+    from the keyboard, we can easily demonstrate this type of
+    failure.  As you've noticed, the CODE.SNO program reports the
+    success or failure of each statement.  So far, all examples have
+    succeeded.  Now try this one:
+<PRE>
+    ?       OUTPUT = INPUT
+    ^Z
+    Failure
+</PRE>
+      Success and failure are control signals, and appear only during
+    the execution of a statement.  They cannot be stored in a variable,
+    which holds values only.
+<P>
+      There is much more which can be done with success and failure,
+    but to understand their use, you'll need to know how SNOBOL4
+    statements are constructed.
+<H3><A NAME="2.2">
+                         2.2 A SNOBOL4 STATEMENT
+</A></H3>
+<P>
+      In general, a SNOBOL4 statement looks like this:
+<PRE>
+    Label   Statement body                                 :GOTO
+</PRE>
+      The label is optional, and is omitted by placing a blank or tab
+    in the first character position.  The GOTO is also optional, and
+    can be eliminated simply by omitting it and the colon.  In fact,
+    even the statement body is optional.  You can have a program line
+    consisting of just a label or a GOTO field.
+<H3><A NAME="2.2.1">
+    2.2.1 The Label Field
+</A></H3>
+<P>
+      SNOBOL4 normally executes the statements of a program in
+    sequence.  The ability to transfer control from one statement to
+    another, perhaps conditionally, makes SNOBOL4 much more usable.
+<P>
+      Labels provide names for statements.  If present, they must
+    begin in the first character position of a statement, and must
+    start with a letter or number.  Additional characters may be anything
+    but blank or tab.  Like variable names, lower-case letters
+    are equivalent to upper-case when case-folding (the default).
+<H3><A NAME="2.2.1">
+    2.2.1 The GOTO Field
+</A></H3>
+<P>
+      Transfer of control is made possible by the GOTO.  It interrupts
+    the normal sequential execution of statements by telling
+    SNOBOL4 which statement to execute after the present one.  The
+    GOTO field appears at the end of the statement, preceded by a
+    colon (:), and has one of these forms:
+<PRE>
+    :(label)
+    :S(label)
+    :F(label)
+    :S(label1) F(label2)
+</PRE>
+      White space is required before the colon.  &quot;Label&quot; is the name
+    given the target statement, and must be enclosed in parentheses.
+    If the first form is used, execution resumes at the referenced
+    statement, unconditionally.  In the second and third forms,
+    transfer occurs only if the statement has succeeded or failed,
+    respectively.  Otherwise, execution proceeds to the next statement
+    in line.  If the fourth form is used, transfer is made to
+    label1 if the statement succeeded, or to label2 if it failed.  A
+    statement with a label and a GOTO would look like this:
+<PRE>
+    COPY    OUTPUT = INPUT           :F(DONE)
+</PRE>
+      Now let's write a short program which copies keyboard input to
+    the screen, and reports the total number of lines.  If you are an
+    accurate typist, you can type it into SNOBOL4 directly.  Otherwise,
+    you should use your text editor to create a file containing
+    the program text.  First stop the CODE.SNO program by typing END:
+<PRE>
+    ?END
+
+    B&gt;SNOBOL4 CON
+
+    Vanilla SNOBOL4      Version 2.14.
+    (c) Copyright 1984,1988 Catspaw, Inc. All Rights Reserved.
+    Enter program, terminate with &quot;END&quot;
+    ?       N = 0
+    ?COPY   OUTPUT = INPUT           :F(DONE)
+    ?       N = N + 1                :(COPY)
+    ?DONE   OUTPUT = 'THERE WERE ' N ' LINES'
+    ?END
+
+    No errors
+
+    TYPE IN A TEST LINE
+    TYPE IN A TEST LINE
+
+    AND ANOTHER
+    AND ANOTHER
+
+    ^Z
+    THERE WERE 2 LINES
+
+    B&gt;
+</PRE>
+      We start the line count in variable N at 0.  The next statement
+    has a label, COPY, a statement body, and a GOTO field.  It is an
+    assignment statement, and begins execution by reading a line of
+    input.  If INPUT successfully obtains a line, the result is
+    stored in OUTPUT.  The GOTO field is only testing for failure, so
+    SNOBOL4 proceeds to the next statement, where N is incremented,
+    and the unconditional GOTO transfers back to statement COPY.
+<P>
+      When an End-of-File is read, variable INPUT signals failure.
+    Execution of this statement terminates immediately, without performing
+    the assignment, and transfers to the statement labeled
+    DONE.  The number of lines is displayed, and control flows into
+    the END statement, stopping the program.
+<H3><A NAME="2.3">
+                         2.3 BUILT-IN FUNCTIONS
+</A></H3>
+<P>
+      A function is analogous to an operator; it operates on data to
+    produce a result.  The data objects are called the arguments of
+    the function.  The result returned -- the function of the arguments -- may
+    have two components: the success or failure signal;
+    and for success, a value.  The value may be any data type.
+<P>
+      A function is used by writing its name and a list of arguments
+    enclosed by parentheses:
+<PRE>
+    FUNCTION_NAME(ARG1, ARG2, ..., ARGn)
+</PRE>
+      It may appear in your program anywhere a constant is allowed -- 
+    in expressions, patterns, even as the argument of another function.
+     If the function has more than one argument, they should be
+    separated by commas.  If trailing arguments are omitted, SNOBOL4
+    will supply the null string instead.  Some functions, such as one
+    that returns the current date, have no arguments at all.
+<P>
+      SNOBOL4 provides a large number of predefined functions, and
+    allows you to define your own.  The large repertoire of built-in
+    functions makes SNOBOL4 programming easier.  Most functions are
+    concerned with pattern matching, input/output, and advanced features
+    of the language.  Here we'll introduce a few simple
+    conditional, numeric, and string functions to give you an idea of
+    the variety.  Try them interactively with CODE.SNO.
+<H3><A NAME="2.3.1">
+    2.3.1 Conditional Functions
+</A></H3>
+<P>
+      These functions fail or succeed depending upon their arguments.
+    They are sometimes called predicate functions because the success
+    of an expression using them is predicated upon their success.  If
+    they succeed, they return the null string as their value.
+<PRE>
+    Function         Succeeds if:
+
+    IDENT(S,T)       S and T are identical.  S and T may be constants
+                     or variables with any data type.  To
+                     be identical, the arguments must have the
+                     same data type and value.  Since omitted arguments
+                     default to the null string, IDENT(S)
+                     succeeds if S is the null string.
+
+    DIFFER(S,T)      S and T are different.  DIFFER is the opposite
+                     of IDENT.  DIFFER(S) succeeds if S is
+                     not the null string.
+
+    EQ(X,Y)          Integers X and Y are equal.  X and Y must be
+                     integers, or strings which can be converted
+                     to integers.
+
+    NE(X,Y)          Integers X and Y are not equal.
+
+    GE(X,Y)          Integer X is greater than or equal to Y.
+
+    GT(X,Y)          Integer X is greater than Y.
+
+    LE(X,Y)          Integer X is less than or equal to Y.
+
+    LT(X,Y)          Integer X is less than Y.
+
+    INTEGER(X)       X is an integer, or a string which can be
+                     converted to an integer.
+
+    LGT(S,T)         String S is lexically greater than string T
+                     using a character-by-character comparison.
+</PRE>
+      Leading blanks may be used in front of a argument for readability.
+     Here are some exercises for CODE.SNO:
+<PRE>
+    ?       N = 3
+    ?       EQ(N, 3)
+    Success
+    ?       IDENT(N, 3)
+    Success
+    ?       EQ(3, &quot;3&quot;)
+    Success
+    ?IDENT(3, &quot;3&quot;)                   (integer and string)
+    Failure
+    ?       EQ(N, 4)
+    Failure
+    ?       NE(N, 4)
+    Success
+    ?       INTEGER(N)
+    Success
+    ?       INTEGER('47')
+    Success
+    ?       DIFFER('ABC', 'abc')
+    Success
+    ?       IDENT('a' 'b' 'c', 'abc')
+    Success
+    ?       LGT('ABC', 'ABD')
+    Failure
+</PRE>
+      When any of these functions succeed, they return a null string.
+    Since other statement elements are not altered when concatenated
+    with the null string, this provides an easy way to interpose
+    tests and construct loops.  Suppose we execute the statement:
+<PRE>
+    N = LT(N,10) N + 1       :S(LOOP)
+</PRE>
+      Function LT fails if N is 10 or greater.  If the statement
+    fails, the assignment is not performed, and execution continues
+    with the next statement.  However, if LT succeeds, its null
+    string value is concatenated with the expression N + 1, and the
+    result is assigned to N.  This has the effect of increasing N by
+    1 and transferring to statement LOOP until N reaches 10.
+<P>
+      If we concatenated several conditional functions together, and
+    they all succeeded, the result would still be the null string.
+    If any function failed, the entire concatenation would fail.
+    This gives us a simple way to produce a successful result if a
+    number of conditions are all true.  For example, the expression:
+<PRE>
+    INTEGER(N) GE(N,5) LE(N,100)
+</PRE>
+    succeeds if N is an integer between 5 and 100.
+<H3><A NAME="2.3.2">
+    2.3.2 Other Functions
+</A></H3>
+<P>
+      These functions always succeed; all but REMDR and SIZE return a
+    string result.
+<PRE>
+    DATE()              Return current date and time as a string.
+
+    DUPL(S,N)           Duplicate string S, N times.
+
+    REMDR(X,Y)          Produce the remainder (modulus) of X / Y.
+
+    REPLACE(S1,S2,S3)   Return string S1 after performing the
+                        character replacements specified by strings
+                        S2 and S3.  S2 specifies which characters to
+                        replace, and S3 specifies what to replace
+                        them with.
+
+    SIZE(S)             Return the number of characters in string S.
+
+    TRIM(S)             Return string S with trailing blanks removed.
+</PRE>
+      Exercises for CODE.SNO:
+<PRE>
+    ?       OUTPUT = 'THE DATE AND TIME ARE: ' DATE()
+    THE DATE AND TIME ARE: 10-19-87 11:49:33.90
+    ?       OUTPUT = DUPL('ABC', 20)
+    ABCABCABCABCABCABCABCABCABCABCABCABCABCABCABCABCABCABCABCABC
+    ?       OUTPUT = SIZE('ZIPPY')
+    5
+    ?       OUTPUT = SIZE('')
+    0
+    ?       OUTPUT = TRIM('TRAILING BLANKS  ') 'GONE'
+    TRAILING BLANKSGONE
+    ?       OUTPUT = REPLACE('spoon','po','PO')
+    sPOOn
+</PRE>
+
+<P><HR>
+<A HREF="ch1.htm"><IMG SRC="../prev.gif" ALT="Previous" ALIGN=TOP> Previous chapter</A>
+<B>&#183;</B> <A HREF="ch3.htm"><IMG SRC="../next.gif" ALT="Next" ALIGN=TOP> Next chapter</A>
+<B>&#183;</B> <A HREF="contents.htm"><IMG SRC="../toc.gif" ALT="Contents" ALIGN=TOP> Table of Contents</A>
+
+</BODY>
+</HTML>

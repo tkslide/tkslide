@@ -1,0 +1,92 @@
+<HTML>
+<HEAD><TITLE>Snobol4 Reference Manual: Chapter 1</TITLE></HEAD>
+<BODY>
+<!-- From Part III of the Catspaw manual distributed with Vanilla Snobol.
+     HTML markup by John English (je@brighton.ac.uk).
+-->
+
+<IMG SRC="../prev.gif" ALT="Previous" ALIGN=TOP> Previous chapter
+<B>&#183;</B> <A HREF="ch2.htm"><IMG SRC="../next.gif" ALT="Next" ALIGN=TOP> Next chapter</A>
+<B>&#183;</B> <A HREF="contents.htm"><IMG SRC="../toc.gif" ALT="Contents" ALIGN=TOP> Table of Contents</A>
+<HR>
+
+<H2>Chapter 1 : INTRODUCTION</H2>
+<P>
+            The reference section describes the SNOBOL4 system.  It will
+          tell you how to create and run SNOBOL4 programs, and catalogs all
+          the standard language features.  The tutorial section can be consulted
+          for illustrative uses of various functions and operators.
+<P>
+            SNOBOL4 is a full implementation of the powerful development
+          language SNOBOL4 for the IBM PC and the entire 8086/286/386 family
+          of computers.  It has all the features of mainframe SNOBOL4,
+          plus numerous useful extensions.  Compatibility with mainframe
+          SNOBOL4 is achieved by basing this product on the Macro Implementation
+          used on such mainframes as the IBM 370 and the CDC 7600.
+          Thus, it incorporates a thoroughly tested implementation in its
+          entirety.  All SNOBOL4 string and pattern matching facilities
+          available in the mainframe environment are now available to the
+          personal computer user.
+<P>
+            The SNOBOL4 program contains both a compiler and interpreter.
+          They are inseparable, and share many common routines.  Your
+          source program is compiled into a compact internal notation,
+          which is interpreted during execution.  More information on the
+          internal code may be found in Griswold's &quot;The Macro Implementation
+          of SNOBOL4;&quot; see file SNOBOL4.DOC for ordering information.
+<H3><A NAME="1.1">1.1 LANGUAGE BACKGROUND</A></H3>
+            In 1962, several researchers at Bell Telephone Laboratories
+          (BTL) were applying computers to problems such as factoring multivariate
+          polynomials and symbolic integration.  Available tools
+          were the Symbolic Communication Language (SCL), an internal BTL
+          product for processing symbolic expressions, and COMIT, designed
+          for natural-language analysis.  Both proved inadequate, and
+          frustration with them led the researchers to attempt the design
+          of a new language.
+<P>
+            The original SNOBOL was developed by David J. Farber, Ralph E.
+          Griswold, and Ivan P. Polonsky, and was first implemented on an
+          IBM 7090 computer in 1963.  The name, SNOBOL, came after the implementation,
+          and ostensibly stands for StriNg Oriented symBOlic
+          Language.
+<P>
+            It was soon discovered that SNOBOL was applicable to a much
+          wider range of problems.  In fact, the language proved more interesting
+          than the problems it was intended to solve.  As more
+          people used it, new features such as recursive functions were
+          added, and its generality grew.  By 1964, it had become SNOBOL3,
+          and was available on such machines as the IBM 7094, CDC 3600, SDS
+          930, Burroughs 5500, and the RCA 601.  Because these implementations
+          were all written from scratch, each machine introduced its
+          own dialect of the language.
+<P>
+            SNOBOL3 had only one data type, the string.  The desire for additional
+          data types, more complex pattern matching, and other
+          features led to a major redesign of the language in 1966, by
+          Ralph Griswold, Jim Poage, and Ivan Polonsky.  The new language -- SNOBOL4 -- was
+          also designed to be portable to other
+          machines.  Most of SNOBOL4 was completed by 1967, although some
+          features, such as operator redefinition, did not appear until
+          1969.  Portability was achieved by writing the system in a macro
+          assembly language for an abstract machine, hence the name &quot;Macro
+          Implementation of SNOBOL4.&quot;  By 1970 it was available on nine
+          different types of mainframes.  Currently, it is available on
+          most large- and medium-scale computers.
+<P>
+            The SNOBOL4 language evolved on computers whose primary input/output
+          devices were the card reader, card punch, and line
+          printer.  The current breed of microcomputers are interactive,
+          rather than batch-oriented.  Thus, SNOBOL4 contains slight alterations
+          of the language to conform to the personal computer environment.
+           For example, the preassigned output keyword PUNCH has
+          been replaced by SCREEN.  Experienced SNOBOL4 programmers will
+          find little incompatibility with familiar implementations.  Most
+          existing SNOBOL4 programs should operate correctly using SNOBOL4
+          with little or no change.
+<P><HR>
+<IMG SRC="../prev.gif" ALT="Previous" ALIGN=TOP> Previous chapter
+<B>&#183;</B> <A HREF="ch2.htm"><IMG SRC="../next.gif" ALT="Next" ALIGN=TOP> Next chapter</A>
+<B>&#183;</B> <A HREF="contents.htm"><IMG SRC="../toc.gif" ALT="Contents" ALIGN=TOP> Table of Contents</A>
+
+</BODY>
+</HTML>

@@ -1,0 +1,15 @@
+	A = "false"
+
+* "if-then-else"
+if	A "true"	:s(goTrue)f(goFalse)
+goTrue	output = "A is TRUE"	:(fi)
+goFalse	output = "A is not TRUE"	:(fi)
+fi
+
+* "switch"
+switch	A ("true" | "false") . switch	:s($("case" switch))f(default)
+casetrue	output = "A is TRUE"	:(esac)
+default
+casefalse	output = "A is not TRUE"	:(esac)
+esac
+end

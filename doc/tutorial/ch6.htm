@@ -1,0 +1,728 @@
+<HTML>
+<HEAD><TITLE>A Snobol4 Tutorial: Chapter 6</TITLE>
+</HEAD>
+
+<BODY>
+<!-- From Part II of the Catspaw manual distributed with Vanilla Snobol.
+     HTML markup by John English (je@brighton.ac.uk).
+-->
+
+<A HREF="ch5.htm"><IMG SRC="../prev.gif" ALT="Previous" ALIGN=TOP> Previous chapter</A>
+<B>&#183;</B> <A HREF="ch7.htm"><IMG SRC="../next.gif" ALT="Next" ALIGN=TOP> Next chapter</A>
+<B>&#183;</B> <A HREF="contents.htm"><IMG SRC="../toc.gif" ALT="Contents" ALIGN=TOP> Table of Contents</A>
+<HR>
+
+<H2>Chapter 6 : PROGRAM-DEFINED OBJECTS</H2>
+<P>
+      SNOBOL4 is a very large and rich language, providing a diverse
+    assortment of built-in features.  It is also an extensible language;
+    it allows you to define new data types, functions, and
+    operators.  You can, by creating your own entities, obtain
+    another level of conciseness and power of expression.
+<P>
+      We will begin with program-defined functions because they allow
+    a program to be partitioned into smaller, more manageable segments.
+     As functions tend to be just a few lines long, transfers
+    of control within them are usually obvious and manageable.  If
+    your main program has complex, intertwined GOTOs, consider how
+    the use of functions would clarify things.
+<P>
+      Functions also allow us to postpone the complete development of
+    an algorithm.  We can design the overall program structure, using
+    function names for components which will be developed later.
+    Furthermore, if a particular function proves inefficient, it can
+    be replaced later with an improved version.
+<H3><A NAME="6.1">
+                      6.1 PROGRAM-DEFINED FUNCTIONS
+</A></H3>
+<P>
+      The concept of a function should be clear from all the examples
+    of SNOBOL4's built-in functions.  A function accepts some number
+    of arguments, performs a computation based on their values, and
+    returns a result and a success signal.  A function can also signal
+    failure, and not return any value.
+<H3><A NAME="6.1.1">
+    6.1.1 Function Definition
+</A></H3>
+<P>
+      We can define a new function by specifying its name and arguments.
+     The definition will be composed of &quot;dummy arguments&quot; -- 
+    place holders that show how the arguments are to be used in the
+    function.  Later, when the function is called, the actual arguments
+    will replace the dummy arguments in the computation.
+<P>
+      We define a new function in SNOBOL4 by using the built-in function
+    DEFINE.  We call it with a &quot;prototype string&quot; containing the
+    new function's name and arguments.  DEFINE makes the new function's
+    name known to SNOBOL4, so it can be used subsequently.
+<P>
+      Suppose we want to create a new function called SHIFT, which
+    would circularly rotate a string through a specified number of
+    character positions.  We'll define all rotations as being to the
+    left -- characters removed from the front of the string are placed
+    back on the end.  For example, SHIFT('ENGRAVING',3) would return
+    the string 'RAVINGENG'.
+<P>
+      We will begin by defining the function name and its dummy arguments,
+    S and N.  Any names of your choosing can by used for dummy
+    arguments.  In a program, it would look like this:
+<PRE>
+    DEFINE('SHIFT(S,N)')
+</PRE>
+      It is important to realize that the DEFINE function must be
+    executed for the definition to occur.  Most other programming
+    languages process function definitions when a program is compiled.
+     SNOBOL4's system is more flexible; the prototype string
+    can itself be the result of other run-time computations.  In an
+    extreme case, data input to a program could determine the names
+    and kinds of functions to be defined.
+<H3><A NAME="6.1.2">
+    6.1.2 The Function Body
+</A></H3>
+<P>
+      Having declared the function name and dummy arguments, we need
+    to provide the statements which will implement the function.  A
+    very simple convention applies:
+<P>
+         When the function is used, SNOBOL4 transfers control to
+         a statement label with the same name as the function.
+<P>
+      In this case, the first statement of the function would be
+    labeled SHIFT.  There is no limit to the number of statements
+    comprising the function body.
+<H3><A NAME="6.1.3">
+    6.1.3 Returning Function Results
+</A></H3>
+<P>
+      First, a function may return a value by assigning it to a variable
+    with the same name as the function.  If no assignment
+    occurs, the result is the null string.
+<P>
+      Second, the function must tell SNOBOL4 that it is finished, and
+    that control should return back to the caller.  It does this by
+    transferring to the special label RETURN.
+<P>
+      The label RETURN should not appear anywhere in your program.
+    It is a special name, reserved by SNOBOL4 for just this purpose.
+<P>
+      With this information, we can now write our SHIFT function.  We
+    will remove the first N characters from the beginning of the argument
+    string, and place them on the end.  The function body
+    looks like this:
+<PRE>
+    SHIFT   S LEN(N) . FRONT REM . REST
+            SHIFT = REST FRONT                   :(RETURN)
+</PRE>
+      Each time SHIFT is called, the particular arguments used are
+    placed in S and N.  The first statement splits S into two parts,
+    assigning them to variables FRONT and REST.  The second statement
+    reassembles them in the shifted order, and assigns them to vari-
+<P>
+    able SHIFT, to be returned as the function result.  The GOTO then
+    transfers to label RETURN to return back to the caller.
+<H3><A NAME="6.1.4">
+    6.1.4 Function Failure
+</A></H3>
+<P>
+      What happens if we try the function call SHIFT('PEAR',7)?  As
+    the function is defined above, the pattern match would fail,
+    since LEN(7) is longer than the subject string.  The assignment
+    to FRONT and REST would not take place, and the function would
+    return an erroneous result.
+<P>
+      Now we could extend the definition of SHIFT to cycle the
+    argument string multiple times.  In general, though, we want to
+    develop a convenient method that allows a function to signal an
+    exceptional condition back to the caller.  Function failure
+    allows us to do just that.  Another convention is provided:
+<P>
+         Transferring to the special label FRETURN returns from
+         a function signaling failure to the caller.  No value
+         is returned as the function result.
+<P>
+      We can now rework the function body to signal failure when N is
+    too large.  In this case, the pattern match fails, and we detect
+    the failure in the GOTO field:
+<PRE>
+    SHIFT   S LEN(N) . FRONT REM . REST          :F(FRETURN)
+            SHIFT = REST FRONT                   :(RETURN)
+</PRE>
+      In general, the transfer to FRETURN does not need to be the
+    result of the failure of a particular statement.  Any success or
+    failure could be tested to produce a transfer to FRETURN.  For
+    example, if we decided to explicitly test the length of S, the
+    function could begin with:
+<PRE>
+    SHIFT   GT(N, SIZE(S))                       :S(FRETURN)
+            . . .
+</PRE>
+
+<H3><A NAME="6.1.5">
+    6.1.5 Local Variables
+</A></H3>
+<P>
+      FRONT and REST were used in this function as temporary variables
+    to rearrange the argument string.  If they had appeared
+    elsewhere in your program, their old values would be destroyed.
+    Such inadvertent conflicts become harder to avoid as your function
+    library grows.  The prototype string used with DEFINE can
+    specify &quot;local variables&quot; to be protected when the function is
+    called.  For our SHIFT function, the call would look like this:
+<PRE>
+    DEFINE('SHIFT(S,N)FRONT,REST')
+</PRE>
+      The local variables appear after the argument list.  When SHIFT
+    is called, any existing values for FRONT and REST will be saved
+    on a pushdown stack.  FRONT and REST are set to the null string,
+<P>
+    and control is transferred to the first statement of the function
+    body.  When the function returns, FRONT and REST are restored to
+    their previous values.
+<P>
+      Since the same potential problem exists for dummy arguments S
+    and N, SNOBOL4 automatically saves their values before assigning
+    the actual arguments to them.  And just like local variables,
+    when the function returns, the dummy arguments are restored to
+    their original values.
+<H3><A NAME="6.1.6">
+    6.1.6 Using Functions
+</A></H3>
+<P>
+      Once a function has been defined, it may be used in exactly the
+    same manner as a built-in function.  It may appear in a statement
+    anywhere its value is needed -- in the subject, pattern, or
+    replacement fields.  If used with the indirect reference operation,
+    functions may even be used in the GOTO field.  Of course, a
+    function may be used as the argument of another function.
+<P>
+      The value returned by a function is not restricted to strings.
+    Any SNOBOL4 data type, including patterns, may be returned.  Earlier,
+    in the <A HREF="ch4.htm">pattern match chapter</A>, we showed how simple patterns
+    could be tailored to our needs by using them in more complicated
+    clauses.  The specific example was a variation of the BREAK pattern
+    which would not match the null string.  Let's use a programdefined
+    function to create a new function, BREAK1, with this
+    property.  The definition statement might look like this:
+<PRE>
+    DEFINE('BREAK1(S)')
+</PRE>
+    and the function body, like this:
+<PRE>
+    BREAK1  BREAK1 = NOTANY(S) BREAK(S)          :(RETURN)
+</PRE>
+      This function can now be used directly in a pattern match.  For
+    example, BREAK1('abc') constructs a pattern which matches a nonnull
+    string, up to the occurrence of the letters 'a', 'b', or
+    'c'.  Of course, the pattern returned by a function can be as
+    complex as desired, giving us an elegant method to define our own
+    pattern matching primitives.
+<H3><A NAME="6.1.7">
+    6.1.7 Organizing Functions
+</A></H3>
+<P>
+      SNOBOL4 does not know or care which statements belong to a
+    particular function.  There is no explicit END statement for
+    individual functions.  To keep programs readable, we'll have to
+    impose some discipline of our own.  Also, having to execute the
+    DEFINE function is a mixed blessing.  It offers tremendous flexibility,
+    but requires us to place all our DEFINE's at the beginning
+    of a program.  Here is the system proposed by Gimpel, which
+    I like to use to manage functions and their definitions:
+<P>
+      We keep the function definition, any one-time initialization,
+    and the function body together as a unit.  A GOTO transfers control
+    around the function body after the definition and initialization
+    statements are executed.  Also present are comments describing
+    its use and any exceptional conditions.  Rewriting the
+    SHIFT function in this form, and taking this opportunity to avoid
+    rebuilding the pattern each time the function is called, it looks
+    like this:
+<PRE>
+    * SHIFT(S,N)  -  Shift string S left N character positions.
+    *  As characters are removed from the left side of the
+    *  string, they are placed on the end.
+    *
+    *  The function fails if N is larger than the size of S.
+
+            DEFINE('SHIFT(S,N)FRONT,REST')
+            SHIFT_PAT = LEN(*N) . FRONT REM . REST :(SHIFT_END)
+
+    SHIFT   S SHIFT_PAT                          :F(FRETURN)
+            SHIFT = REST FRONT                   :(RETURN)
+    SHIFT_END
+</PRE>
+      Now this group of lines can be incorporated as a unit into the
+    beginning of any program that wants to use it.  When execution
+    begins, the first statement defines the SHIFT function.  Next we
+    define a pattern, called SHIFT_PAT, for use when the function is
+    called.  The pattern definition is only executed once, so we use
+    the unevaluated expression operator (*N) to obtain the current
+    value of N on each function call.  After defining the pattern, we
+    &quot;jump around&quot; the function body, to label SHIFT_END.  (Remember,
+    we are defining the function now, not executing it; falling into
+    the function body would be an error.)  The function is now defined,
+    and ready to be used.
+<P>
+      In general, functions should be prepared in this form:
+<PRE>
+    * Fname  - Description of use
+
+            DEFINE('Fname(arg1,...,argn)local1,...,localn')
+             . . .
+    *       Any one-time initialization for Fname
+             . . .                               :(Fname_END)
+
+    Fname   Function body
+             . . .
+    Fname_END
+</PRE>
+      If you place your functions in individual disk files, they can
+    be included in new programs as necessary.  By preparing functions
+    in this form, they will all be defined and initialized when execution
+    begins.
+<P>
+      When discussing pattern matching, we used a pattern to convert
+    a character to its ASCII decimal value.  In BASIC, two functions
+    are provided for similar operations: ASC and CHR$.  We can create
+    SNOBOL4 equivalents like this:
+<PRE>
+    * ASC(S) - Return the ASCII code for the first character of
+    *          string S.
+    *
+    *       The value returned is an integer between 0 and 255.
+    *       The function fails if S is null.
+
+            DEFINE('ASC(S)C')
+            ASC_ONE = LEN(1) . C
+            ASC_PAT = BREAK(*C) @ASC             :(ASC_END)
+
+    ASC     S ASC_ONE                            :F(FRETURN)
+            &amp;ALPHABET ASC_PAT                    :(RETURN)
+    ASC_END
+
+    * CHR(N) - Converts an integer ASCII code to a one character
+    *          string.
+    *
+    *       The argument N is an integer between 0 and 255.
+    *       The function fails if N is greater than 255.
+
+            DEFINE('CHR(N)')
+            CHR_PAT = TAB(*N) LEN(1) . CHR       :(CHR_END)
+
+    CHR     &amp;ALPHABET CHR_PAT              :S(RETURN) F(FRETURN)
+    CHR_END
+</PRE>
+      Note that both functions were written to work correctly regardless
+    of the anchoring mode in use by the calling program.
+<P>
+      (The CHR function is shown here as an example only.  Vanilla
+    SNOBOL4 provides a built-in function, CHAR(N), for this purpose.
+    See <A HREF="../manual/ch8.htm">Chapter 8 of the Reference Manual</A>, &quot;Built-in Functions.&quot;)
+<H3><A NAME="6.1.8">
+    6.1.8 Call by Value and Call by Name
+</A></H3>
+<P>
+      Function calls in SNOBOL4 transmit the &quot;value&quot; of the argument
+    to the function.  Variables used in the function call cannot be
+    harmed by the function.  This type of function usage is referred
+    to as &quot;call by value.&quot;  Occasionally, we might want the function
+    to access the argument variables themselves.  The name operator
+    introduced in the previous chapter provides this ability.  The
+    function call still transmits a value, but the value used is the
+    &quot;name&quot; of a variable.
+<P>
+      Consider a function called SWAP, which will exchange the contents
+    of two variables.  If we wanted to exchange the contents of
+    variables COUNT and OLDCOUNT, we would say SWAP(.COUNT,
+    .OLDCOUNT).  The function looks like this:
+<PRE>
+    * SWAP(.V1, .V2) - Exchange the contents of two variables.
+    *  The variables must be prefixed with the name operator
+    *  when the function is called.
+
+            DEFINE('SWAP(X,Y)TEMP')              :(SWAP_END)
+
+    SWAP    TEMP = $X
+            $X = $Y
+            $Y = TEMP                            :(RETURN)
+    SWAP_END
+</PRE>
+      The name operator allows us to access the argument variables.
+    If we had not used it, the function would be called with the
+    variables' values, with no indication of where they came from.
+    Calls to SWAP are not limited to simple variable arguments.  Anything
+    capable of receiving the name operator, such as array and
+    table elements, could be used:  SWAP(.A&lt;4,3&gt;, .T&lt;'YOU'&gt;).
+<P>
+      There are certain situations where call by name occurs implicitly.
+     If the argument is an array or table name, or a programdefined
+    data type (discussed below), it points to the actual data
+    object, which can then be modified by the function.  For example,
+    if FILL were a function which loads an array with values read
+    from a file, the statements
+<PRE>
+    A = ARRAY(25)
+    FILL(A)
+</PRE>
+    would cause array A to be altered.
+<H3><A NAME="6.1.9">
+    6.1.9 Functions and CODE.SNO
+</A></H3>
+<P>
+      The CODE.SNO program was provided to allow interactive experiments
+    with SNOBOL4 statements.  If you create functions using the
+    preceding format, they also can be tested using CODE.SNO.
+<P>
+      Use your text editor to create a disk file containing the SHIFT
+    function.  (Be certain to include the GOTO that transfers around
+    the function body.)  Call the file SHIFT.SNO.  Now, start the
+    CODE.SNO program, and type the following:
+<PRE>
+    ?       SLOAD('SHIFT.SNO')
+    Success
+    ?       OUTPUT = SHIFT('COTTON',4)
+    ONCOTT
+    ?       OUTPUT = SHIFT('OAK',4)
+    Failure
+</PRE>
+
+<H3><A NAME="6.1.1">
+    6.1.10 Recursive Functions
+</A></H3>
+<P>
+      The statements that comprise a function are free to call any
+    functions they choose, including the function they are defining.
+    Of course, for this to make sense, they must call themselves with
+    a simplified version of the original problem, or an endless loop
+    would result.  Eventually, the function calls itself with an argument
+    so simple that it can return an answer without any further
+    recursive calls.  It's like winding a clock spring up.  The
+    central, non-recursive answer to the innermost call provides an
+    answer to the next turn out, with the recursive calls unwinding
+    until the original problem can be solved.
+<P>
+      There is no explicit declaration for recursion; any function
+    can be used recursively if it is designed properly.  However, all
+    local variables should be declared in the DEFINE function so they
+    will be saved and restored during recursive calls.
+<P>
+      Sometimes, recursion can produce dramatically smaller programs.
+    &quot;Algorithms in SNOBOL4&quot; provides a example with the recursive
+    function, ROMAN.  It convert's an integer in the range 0 to 3999
+    to its Roman numeral equivalent.  Two premises are required:
+<OL>
+      <LI>We know the Roman numerals for the numbers 0 to 9 (null, I,
+         II, ..., IX), and can perform this conversion with a simple
+         pattern match.
+<P>
+      <LI>We can use the REPLACE function to &quot;multiply&quot; a number in
+         Roman form by 10 by replacing I by X, V by L, X by C, etc.
+</OL><P>
+      The function uses these two rules to produce a recursive solution
+    for some integer N.  The algorithm looks like this:
+<BLOCKQUOTE>
+         The rightmost digit is removed from the argument and
+         converted by premise 1.  Removing the digit effectively
+         divides the argument by 10, simplifying the problem.
+<P>
+         The reduced argument is then converted by calling ROMAN
+         recursively and &quot;multiplying&quot; the result by 10 according
+    to premise 2.
+</BLOCKQUOTE>
+         The previously converted unit's digit is appended to
+         the result.
+<P>
+    Here's the function (note that a &quot;plus sign&quot; in column one allows
+    a statement to be continued over several lines):
+<PRE>
+    * ROMAN(N) - Convert integer N to Roman numeral form.
+    *
+    *  N must be positive and less than 4000.
+    *
+    *  An asterisk appears in the result if N &gt;= 4000.
+    *
+    *  The function fails if N is not an integer.
+
+            DEFINE('ROMAN(N)UNITS')              :(ROMAN_END)
+
+    *  Get rightmost digit to UNITS and remove it from N.
+    *  Return null result if argument is null.
+    ROMAN   N RPOS(1) LEN(1) . UNITS =           :F(RETURN)
+
+    *  Search for digit, replace with its Roman form.
+    *  Return failing if not a digit.
+            '0,1I,2II,3III,4IV,5V,6VI,7VII,8VIII,9IX,'  UNITS
+    +         BREAK(',') . UNITS                 :F(FRETURN)
+
+    *  Convert rest of N and multiply by 10.  Propagate a
+    *  failure return from recursive call back to caller.
+            ROMAN = REPLACE(ROMAN(N), 'IVXLCDM', 'XLCDM**')
+    +               UNITS            :S(RETURN) F(FRETURN)
+    ROMAN_END
+</PRE>
+      The first call to ROMAN may have an integer argument.  The
+    statement labeled ROMAN causes N to be converted to a string, and
+    subsequent recursive calls use a string argument.  The recursive
+    calls cease when reducing N finally produces a null string
+    argument -- the match at statement ROMAN fails, and the function
+    returns immediately with a null result.
+<H3><A NAME="6.2">
+                     6.2 PROGRAM-DEFINED DATA TYPES
+</A></H3>
+<P>
+      With the exception of arrays and tables, a variable may have
+    only one item of data in it at a time.  In many applications, it
+    is convenient if several data items can be associated with a
+    variable.  For example, if we wanted to work with complex numbers,
+    a variable should contain two numbers -- the real and imaginary
+    parts.  In an inventory system, an individual product might
+    require values such as name, price, quantity, and manufacturer.
+<P>
+      Program-defined data types enlarge SNOBOL4's repertoire to
+    include new objects such as COMPLEX or PRODUCT.  SNOBOL4 only
+    provides a system for managing these new types; defining a data
+    type does not magically invest SNOBOL4 with a knowledge of complex
+    arithmetic or inventory accounting.  It is still up to you
+    to provide the computational support for each new type.
+<H3><A NAME="6.2.1">
+    6.2.1 Data Type Definition
+</A></H3>
+<P>
+      A program-defined data type will consist of a number of fields,
+<P>
+    each containing an individual data element.  We begin by selecting
+    names for the data type and fields.  An inventory system
+    might use the data type name PRODUCT, and field names NAME,
+    PRICE, QUANTITY, and MFG.
+<P>
+      A data type is defined by providing a prototype string to the
+    built-in DATA function.  The prototype assumes a form similar to
+    a function call, with the data type taking the place of the function
+    name, and the field names replacing the arguments.  The form
+    of the prototype string is:
+<PRE>
+    'TYPENAME(FIELD1,FIELD2,...,FIELDn)'
+</PRE>
+      Blanks are not permitted within a prototype.  Try creating a
+    new data type using the CODE.SNO program:
+<PRE>
+    ?       DATA('PRODUCT(NAME,PRICE,QUANTITY,MFG)')
+    Success
+</PRE>
+      The DATA function tells SNOBOL4 to define an object creation
+    function with the new data type's name:
+<PRE>
+    PRODUCT(arg1, arg2, arg3, arg4)
+</PRE>
+      This new function can be called whenever we wish to create a
+    new object with the PRODUCT data type.  Its arguments are the
+    initial values to be given to the four fields which comprise a
+    PRODUCT.  The function returns a pointer to the new object, which
+    can be stored in a variable, array, or table.  Try creating two
+    new objects as follows:
+<PRE>
+    ?      ITEM1 = PRODUCT('CAPERS', 2, 48, 'BRINE BROTHERS')
+    ?      ITEM2 = PRODUCT('PICKLES', 1, 72, 'PETER PIPER INC.')
+</PRE>
+
+<H3><A NAME="6.2.2">
+    6.2.2 Data Type Use
+</A></H3>
+<P>
+      The defining call to the DATA function also created several
+    field reference functions.  In this case, their names would be:
+<PRE>
+    NAME(arg)    PRICE(arg)    QUANTITY(arg)    MFG(arg)
+</PRE>
+      The argument used with each function is an object created by
+    the PRODUCT function.  Try accessing ITEM1's fields:
+<PRE>
+    ?       OUTPUT = MFG(ITEM1)
+    BRINE BROTHERS
+    ?       OUTPUT = PRICE(ITEM1) * QUANTITY(ITEM1)
+    96
+</PRE>
+      We can alter the value of a field after an object is created.
+    Field reference functions can also be used as the object of an
+    assignment, so:
+<PRE>
+    ?       QUANTITY(ITEM2) = QUANTITY(ITEM2) - 12
+</PRE>
+    changes the QUANTITY field of ITEM2 from 72 to 60.
+<H3><A NAME="6.2.3">
+    6.2.3 Copying Data Items
+</A></H3>
+<P>
+      It is important to recognize that variables like ITEM1 and
+    ITEM2 contain &quot;pointers&quot; to the data.  Assigning ITEM1 to another
+    variable, say LASTITEM, merely copies the pointer; both variables
+    still point to the same physical packet of data in memory.
+    Altering the QUANTITY field of ITEM1 would alter the QUANTITY
+    field of LASTITEM.  This is the same behavior observed earlier
+    for array and table names.
+<P>
+      The built-in COPY function creates a unique copy of an object--
+    one which is independent of the original.  Try using it with
+    CODE.SNO:
+<PRE>
+    ?       LASTITEM = COPY(ITEM1)
+    ?       QUANTITY(ITEM1) = 24
+    ?       OUTPUT = QUANTITY(LASTITEM)
+    48
+</PRE>
+
+<H3><A NAME="6.2.4">
+    6.2.4 Creating Structures
+</A></H3>
+<P>
+      Our inventory example used string and integer values as the
+    field contents.  In fact, any SNOBOL4 data type may be stored in
+    a field, including pointers to other program-defined types.  Complex
+    structures, such as queues, stacks, trees, and arbitrary
+    graphs may be created.
+<P>
+      For example, if we wanted to link together all products made by
+    the same manufacturer, PRODUCT could be defined with an additional
+    field.  We won't go through the exercise with CODE.SNO,
+    but will sketch out the changes:
+<PRE>
+    DATA('PRODUCT(NAME,PRICE,QUANTITY,MFG,MFGLINK')
+</PRE>
+      As each product is defined, we will determine if we have
+    another product from the same manufacturer.  If so, MFGLINK is
+    set to point to that other product.  If not, it is set to the
+    null string.  A table M provides a convenient way to keep track
+    of manufacturers.  Assume variable COMPANY contains the manufacturer's
+    name as each product is defined.  Then all of the requisite
+    searching and linking can be accomplished in one statement:
+<PRE>
+    M&lt;COMPANY&gt; = PRODUCT(..., ..., ..., COMPANY, M&lt;COMPANY&gt;)
+</PRE>
+      If this is the company's first appearance, it is not in the
+    table, and the last argument to the PRODUCT function sets MFGLINK
+    to the null string.  The assignment statement uses the company as
+    the table subscript, and the entry points to the current product.
+<P>
+    If another product definition uses the same company, MFGLINK will
+    point to the previous product, and the table will be updated to
+    point to the current product.  In this manner, all products from
+    a manufacturer will be threaded together.  Each thread starts
+    with a table entry, and goes through each product's MFGLINK
+    field, ending with a null string in the last product's MFGLINK.
+<P>
+      Now if we wanted to display all products supplied by a particular
+    manufacturer, we select and follow the appropriate thread:
+<PRE>
+            X      =  M&lt;COMPANY&gt;
+    LOOP    OUTPUT =  DIFFER(X) NAME(X)          :F(DONE)
+            X      =  MFGLINK(X)                 :(LOOP)
+    DONE
+</PRE>
+
+<H3><A NAME="6.2.5">
+    6.2.5 The DATATYPE Function
+</A></H3>
+<P>
+      The DATATYPE function allows you to learn the type of data in a
+    particular variable.  It is useful when the kind of processing to
+    be performed depends on the data type.  The formal data type name
+    is returned as an upper-case string:
+<PRE>
+    ?       OUTPUT = DATATYPE(54)
+    INTEGER
+    ?       OUTPUT = DATATYPE(ITEM1)
+    PRODUCT
+</PRE>
+
+<H3><A NAME="6.3">
+                      6.3 PROGRAM-DEFINED OPERATORS
+</A></H3>
+<P>
+      If you can define new functions and data types, why not new
+    operators too?  Indeed, SNOBOL4 provides this feature, although
+    most programs can be written without it.  For the sake of completeness,
+    we'll provide a brief discussion.
+<H3><A NAME="6.3.1">
+    6.3.1 Operators and Functions
+</A></H3>
+<P>
+      Unary or binary operators can be thought of as functions of one
+    or two arguments.  For example, A + B can be written in functional
+    form as PLUS(A,B), where PLUS is some function which implements
+    addition.  Operators can be redefined by specifying a
+    function to replace them.  We still write our program in terms of
+    the operator's graphic symbol, but SNOBOL4 will use the specified
+    function whenever the operator must be performed.
+<P>
+      The built-in function OPSYN creates synonyms and new definitions
+    for operators.  Synonyms permit different names or symbols
+    to be used in place of a function or operator.  The general form
+    of OPSYN is:
+<PRE>
+    OPSYN(new name, old name, i)
+</PRE>
+      The new name is defined as a synonym of the old name.  The
+    third argument is 0, 1, or 2 if we are defining functions, unary
+    operators, or binary operators respectively.
+<H3><A NAME="6.3.2">
+    6.3.2 Function Synonyms
+</A></H3>
+<P>
+      We can make the name LENGTH a synonym for the SIZE function:
+<PRE>
+    ?       OPSYN('LENGTH', 'SIZE', 0)
+    ?       OUTPUT = LENGTH('RABBIT')
+    6
+</PRE>
+      The word synonym is not quite an accurate description of OPSYN.
+    The name LENGTH becomes associated with the &quot;code&quot; that implements
+    the SIZE function, not with the word SIZE per se.  If SIZE
+    was subsequently redefined -- perhaps as a program-defined
+    function--LENGTH would continue to return the number of
+    characters in a string.
+<H3><A NAME="6.3.3">
+    6.3.3 Operator Synonyms
+</A></H3>
+<P>
+      Take a moment to examine the tables in <A HREF="../manual/ch4.htm">Chapter 4 of the Reference Manual</A>, &quot;Operators,&quot;
+    in the reference section.  Note that in each table there are a
+    number of operator symbols whose definition is &lt;none&gt;.
+<P>
+      If you use an undefined binary operator, you'll get an error:
+<PRE>
+    ?       OUTPUT = 1 # 1
+    Execution error #5, Undefined function or operation
+</PRE>
+      However, we could make this operator synonymous with the DIFFER
+    function (which also uses two arguments) and use it instead:
+<PRE>
+    ?       OPSYN('#', 'DIFFER', 2)
+    ?       OUTPUT = 1 # 2
+    Failure
+</PRE>
+      Conversely, we can define a function in place of an operator:
+<PRE>
+    ?       OPSYN('PLUS', '+', 2)
+    ?       OUTPUT = PLUS(4, 5)
+    9
+</PRE>
+      Unary operators can be similarly treated, using 1 as the third
+    argument:
+<PRE>
+    ?       OPSYN('!', 'ANY', 1)
+    ?       'ABC321' !'3C' . OUTPUT
+    C
+</PRE>
+      Operators can be created to maintain a stack, or navigate
+    around a tree.  The full generality of functions and programdefined
+    data types are available to your operators.  Through this
+    technique you can make SNOBOL4 speak the language of your
+    particular problem.
+
+<P><HR>
+<A HREF="ch5.htm"><IMG SRC="../prev.gif" ALT="Previous" ALIGN=TOP> Previous chapter</A>
+<B>&#183;</B> <A HREF="ch7.htm"><IMG SRC="../next.gif" ALT="Next" ALIGN=TOP> Next chapter</A>
+<B>&#183;</B> <A HREF="contents.htm"><IMG SRC="../toc.gif" ALT="Contents" ALIGN=TOP> Table of Contents</A>
+
+</BODY>
+</HTML>

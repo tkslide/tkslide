@@ -1,0 +1,31 @@
+Zero install package
+--------------------
+Good news -- if you are using the "zero-install" version of the package
+all you have to do is to change to the program directory and start 'slide'
+
+
+Installation
+------------
+Well, you have to have TCL installed.
+Just unzip/untar it, adjust your PATH (if needed).
+
+Configuration
+-------------
+There is only one system-wide configuration file (tksliderc in installation
+directory and one user configuration file in user's "HOME" 
+UNIX: $HOME/.tksliderc
+WINDOWS: {your profile folder}\tksliderc
+
+You can copy the example_tksliderc file to the proper location and adjust it
+with your favorite editor
+
+You will *have to* specify the full path name of your browser.
+
+Platform-specific
+-----------------
+UNIX:
+- The file should be executable (use chmod +x tkslide.tcl if needed).
+- If your 'wish' executable isn't '/usr/bin/wish' adjust the first line of
+tkslide.tcl.
+
+

@@ -1,0 +1,286 @@
+<HTML>
+<HEAD><TITLE>Snobol4 Reference Manual: Chapter 3</TITLE></HEAD>
+<BODY>
+<!-- From Part III of the Catspaw manual distributed with Vanilla Snobol.
+     HTML markup by John English (je@brighton.ac.uk).
+-->
+
+<A HREF="ch2.htm"><IMG SRC="../prev.gif" ALT="Previous" ALIGN=TOP> Previous chapter</A>
+<B>&#183;</B> <A HREF="ch4.htm"><IMG SRC="../next.gif" ALT="Next" ALIGN=TOP> Next chapter</A>
+<B>&#183;</B> <A HREF="contents.htm"><IMG SRC="../toc.gif" ALT="Contents" ALIGN=TOP> Table of Contents</A>
+<HR>
+
+<H2>Chapter 3 : STATEMENTS</H2>
+<P>
+            Each line of input to SNOBOL4 consists of a sequence of ASCII
+          characters, terminated by a carriage return.
+<P>
+            Comment and control statements are always one line long.  However,
+          a program statement may occupy several lines if necessary.
+          A continuation mark (plus sign or period) is placed in the first
+          column of the additional lines.
+<H3><A NAME="3.1">3.1 COMMENT STATEMENTS</A></H3>
+            An asterisk (*) in character position one denotes a comment
+          card.  All text through the end-of-line is copied to the listing
+          file, but is otherwise ignored by SNOBOL4.
+<H3><A NAME="3.2">3.2 CONTROL STATEMENTS</A></H3>
+            Control statements provide instructions to the SNOBOL4 compiler.
+           They begin with a minus (-) in character position one.
+          Controls may be specified in upper- or lower-case, regardless of
+          the current state of case-folding.  Unrecognized controls are
+          ignored.
+<UL>
+<LI><B>-CASE</B><P> n          Fold lower-case names to upper-case if n is
+                     nonzero.  Treat upper- and lower-case names
+                     as distinct if n is zero or absent.
+
+<P>
+<LI><B>-EJECT</B><P>           Start a new page on the listing file.
+
+<P>
+<LI><B>-LIST</B><P>            Equivalent to -LIST LEFT.
+
+<P>
+<LI><B>-LIST</B><P> LEFT       Turn on list output, produce statement numbers
+                     at left end of line.
+
+<P>
+<LI><B>-LIST</B><P> RIGHT      Turn on list output, produce statement numbers
+                     at right end of line.
+
+<P>
+<LI><B>-UNLIST</B><P>          Turn off list output.  Errors are not shown
+                     on the screen.
+</UL>
+            SNOBOL4 defaults to -LIST LEFT and -CASE 1.
+<H3><A NAME="3.3">3.3 PROGRAM STATEMENTS</A></H3>
+            If a line is not a control or comment statement, it is considered
+          SNOBOL4 program text.  A SNOBOL4 statement may have up to
+          five components.  The general form of a statement is:
+<PRE>
+    LABEL  SUBJECT PATTERN = REPLACEMENT              :GOTO
+</PRE>
+            Statement elements are separated by blank or tab.
+<P>
+            Ignoring the LABEL and GOTO fields for a moment, the remaining
+          elements may appear in various combinations to create different
+          types of statements:
+<DL>
+<DT>
+          <B>Evaluate expression:</B> SUBJECT
+<DD>
+            The expression comprising the subject is evaluated.  It may invoke
+          primitive and program-defined functions.
+<P>
+<DT>
+          <B>Assignment statement:</B> SUBJECT = REPLACEMENT
+<DD>
+            The value on the right is assigned to the variable on the left.
+          If failure occurs when evaluating the subject or replacement components,
+          the assignment does not occur.
+<P>
+<DT>
+          <B>Pattern match:</B> SUBJECT PATTERN
+<DD>
+            The subject and pattern expressions are evaluated, and the
+          specified pattern is applied to the subject string, producing
+          success or failure.
+<P>
+<DT>
+          <B>Pattern match with replacement:</B> SUBJECT PATTERN = REPLACEMENT
+<DD>
+            If the pattern match succeeds, the replacement expression is
+          evaluated and replaces the portion of the subject matched.  Only
+          the matched portion is replaced; characters adjacent to the
+          matching substring are not disturbed.
+<P>
+            If the equal sign (=) is present but the replacement field is
+          absent, the null string is assumed as the value of the replacement
+          field.
+</DL>
+            The GOTO field provides two-way branching to test the success
+          or failure of the preceding statement elements.
+<H4>3.3.1 Label Field</H4>
+            If a label is present, it must begin with the first character
+          of the line.  Labels provide a name for the statement, and serve
+          as the target for transfer of control from the GOTO field of any
+          statement.  Labels must begin with a letter or digit, optionally
+          followed by an arbitrary string of characters.  The label field
+          is terminated by the character blank, tab, or semicolon.  If the
+          first character of a line is blank or tab, the label field is
+          absent.
+<P>
+            If case-folding is in effect, lower-case letters are converted
+          to upper-case before defining the label.
+<H4>3.3.2 Subject Field</H4>
+            The subject field specifies the string which will be the subject
+          of pattern matching.  It also specifies the left side of a
+          simple assignment statement if pattern matching is absent.
+<P>
+            In an assignment statement, the subject must be a variable
+          name, an unprotected keyword, or a field-reference function from
+          a program-defined data type.  If a string is produced by evaluating
+          an expression, the indirect ($) operator must be used to
+          reference the underlying variable.
+<P>
+            If the subject appears in pattern matching without replacement,
+          the subject must evaluate to a string.  The string is scanned
+          left to right during the pattern match.  If the subject evaluates
+          to an integer, it is automatically converted to a string.  If replacement
+          is present, the same subject restrictions of assignment
+          statements apply.  Thus, a literal string is a valid subject only
+          if replacement is absent.
+<P>
+            If the expression comprising the subject contains the concatenation
+          operator, the subject must be surrounded by parenthesis.
+          This allows SNOBOL4 to distinguish concatenation blanks within
+          the subject from the blank between subject and pattern.
+<H4>3.3.3 Pattern Field</H4>
+            The pattern may be a simple string, or a complex expression involving
+          primitive pattern functions.  The pattern specifies one
+          or more strings which are systematically searched for in the subject.
+           The pattern match succeeds if a match is found, and fails
+          otherwise.  The &amp;FULLSCAN keyword determines whether the search
+          is exhaustive, or if heuristics will be applied to prevent futile
+          match attempts.
+<P>
+            The pattern may assign various matching components to variables
+          with the binary assignment operators dot and dollar sign (., $).
+<H4>3.3.4 Replacement Field</H4>
+            In an assignment statement, there are very few restrictions on
+          the replacement field.  If the subject is an unprotected keyword,
+          the replacement field must evaluate to an integer value.  If the
+          subject is a variable, the replacement field is assigned directly
+          to it, without type conversion.
+<P>
+            If there is pattern matching on the left side of the statement,
+          the replacement field must evaluate to a string, so that it may
+          be inserted into the matched portion of the subject string.
+<P>
+            Replacement occurs only if evaluation of the subject, pattern,
+          and replacement succeed.  Primitive functions which return success
+          or failure may be used in the replacement field as predicate
+          functions.  Since they return the null string, they do not alter
+          the replacement value.  However, their failure can prevent replacement
+          from occurring, and can be tested in the GOTO field.
+<H4>3.3.5 GOTO Field</H4>
+            Statement execution normally proceeds sequentially from one
+          statement to the next.  The GOTO field allows this flow to be altered
+          by directing the SNOBOL4 system to continue execution elsewhere.
+           The GOTO field is set off from the preceding statement
+          elements by blank or tab, and colon (:).  It may assume three
+          forms:  unconditional, conditional, and direct.
+<P>
+            The &quot;unconditional GOTO&quot; causes control to be transferred to
+          the specified labeled statement.  The label is enclosed in parenthesis,
+          and may be a name, or the result of evaluating an expression
+          and applying the indirect operator ($).  Transfer is made to
+          the labeled statement regardless of the success or failure outcome
+          of the earlier parts of the statement.
+<P>
+            The &quot;conditional GOTO&quot; similarly specifies control transfer to
+          a labeled statement, but it depends on the success or failure of
+          the statement.  The letter S precedes the parenthesized label
+          where control goes next if the statement succeeds.  The letter F
+          specifies the branch to be taken if the statement fails.  For
+          example:
+<PRE>
+    :S(LOOP)         Branches to label LOOP if the statement succeeds.
+
+    :F(ERROR)        Branches to label ERROR if the statement fails.
+
+    :S(OK) F(NOGO)   Branches to label OK on success, to NOGO on failure.
+
+    :(AGAIN)         Unconditionally transfers control to label AGAIN.
+
+    :($('VAR' N))    Branches to the label obtained by concatenating
+                     the string 'VAR' with the value of variable N.
+</PRE>
+            The &quot;direct GOTO&quot; is used to branch to a block of code compiled
+          with the CODE function.  If the code contains labels, a regular
+          GOTO could branch to the label and begin execution in the code
+          block.  The direct GOTO will branch to the start of the code
+          block, labeled or not.  A direct GOTO is specified by placing in
+          angle brackets the name of the variable which points to the code
+          block.
+<P>
+            Direct GOTOs may be made conditional by preceding them with S
+          or F.  They may also appear with regular GOTOs:
+<PRE>
+    VAR = CODE(string)         :S&lt;VAR&gt; F(COMPILE_ERROR)
+</PRE>
+            The lower-case letters &quot;s&quot; and &quot;f&quot; may be used interchangeably
+          with &quot;S&quot; and &quot;F&quot;, regardless of case-folding.
+<P>
+            The GOTO field may appear on a line without any subject, pattern,
+          and replacement.  The absent SNOBOL4 statement is assumed
+          to have succeeded.
+<H3><A NAME="3.4">3.4 CONTINUATION STATEMENTS</A></H3>
+            A SNOBOL4 statement may be divided across several lines by
+          placing a plus (+) or period (.) in character position one of the
+          successive lines.  There is no limit to the number of continuation
+          statements allowed.  The statement must be divided at a
+          point where a blank or tab could appear as an operator or separator;
+          it cannot be split in the middle of a name or quoted string.
+<P>
+            Very long strings may be entered on multiple lines, using the
+          implicit blank between lines as a concatenation operator:
+<PRE>
+            LONG_STRING = &quot;This is an example of a very long &quot;
+    +   &quot;string that wends its way across multiple continua&quot;
+    +   &quot;tion statements.  There is an implicit blank at the &quot;
+    +   &quot;beginning of each line that provides the concatenation&quot;
+    +   &quot; operator between segments.&quot;
+</PRE>
+<H3><A NAME="3.5">3.5 MULTIPLE STATEMENTS</A></H3>
+            The semicolon character may be used to place several statements
+          on one line.  Each semicolon terminates the current statement and
+          behaves like a new &quot;column one&quot; for the statement which follows.
+          Only program statements are permitted after the semicolon; control
+          and continuation statements are not allowed.  Here are some
+          examples:
+<PRE>
+    I = 1;     J = 2;      S PAT = 'HENRI'       :S(YES)
+    I = 1;OUT  OUTPUT = A&lt;I&gt;  :F(END);  I = I + 1 :(OUT)
+</PRE>
+            Because of its poor readability, placing labels in the middle
+          of a statement is strongly discouraged.
+<P>
+            As a language extension, Vanilla SNOBOL4 permits a comment
+          statement after the semicolon.  This provides a simple device for
+          end-of-line comments:
+<PRE>
+    PARA    NEXT = GETNEXT() :F(FRETURN) ;* Return if EOF
+            IDENT(NEXT)      :S(RETURN)  ;* Return on empty line
+            PARA = PARA NEXT :(PARA)     ;* Splice line
+</PRE>
+<H3><A NAME="3.6">3.6 THE END STATEMENT</A></H3>
+            The last statement in a program must be an END statement.  The
+          word END appears in the label field, beginning in column one.
+          Normally, it is the only word on the line:
+<PRE>
+            . . .
+            OUTPUT = 'All done'
+    END
+</PRE>
+            After reading the END statement, compilation ends, and execution
+          begins immediately with the very first program statement.
+          When the program is done, it should flow into the END statement,
+          or use a GOTO to transfer to it.
+<P>
+            Occasionally, we would like to begin execution at other than
+          the first statement.  If we place a statement label in the subject
+          field of the END statement, execution will begin there.  For
+          example, this statement will cause execution to begin at the
+          statement labeled START:
+<PRE>
+    END     START
+</PRE>
+
+<P><HR>
+<A HREF="ch2.htm"><IMG SRC="../prev.gif" ALT="Previous" ALIGN=TOP> Previous chapter</A>
+<B>&#183;</B> <A HREF="ch4.htm"><IMG SRC="../next.gif" ALT="Next" ALIGN=TOP> Next chapter</A>
+<B>&#183;</B> <A HREF="contents.htm"><IMG SRC="../toc.gif" ALT="Contents" ALIGN=TOP> Table of Contents</A>
+
+</BODY>
+</HTML>

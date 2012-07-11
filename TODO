@@ -1,0 +1,20 @@
+in random order:
+----------------
+- better syntax highlighting
+- configuration file documentation
+- multiple s4 options (checkboxes?)
+- project support
+- user-defined screen configuration
+- Baloon helps for snobol4 keywords?
+- resizable in/out/error frames? 
+	- or maybe vertically stacked in/out/err frames?
+- separate documentation pack (optional download?)
+- "goto procedure definition", like in ML editor (see wiki.tcl.tk).
+- test it with Catspaws Snobol4? Does anybody care? [Ask?]
+- who can test it with Spitbol? Announcement - webpage? mailgroup?
+- what with interactivity? (is the expect package the one and only way to implement it?)
+- *PORTABLE* intelligent browser recognition (use the systems default HTML browser - very complicated under Windows)
+- Function creator
+- Data creator (definition + accessors)
+- starkit package?
+- update documentation

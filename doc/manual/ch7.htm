@@ -1,0 +1,154 @@
+<HTML>
+<HEAD><TITLE>Snobol4 Reference Manual: Chapter 7</TITLE></HEAD>
+<BODY>
+<!-- From Part III of the Catspaw manual distributed with Vanilla Snobol.
+     HTML markup by John English (je@brighton.ac.uk).
+-->
+
+<A HREF="ch6.htm"><IMG SRC="../prev.gif" ALT="Previous" ALIGN=TOP> Previous chapter</A>
+<B>&#183;</B> <A HREF="ch8.htm"><IMG SRC="../next.gif" ALT="Next" ALIGN=TOP> Next chapter</A>
+<B>&#183;</B> <A HREF="contents.htm"><IMG SRC="../toc.gif" ALT="Contents" ALIGN=TOP> Table of Contents</A>
+<HR>
+
+<H2>Chapter 7 : PATTERNS AND PATTERN FUNCTIONS</H2>
+<P>
+            The SNOBOL4 pattern matcher is called the &quot;scanner.&quot;  The
+          &quot;cursor&quot; is the scanner's pointer into the subject string; it
+          points between subject characters (no relation to your CRT cursor).
+           It is initially zero when positioned to the left of the
+          subject, and is incremented as the scanner moves to the right in
+          the subject.
+<H3><A NAME="7.1">7.1 PRIMITIVE PATTERNS</A></H3>
+            These variables initially contain the primitive patterns of the
+          same name.  They may be set to other values by a program, and restored
+          to their original value from the corresponding protected
+          keywords.
+<UL>
+<LI><B>ABORT</B><P>            Causes immediate failure of the entire pattern
+ match, without seeking alternatives.
+
+<P>
+<LI><B>ARB</B><P>              Matches zero or more characters of the subject
+ string.  It matches the shortest possible
+ substring.
+
+<P>
+<LI><B>BAL</B><P>              Matches any nonnull string which is balanced
+                     with respect to parentheses.  A string without
+ parentheses is considered balanced.  BAL
+                     matches the shortest string possible.
+
+<P>
+<LI><B>FAIL</B><P>             Causes failure of this portion of the pattern
+                     match, causing the scanner to backtrack and
+                     try alternatives.
+
+<P>
+<LI><B>FENCE</B><P>            Matches the null string and succeeds when the
+                     scanner is moving left to right in a pattern,
+                     but fails if the scanner has to back up
+                     through it, seeking alternatives.
+
+<P>
+<LI><B>REM</B><P>              Matches zero or more characters from the current
+ cursor position to the end of the subject
+ string.
+
+<P>
+<LI><B>SUCCEED</B><P>          Matches the null string and always succeeds.
+</UL>
+            Altering these primitive patterns can produce very confusing
+          programs, unless the new value encompasses the old, like this:
+<PRE>
+    ARB = &amp;ARB . OUTPUT
+</PRE>
+
+<H3><A NAME="7.2">7.2 PRIMITIVE PATTERN FUNCTIONS</A></H3>
+            These functions produce a pattern based on the argument supplied.
+           The argument data type is shown below---other data types
+          or expressions will be converted to the required type if
+          possible.
+<P>
+            Pattern functions may be combined with other primitive patterns,
+          functions, and strings using the alternation and concatenation
+          operators to produce larger patterns.
+<UL>
+<LI><B>ANY(string)</B>&#160;&#160;&#160;&#160;                     Match one character from set
+<P>
+          Matches exactly one character from the set of characters specified
+          by the argument string.
+<P>
+<LI><B>ARBNO(pattern)</B>&#160;&#160;&#160;&#160;                  Match repeated pattern
+<P>
+          Matches zero or more consecutive occurrences of the string
+          matched by the argument pattern.  ARBNO matches the shortest
+          string possible--initially the null string--and only tries to
+          match pattern if other pattern components in the statement require
+          it.
+<P>
+<LI><B>BREAK(string)</B>&#160;&#160;&#160;&#160;                   Match characters not in set
+<P>
+          Matches zero or more characters provided they are not in the set
+          of characters in the argument string.  That is, it matches up to,
+          but not including, a character from the argument string.
+<P>
+<LI><B>LEN(integer)</B>&#160;&#160;&#160;&#160;                    Match fixed length string
+<P>
+          Matches a string of the specified length.  There are no restrictions
+          on the subject string characters.  An argument of zero will
+          match the null string.
+<P>
+<LI><B>NOTANY(string)</B>&#160;&#160;&#160;&#160;                  Match one character not in set
+<P>
+          Matches exactly one character provided it is not in the set of
+          characters specified by the argument string.
+<P>
+<LI><B>POS(integer)</B>&#160;&#160;&#160;&#160;                    Verify scanner position
+<P>
+          Succeeds if the scanner's current cursor position in the subject
+          string is equal to the specified integer value.  This function
+          merely verifies scanner position---it does not consume or match
+          any subject characters.  POS(0) as the first component of a pattern
+          produces an anchored pattern match.
+<P>
+<LI><B>RPOS(integer)</B>&#160;&#160;&#160;&#160;                   Verify scanner position from end
+<P>
+          Succeeds if the scanner's current cursor position in the subject
+          string is the specified number of characters from the end of the
+          string.  Like POS(), it verifies scanner position but does not
+          consume any characters.  RPOS(0) as the last component of a pattern
+          forces the pattern to match to the end of the subject
+          string.
+<P>
+<LI><B>RTAB(integer)</B>&#160;&#160;&#160;&#160;                   Match through position counting
+                                           from end
+<P>
+          Matches all characters from the current cursor position up to the
+          specified cursor position, counting from the end of the subject
+          string.  RTAB(N) matches characters up to, but not including, the
+          final N characters of the subject.
+<P>
+<LI><B>SPAN(string)</B>&#160;&#160;&#160;&#160;                    Match characters in set
+<P>
+          Matches one or more characters from the set of characters specified
+          by the argument string.  SPAN will not match the null
+          string; at least one character from the argument string must be
+          found in the subject.
+<P>
+<LI><B>TAB(integer)</B>&#160;&#160;&#160;&#160;                    Match through fixed position
+<P>
+          Matches all characters from the current cursor position up to the
+          specified cursor position.  TAB(N) matches characters up to, and
+          including, the initial N characters of the subject.  TAB will
+          match the null string if the target position and current cursor
+          position are the same.  The function fails if the current scanner
+          position is to the right of the target position.
+</UL>
+
+<P><HR>
+<A HREF="ch6.htm"><IMG SRC="../prev.gif" ALT="Previous" ALIGN=TOP> Previous chapter</A>
+<B>&#183;</B> <A HREF="ch8.htm"><IMG SRC="../next.gif" ALT="Next" ALIGN=TOP> Next chapter</A>
+<B>&#183;</B> <A HREF="contents.htm"><IMG SRC="../toc.gif" ALT="Contents" ALIGN=TOP> Table of Contents</A>
+
+</BODY>
+</HTML>
