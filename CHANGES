@@ -1,3 +1,7 @@
+0.34+
+* support for spitbol
+* version control on github
+
 0.34
 * corrected handling of "Save output" (no window title change)
 0.33
