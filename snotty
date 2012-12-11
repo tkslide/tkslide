@@ -1,0 +1,9 @@
+#! /bin/bash
+B=`dirname $0`
+if test `uname -m` = "x86_64" 
+then 
+	RUNTIME=$B/runtime/tclkit-linux-x86_64
+else
+	RUNTIME=$B/runtime/tclkit-linux-x86
+fi
+$RUNTIME $B/snotty.tcl $@
