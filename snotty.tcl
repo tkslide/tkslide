@@ -1,5 +1,7 @@
-set ::wid 1
-set ::syntax 1
+set ::tabs {2c 12c 55c left}
+set ::snobol4prog {/usr/local/bin/snobol4}
+set ::snobol4option {-br}
+
 set ::rootdir [file dirname [info script]]
 set auto_path [linsert $auto_path 0 [file join $::rootdir "lib"]]
 package require Tcl 8
@@ -8,6 +10,16 @@ package require fileutil
 package require ctext
 package require find
 
+
+set options {
+	{r	"Snobol4's -r switch"}
+	{f.arg	"unnamed.sno" "Load file on startup"}
+}
+set usage ": snotty \[-r]:"
+array set params [::cmdline::getoptions argv $options $usage]
+
+set ::wid 1
+set ::syntax 1
 
 proc setHilight {w} {
 #{{{
@@ -51,6 +63,29 @@ proc file_new {fname} {
 
 proc file_run {id} {
 	puts "run $id"
+	set currwin [focus]
+	set program [file join [ ::fileutil::tempfile "tkslide."]]
+	set ifile [file join [ ::fileutil::tempfile "tkslide.in."]]
+	set ofile [file join [ ::fileutil::tempfile "tkslide.out."]]
+	set efile [file join [ ::fileutil::tempfile "tkslide.err."]]
+	set fd [open $program w]
+	set pgm [$currwin get 1.0 "end -1c"]
+	puts -nonewline $fd  "$pgm"
+	close $fd
+	if { [catch {eval exec -keepnewline \
+			[list $::snobol4prog] \
+			[list $::snobol4option] \
+			[list $program] \
+			< [list $ifile] \
+			> [list $ofile] \
+			2> [list $efile] \
+		} results ] } { 
+				$currwin insert "end" "$results\n" 
+	  } 
+		set ofd [open $ofile r]
+		$currwin insert "end" "\n"
+		$currwin insert "end" [read $ofd]
+		close $ofd
 }
 
 proc file_close {id} {
@@ -63,7 +98,7 @@ proc file_close {id} {
 }
 
 proc createwin {winid} {
-	set winid [ctext $winid]
+	set winid [ctext $winid -tabs $::tabs]
 	bind $winid <Control-s> {file_save "" }
 	bind $winid <Control-o> {file_open "" }
 	bind $winid <Control-n> {file_new  ""}
@@ -71,6 +106,7 @@ proc createwin {winid} {
 	bind $winid <Control-q> {file_close ""}
 	setHilight $winid
 	wm title [winfo parent $winid] "SnoTTY"
+	wm protocol [winfo parent $winid] WM_DELETE_WINDOW {file_close ""}
 
 	return $winid
 }
