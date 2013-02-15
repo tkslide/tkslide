@@ -1,5 +1,7 @@
+0.35
+* support for spitbol (first implementation)
+
 0.34+
-* support for spitbol
 * version control on github
 
 0.34
