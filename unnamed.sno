@@ -1,4 +1,0 @@
-	x = 1
-while	output = x " " ?eq((x / 3) * 3 - x, 0) "Fizz" ?eq((x / 5) * 5 - x,0) "Buzz"
-	x = ?lt(x,100) x + 1	:s(while)
-end

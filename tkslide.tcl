@@ -170,7 +170,13 @@ proc saveTranscript {w} {
 
 proc runProgram {} {
 #{{{
+	set snobol4interp $::snobol4prog
 	set program [file join [ ::fileutil::tempfile "tkslide"]]
+	if {[string compare "$::language" "spitbol"]} {
+		set snobol4interp $::snobol4prog
+	} else {
+		set snobol4interp  $::spitbolprog
+	}
 	set fd [open $program w]
 	set pgm [.text get 1.0 "end -1c"]
 	if { $::useUTFlibrary } {
@@ -188,7 +194,7 @@ proc runProgram {} {
 	close $ifd
 	update
 	if { [catch {eval exec -keepnewline \
-			[list $::snobol4prog] $::snobol4option [list $program] \
+			[list $snobol4interp] $::snobol4option [list $program] \
 			$::snobol4param \
 			< [list $::ifile] \
 			> [list $::ofile] \
@@ -618,6 +624,8 @@ frame .toolbar
 
 #{{{Parameter bar
 frame .rtparam 
+	radiobutton .langSnobol4 -text {Snobol4} -variable ::language -value {snobol4}
+	radiobutton .langSpitbol -text {Spitbol} -variable ::language -value {spitbol}
 	label .s4optlab -text "Snobol4 options:" -underline 3
 	entry .s4option -bg white -font $::myFont -textvariable ::snobol4option
 	label .s4parlab -text "Parameters:" -underline 0
@@ -625,6 +633,8 @@ frame .rtparam
 	#button .s4run -bitmap @$icnRunP -text "Run" -underline 0 -width 34 -command {runProgram} -relief $::btnStyle
 	button .s4run -image [image create photo -file $icnRunP ] -text "Run" -underline 0 -width 34 -command {runProgram} -relief $::btnStyle
 	balloon .s4run "Run program"
+	pack .langSnobol4 .langSpitbol -in .rtparam -anchor w -side left -fill both -pady 1 -padx 1
+	.langSnobol4 select
 	pack .s4optlab -in .rtparam -anchor w  -side left   -fill both -pady 1 -padx 1
 	pack .s4option -in .rtparam -anchor w  -side left   -fill both -pady 1 -padx 1
 	balloon .s4option "Enter Snobol4 options here"
