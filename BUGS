@@ -1,4 +1,7 @@
 Known bugs:
+- WINDOWS: Spitbol interpreter seems to dislike windows style paths with spaces. 
+  If you plan to use spitbol with tkslide store "tkslide" folder in location 
+  without spaces (like "c:\tkslide" or "e:\tmp\tkslide")
 
 - cannot start with eTcl 1 rc 23
 
@@ -10,11 +13,7 @@ Known bugs:
   Fix: update TCL to 8.4.7+
   Workaround: Resize manually 
 
-- my English. After 11 years in Germany my German is still wanting some
-  improvement, but it didn't stop my English from getting even worse. (I'm not
-  even sure if the previous sentence was in English).
-
 - interactive (using keyboard entry) programs may hang the IDE
 
 - to stop program which entered endless loop one has to kill the snobol4
-	process.
+  process.
