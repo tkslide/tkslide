@@ -1,0 +1,92 @@
+*	open an SMTP connection for CSNOBOL4
+*	Phil Budne <phil@ultimate.com>
+*	May 7, 1997
+*	$Id: smtp.sno,v 1.2 2002/02/07 15:52:03 phil Exp $
+
+-include "tcp.sno"
+-include "bq.sno"
+
+*	whatever needs to be appended to line to make a CRLF
+	SMTP.CRLF = CHAR(13)
+
+* XXX UGGGGG-LEEEEE!
+	SMTP.HOSTNAME = BQ("(hostname || uname -n) | nslookup | grep '^Name:' | sed 's/^.*:[ 	]*//'")
+
+	DATA("SMTP.CONN(SMTP.CONN.VAR)")
+
+****************
+*	SMTP.OPEN()
+*
+*	args;
+*	Internet hostname for connection
+*	username@host of sender for envelope
+*	username of recipient for envelope (or array of recipients)
+*
+*	returns a SMTP.CONN data struct, to be passed to other routines
+	DEFINE("SMTP.OPEN(SMTP.HOST,SMTP.FROM,SMTP.TO)SMTP.X,SMTP.N")
+							:(SMTP.OPEN.END)
+SMTP.OPEN
+	SMTP.OPEN = SMTP.CONN()
+	TCP.OPEN(.SMTP.CONN.VAR(SMTP.OPEN),SMTP.HOST,"smtp")
++							:F(FRETURN)
+	SMTP.X = SMTP.CONN.VAR(SMTP.OPEN)		:F(SMTP.ERROR)
+	SMTP.X POS(0) "220"				:F(SMTP.ERROR)
+	SMTP.CONN.VAR(SMTP.OPEN) = "HELO " SMTP.HOSTNAME SMTP.CRLF
+	SMTP.X = SMTP.CONN.VAR(SMTP.OPEN)		:F(SMTP.ERROR)
+	SMTP.X POS(0) "250"				:F(SMTP.ERROR)
+	SMTP.CONN.VAR(SMTP.OPEN) = "MAIL FROM:<" SMTP.FROM ">" SMTP.CRLF
+	SMTP.X = SMTP.CONN.VAR(SMTP.OPEN)		:F(SMTP.ERROR)
+	SMTP.X POS(0) "2"				:F(SMTP.ERROR)
+	IDENT(DATATYPE(SMTP.TO), "ARRAY")		:S(SMTP.ARRAY)
+*	here with one recipient
+	SMTP.CONN.VAR(SMTP.OPEN) = "RCPT TO:<" SMTP.TO ">" SMTP.CRLF
+	SMTP.X = SMTP.CONN.VAR(SMTP.OPEN)		:F(SMTP.ERROR)
+	SMTP.X POS(0) "2"				:F(SMTP.ERROR)
+							:(SMTP.DATA)
+SMTP.ARRAY
+	SMTP.N = 1
+SMTP.ARRAY.NEXT
+	SMTP.CONN.VAR(SMTP.OPEN) = "RCPT TO:<" SMTP.TO<SMTP.N> ">" SMTP.CRLF
+							:F(SMTP.DATA)
+	SMTP.N = SMTP.N + 1
+	SMTP.X = SMTP.CONN.VAR(SMTP.OPEN)		:F(SMTP.ERROR)
+	SMTP.X POS(0) "2"				:F(SMTP.ERROR)
+							:(SMTP.ARRAY.NEXT)
+SMTP.DATA
+	SMTP.CONN.VAR(SMTP.OPEN) = "DATA" SMTP.CRLF
+	SMTP.X = SMTP.CONN.VAR(SMTP.OPEN)		:F(SMTP.ERROR)
+	SMTP.X POS(0) "3"				:F(SMTP.ERROR)
+
+*	XXX generate To/From/Data headers????
+							:(RETURN)
+SMTP.ERROR
+	TCP.CLOSE(.SMTP.CONN.VAR(SMTP.OPEN))		:(FRETURN)
+SMTP.OPEN.END
+
+****************
+*	SMTP input
+
+	DEFINE("SMTP.INPUT(SMTP.VAR)")			:(SMTP.INPUT.END)
+SMTP.INPUT
+*	XXX strip CRLF?
+	SMTP.INPUT = SMTP.CONN.VAR(SMTP.VAR)		:F(FRETURN)S(RETURN)
+SMTP.INPUT.END
+
+****************
+*	SMTP output
+
+	DEFINE("SMTP.OUTPUT(SMTP.VAR,SMTP.STR)")	:(SMTP.OUTPUT.END)
+SMTP.OUTPUT
+	SMTP.STR = IDENT(SMTP.STR, ".") ".."
+	SMTP.CONN.VAR(SMTP.VAR)	= SMTP.STR SMTP.CRLF	:F(FRETURN)S(RETURN)
+SMTP.OUTPUT.END
+
+****************
+*	SMTP close
+
+	DEFINE("SMTP.CLOSE(SMTP.VAR)")			:(SMTP.CLOSE.END)
+SMTP.CLOSE
+	SMTP.CONN.VAR(SMTP.VAR) = "." SMTP.CRLF
+	TCP.CLOSE(.SMTP.CONN.VAR(SMTP.VAR))		:(RETURN)
+SMTP.CLOSE.END
+

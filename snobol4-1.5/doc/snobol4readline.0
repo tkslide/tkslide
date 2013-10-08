@@ -1,0 +1,34 @@
+SNOBOL4READLINE(1)                                          SNOBOL4READLINE(1)
+
+
+
+NNAAMMEE
+       snobol4readline - SNOBOL4 line editing interface
+
+
+SSYYNNOOPPSSIISS
+       --IINNCCLLUUDDEE ''rreeaaddlliinnee..ssnnoo''
+
+       IINNPPUUTT__SSTTRRIINNGG == RREEAADDLLIINNEE((PPRROOMMPPTT__SSTTRRIINNGG))
+
+       AADDDD__HHIISSTTOORRYY((SSTTRRIINNGG))
+
+       SSTTRRIINNGG == HHIISSTTOORRYY__EEXXPPAANNDD((SSTTRRIINNGG))
+
+
+DDEESSCCRRIIPPTTIIOONN
+       RREEAADDLLIINNEE(()) performs user input with line editing.
+
+       AADDDD__HHIISSTTOORRYY(())  adds  lines  to  the input history available via editing
+       commands.
+
+
+SSEEEE AALLSSOO
+       ssnnoobbooll44(1), rreeaaddlliinnee(3)
+
+AAUUTTHHOORR
+       Philip L. Budne
+
+
+
+SNOBOL                            4 Jan 2012                SNOBOL4READLINE(1)

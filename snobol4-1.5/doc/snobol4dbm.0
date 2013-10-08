@@ -1,0 +1,137 @@
+SNOBOL4DBM(1)                                                    SNOBOL4DBM(1)
+
+
+
+NNAAMMEE
+       snobol4dbm - SNOBOL4 NDBM interface
+
+
+SSYYNNOOPPSSIISS
+       --IINNCCLLUUDDEE ''nnddbbmm..ssnnoo''
+
+       ddbbhhaannddllee == DDBBMM__OOPPEENN((ffiillee,,ffllaaggss,,mmooddee))
+
+       DDBBMM__CCLLOOSSEE((ddbbhhaannddllee))
+
+       DDBBMM__SSTTOORREE((ddbbhhaannddllee,,kkeeyy,,ddaattuumm,,ffllaaggss))
+
+       ddaattuumm == DDBBMM__FFEETTCCHH((ddbbhhaannddllee,,kkeeyy))
+
+       DDBBMM__DDEELLEETTEE((ddbbhhaannddllee,,kkeeyy))
+
+       kkeeyy == DDBBMM__FFIIRRSSTTKKEEYY((ddbbhhaannddllee))
+
+       kkeeyy == DDBBMM__NNEEXXTTKKEEYY((ddbbhhaannddllee))
+
+       DDBBMM__EERRRROORR((ddbbhhaannddllee))
+
+       DDBBMM__CCLLEEAARREERRRR((ddbbhhaannddllee))
+
+
+DDEESSCCRRIIPPTTIIOONN
+       "NDBM"  (for  New  Data  Base  Managemnt)  is an industry standard fast
+       hashed storage API first created in 4.3BSD, and included in the Unix 98
+       (SUSv2)  standard.  The original DBM API appeared in AT&T Research Unix
+       Version 7, and only allowed access to a single file at a time.
+
+
+       There are many different implementations of this API, including:
+
+
+       +o      The original BSD 4.3 ndbm, based on AT&T dbm. Found  in  commer-
+              cial Un*x offerings.
+
+
+       +o      Berkeley  DB  v1  compatibility interface.  Supplied with 4.4BSD
+              based systems: (Free|Open|Net)BSD, MacOS X.
+
+
+       +o      GNU DBM (GDBM) found in Linux distributions.
+
+
+       +o      SDBM, Ozan Yigit's Public Domain implementation of  NDBM.   Sup-
+              plied  with this distribution, and used as a last resort on Un*x
+              systems (and by default on non Un*x systems).
+
+
+       DDBBMM__OOPPEENN takes a filename (STRING), flags (either  "R"  for  read-only,
+       "W"  for  write  access, or "CW" to create and write a new file), and a
+       "mode" string, which defaults to "0660" (octal) and returns a  database
+       handle which can be passed to the remaining functions.
+
+
+       DDBBMM__CCLLOOSSEE closes the database file.  DDBBMM__CCLLOOSSEE _M_U_S_T be called to ensure
+       that all your data is written.
+
+
+       DDBBMM__SSTTOORREE takes a database handle, key and datum strings,  and  a  flag
+       (either  DDBBMM__IINNSSEERRTT  to  insert  a new pair, or fail if the key already
+       exists, or DDBBMM__RREEPPLLAACCEE to insert or replace existing  data).   The  key
+       and datum strings may contain an arbitrary series of characters.
+
+
+       DDBBMM__FFEETTCCHH  returns  the  stored datum (if any) for the supplied key, or
+       fails.
+
+
+       DDBBMM__DDEELLEETTEE deletes the stored datum (if any) for the supplied  key,  or
+       fails.
+
+
+       DDBBMM__FFIIRRSSTTKKEEYY  and subsequent calls to DDBBMM__NNEEXXTTKKEEYY allow you to traverse
+       all stored keys.  The keys will be returned in arbitrary order, and the
+       routines will fail at the end of the traversal.
+
+
+       DDBBMM__EERRRROORR is a predicate which succeeds if the database handle is valid
+       and an I/O error has occurred on the file.  DDBBMM__CCLLEEAARREERRRR is a predicate
+       which  succeeds  if  if  the database handle is valid, and has the side
+       effect of clearing the I/O error flag.
+
+
+FFIILLEESS
+       NDBM, GDBM, and SDBM  create  two  files:  _f_i_l_e_n_a_m_e.dir,  _f_i_l_e_n_a_m_e.pag.
+       Berkeley DB creates a single _f_i_l_e_n_a_m_e.db file.
+
+
+SSEEEE AALLSSOO
+       nnddbbmm(3), ddbbooppeenn(3), ggddbbmm(3).
+
+
+AAUUTTHHOORR
+       Philip L. Budne
+
+
+BBUUGGSS
+       None of the implementations allow concurrent read and write.
+
+
+       Some  implementations (classic NDBM and SDBM) place limits on the total
+       size of key plus datum (typically slightly less than 1KB).
+
+
+       NOTE: Some implementations (classic NDBM and SDBM) create  sparse  file
+       which  appear  (to  "ls  -l") to be larger than they are (see "ls -s").
+       Copying such files may cause the non-allocated blocks  to  be  "filled"
+       with zeroed disk blocks, and then the files really will be large!
+
+
+       Only GDBM provides locking to eliminate the possibility of file corrup-
+       tion, or reading of incomplete data.
+
+
+       GDBM locking sometimes fails on NFS mounted partitions (particularly on
+       Linux  systems).   GDBM's NDBM interface does not provide a way to dis-
+       able locking.
+
+
+       DBM databases accessed concurrently by multiple  processes  are  tradi-
+       tionally (re)created from text files and used for fast disk-based read-
+       only table lookups.  Programs which need to update the file generate  a
+       new  temporary  copy  using  a  different name, and then rename the new
+       file(s), so that the next reader gets the new copies (existing  readers
+       continue to see old data).
+
+
+
+SNOBOL                            3 Dec 2005                     SNOBOL4DBM(1)

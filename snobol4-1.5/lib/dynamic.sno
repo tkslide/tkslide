@@ -1,0 +1,85 @@
+*	$Id: dynamic.sno,v 1.5 2012/03/16 05:21:42 phil Exp $
+*
+*	dynamic.sno -- create dynamicly loadable modules for LOAD()
+*	Phil Budne, November 2005
+
+-include 'host.sno'
+
+****************
+* compile a C source file in a way suitable for dynamic loading
+
+	DEFINE('COMPILE_C_DYNAMIC(SRC)CMD,CC,DL_CFLAGS,COPT')
+						:(COMPILE_C_DYNAMIC_END)
+COMPILE_C_DYNAMIC
+* fail if we don't know how to invoke the compiler!
+	CC = HOST(HOST_CC)				:F(FRETURN)
+	IDENT(CC)					:S(FRETURN)
+	DL_CFLAGS = HOST(HOST_DL_CFLAGS) ' '
+	COPT = HOST(HOST_COPT) ' '
+	CMD = CC ' ' COPT DL_CFLAGS '-c -I' HOST(HOST_INCLUDE_DIR) ' ' SRC
+	TERMINAL = DIFFER(DYNAMIC.DEBUG) CMD
+	HOST(HOST_SYSCMD, CMD)				:F(FRETURN)S(RETURN)
+COMPILE_C_DYNAMIC_END
+
+****************
+* link a dynamicly loadable module given
+* an output filename, object files, and libraries
+
+	DEFINE('LINK_DYNAMIC(OUT,OBJ,LIBS)CMD,DL_LD,DL_EXT,DL_LDFLAGS,DSEP')
+							:(LINK_DYNAMIC_END)
+LINK_DYNAMIC
+* fail if we don't have a command!
+	DL_LD = HOST(HOST_DL_LD)			:F(FRETURN)
+	IDENT(DL_LD)					:S(FRETURN)
+
+* add system local suffix (not always ".so"!)
+	DL_EXT = HOST(HOST_DL_EXT)
+	OUT = DIFFER(DL_EXT) OUT DL_EXT
+
+	DL_LDFLAGS = HOST(HOST_DL_LDFLAGS) ' '
+	CMD = DL_LD ' ' DL_LDFLAGS '-o ' OUT ' ' OBJ ' ' LIBS
+	TERMINAL = DIFFER(DYNAMIC.DEBUG) CMD
+	HOST(HOST_SYSCMD, CMD)				:F(FRETURN)
+
+* return the name of the output file
+	LINK_DYNAMIC = OUT
+
+* some dynamic loaders want to see a dir seperator, so make sure there is one!
+	DSEP = HOST(HOST_DIR_SEP)
+	LINK_DYNAMIC BREAK(DSEP) DSEP		:S(RETURN)
+* prepend "./"
+	LINK_DYNAMIC = "." DSEP LINK_DYNAMIC	:(RETURN)
+LINK_DYNAMIC_END
+
+****************
+* make a dynamic module, given C sources
+*	LIBS may contain both objects
+
+	DEFINE('MAKE_DYNAMIC_MODULE(OUT,SRC,LIBS)OBJ,DL_LD,CC')
+						:(MAKE_DYNAMIC_MODULE_END)
+MAKE_DYNAMIC_MODULE
+* fail early if we don't know how to do the job!
+	DIFFER(HOST(HOST_CC))				:F(FRETURN)
+	DIFFER(HOST(HOST_DL_LD))			:F(FRETURN)
+
+* no sources?
+	IDENT(SRC)					:S(MDM_LINK)
+
+* compile C file(s) -- someday handle other languages?
+	COMPILE_C_DYNAMIC(SRC)				:F(FRETURN)
+
+* get names of object files to load
+* XXX FIXME: make sure .c followed by whitespace!
+* split up on whitespace boundaries, 
+	OBJ = SRC
+MDM_LOOP
+	OBJ BREAKX('.') . TMP '.c' = TMP '.o'		:S(MDM_LOOP)
+
+* create dynamicly loadable library (often a shared object file)
+MDM_LINK
+
+* fail if nothing to work on!
+	IDENT(OBJ LIBS)					:S(FRETURN)
+	MAKE_DYNAMIC_MODULE = LINK_DYNAMIC(OUT, OBJ, LIBS) :F(FRETURN)
+							:(RETURN)
+MAKE_DYNAMIC_MODULE_END

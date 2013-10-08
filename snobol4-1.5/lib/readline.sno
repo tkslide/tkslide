@@ -1,0 +1,9 @@
+* $Id: readline.sno,v 1.1 2012/01/04 00:09:23 phil Exp $
+*
+* Phil Budne <phil@ultimate.com>
+* January 3, 2011
+*
+* readline functions
+	LOAD("READLINE(STRING)STRING")
+	LOAD("ADD_HISTORY(STRING)STRING")
+	LOAD("HISTORY_EXPAND(STRING)STRING")

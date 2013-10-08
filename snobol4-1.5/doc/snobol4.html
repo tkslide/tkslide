@@ -1,0 +1,2199 @@
+<!-- Creator     : groff version 1.21 -->
+<!-- CreationDate: Tue Oct  1 11:33:15 2013 -->
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta name="generator" content="groff -Thtml, see www.gnu.org">
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII">
+<meta name="Content-Style" content="text/css">
+<style type="text/css">
+       p       { margin-top: 0; margin-bottom: 0; vertical-align: top }
+       pre     { margin-top: 0; margin-bottom: 0; vertical-align: top }
+       table   { margin-top: 0; margin-bottom: 0; vertical-align: top }
+       h1      { text-align: center }
+</style>
+<title>SNOBOL4</title>
+
+</head>
+<body>
+
+<h1 align="center">SNOBOL4</h1>
+
+<a href="#NAME">NAME</a><br>
+<a href="#SYNOPSIS">SYNOPSIS</a><br>
+<a href="#DESCRIPTION">DESCRIPTION</a><br>
+<a href="#OPTIONS">OPTIONS</a><br>
+<a href="#ENVIRONMENT">ENVIRONMENT</a><br>
+<a href="#SEE ALSO">SEE ALSO</a><br>
+<a href="#AUTHOR">AUTHOR</a><br>
+<a href="#DIAGNOSTICS">DIAGNOSTICS</a><br>
+<a href="#BUGS">BUGS</a><br>
+
+<hr>
+
+
+<h2>NAME
+<a name="NAME"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em">snobol4 &minus;
+SNOBOL4 interpreter</p>
+
+<h2>SYNOPSIS
+<a name="SYNOPSIS"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>snobol4</b>
+[ <i>options</i> ... ] [ <i>file(s)</i> ... ] [
+<i>params</i> ... ]</p>
+
+<h2>DESCRIPTION
+<a name="DESCRIPTION"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em">This manual
+page describes a port of the original Bell Telephone Labs
+(BTL) Macro Implementation of SNOBOL4 to machines with ILP32
+(32-bit int/long/pointer) or LP64 (64-bit long/pointer) C
+compilers by Philip L. Budne. The language and its
+implementation are described in [1] and [2]. Extensions from
+Catspaw SNOBOL4+, SPITBOL and SITBOL have been added. This
+page discusses only the changes/extensions.</p>
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>Limitations</b>
+<br>
+All aspects of the language are implemented except:</p>
+
+<table width="100%" border="0" rules="none" frame="void"
+       cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="1%">
+
+
+<p>&bull;</p></td>
+<td width="10%"></td>
+<td width="78%">
+
+
+<p>Trapping of arithmetic exceptions.</p></td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="1%">
+
+
+<p>&bull;</p></td>
+<td width="10%"></td>
+<td width="78%">
+
+
+<p><b>LOAD()</b> can be used to access external functions
+on most platforms, but not all. External functions can be
+statically linked (poor man&rsquo;s loading) into the
+snobol4 executable on <b>ALL</b> platforms. See
+/usr/local/lib/snobol4/<i>version</i>/load.txt for more
+information.</p> </td></tr>
+</table>
+
+<p style="margin-left:11%; margin-top: 1em"><b>Changes</b>
+<br>
+The following behaviors have been changed from the original
+Macro SNOBOL4;</p>
+
+<table width="100%" border="0" rules="none" frame="void"
+       cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="1%">
+
+
+<p style="margin-top: 1em">&bull;</p></td>
+<td width="10%"></td>
+<td width="78%">
+
+
+<p style="margin-top: 1em">Listings are disabled by
+default. Default listing side (when enabled by <b>-LIST</b>
+or the <b>-l</b> command line option is <b>LEFT</b>.
+Listings are directed to standard output (or file specified
+by the <b>-l</b> command line option.</p></td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="1%">
+
+
+<p>&bull;</p></td>
+<td width="10%"></td>
+<td width="78%">
+
+
+<p>Error messages, the startup banner and statistics are
+directed to standard error. Compilation error messages
+(including erroneous lines) appear on standard error as well
+as in the listings. Error messages now reference the source
+file name and line number.</p></td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="1%">
+
+
+<p>&bull;</p></td>
+<td width="10%"></td>
+<td width="78%">
+
+
+<p>Character set (see below).</p></td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="1%">
+
+
+<p>&bull;</p></td>
+<td width="10%"></td>
+<td width="78%">
+
+
+<p>The <b>PUNCH</b> output variable no longer exists (see
+<b>TERMINAL</b> variable below).</p></td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="1%">
+
+
+<p>&bull;</p></td>
+<td width="10%"></td>
+<td width="78%">
+
+
+<p>I/O is not performed using FORTRAN I/O. The 3rd argument
+to the <b>OUTPUT()</b> and <b>INPUT()</b> functions is
+interpreted as a string of I/O options (see below).</p></td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="1%">
+
+
+<p>&bull;</p></td>
+<td width="10%"></td>
+<td width="78%">
+
+
+<p>Control lines and comment characters are valid after the
+end of string (;) statement separator. Listing statement
+numbers show the statement number of the LAST statement on
+the line (rather than the first).</p></td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="1%">
+
+
+<p>&bull;</p></td>
+<td width="10%"></td>
+<td width="78%">
+
+
+<p>Setting the <b>&amp;ABEND</b> keyword causes a core dump
+upon termination!</p></td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="1%">
+
+
+<p>&bull;</p></td>
+<td width="10%"></td>
+<td width="78%">
+
+
+<p>The value of the <b>&amp;CODE</b> keyword determines the
+exit status of the <b>snobol4</b> application.</p></td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="1%">
+
+
+<p>&bull;</p></td>
+<td width="10%"></td>
+<td width="78%">
+
+
+<p>The <b>DATE()</b> function returns strings of the form:
+<i>MM/DD/YYYY HH:MM:SS</i>. See extensions section for
+arguments to the <b>DATE()</b> function.</p></td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="1%">
+
+
+<p>&bull;</p></td>
+<td width="10%"></td>
+<td width="78%">
+
+
+<p>Keyword <b>&amp;STLIMIT</b> now defaults to -1. When
+<b>&amp;STLIMIT</b> is less than zero there is no limit to
+the number of statements executed, and <b>&amp;STCOUNT</b>
+is not incremented.</p></td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="1%">
+
+
+<p>&bull;</p></td>
+<td width="10%"></td>
+<td width="78%">
+
+
+<p><b>VALUE</b> tracing applies to variables modified by
+immediate value assignment ($ operator) and value assignment
+(. operator) during pattern matching.</p></td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="1%">
+
+
+<p>&bull;</p></td>
+<td width="10%"></td>
+<td width="78%">
+
+
+<p>The <b>BACKSPACE()</b> function is not implemented. Use
+the <b>SET()</b> function instead.</p></td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="1%">
+
+
+<p>&bull;</p></td>
+<td width="10%"></td>
+<td width="78%">
+
+
+<p>I/O unit numbers up to 256 can be used.</p></td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="1%">
+
+
+<p>&bull;</p></td>
+<td width="10%"></td>
+<td width="78%">
+
+
+<p>Attempts to output on a closed unit generates a fatal
+&ldquo;Output error&rdquo;.</p></td></tr>
+</table>
+
+<p style="margin-left:11%; margin-top: 1em"><b>Character
+set <br>
+snobol4</b>(1) is 8-bit clean, and uses the native character
+set. Any 8-bit byte is accepted as a SNOBOL datum or in a
+string constant of a SNOBOL source program. The value of the
+SNOBOL protected keyword <b>&amp;ALPHABET</b> is a
+256-character string of all bytes from 0 to 255, in
+ascending order.</p>
+
+<p style="margin-left:11%; margin-top: 1em">On ASCII-based
+systems, any character with the 8th bit set is treated as
+&ldquo;alphabetic&rdquo;, and can start, or be used in
+identifiers and labels. This includes characters from the
+&ldquo;upper half&rdquo; of national character sets and all
+bytes resulting from the UTF-8 encoding of Unicode
+characters.</p>
+
+<p style="margin-left:11%; margin-top: 1em">Programs may be
+entered in mixed case; By default lower case identifiers are
+folded to upper case (see <b>&amp;CASE</b> and
+<b>&minus;CASE</b> extensions below). Case folding is
+performed by using the C library <b>islower</b>(3) test, and
+then using <b>toupper</b>(3) to convert the lower-case
+characters to upper case. When using UTF-8 encoded
+characters in code, case folding should be disabled, to
+prevent any bytes which appear to be lower case in the
+current locale from being modified.</p>
+
+<p style="margin-left:11%; margin-top: 1em">The following
+operator character sequences are permitted and represent a
+cross between PDP-10 Macro SNOBOL, SITBOL and Catspaw
+SPITBOL usage: <br>
+Exponentiation: ^ **</p>
+
+<table width="100%" border="0" rules="none" frame="void"
+       cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="20%">
+
+
+<p>Alternation:</p></td>
+<td width="69%">
+
+
+<p>| !</p></td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="20%">
+
+
+<p>Unary negation:</p></td>
+<td width="69%">
+
+
+<p>~ \</p></td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="20%">
+
+
+<p>Assignment:</p></td>
+<td width="69%">
+
+
+<p>= _</p></td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="20%">
+
+
+<p>Comment line:</p></td>
+<td width="69%">
+
+
+<p>* # | ; !</p></td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="20%">
+
+
+<p>Continuation line:</p></td>
+<td width="69%">
+
+
+<p>+ .</p></td></tr>
+</table>
+
+<p style="margin-left:11%; margin-top: 1em">Both square
+brackets ([]) and angle brackets (&lt;&gt;) may be used to
+subscript arrays and tables. The <b>TAB</b> (ASCII 9)
+character is accepted as whitespace. Note that the use of
+the pound sign for comments allows use of the shell
+interpreter sequence at the top of a file (e.g.,
+&quot;#!/usr/local/bin/snobol4 -b&quot;). Underscore (_) and
+period (.) are legal within identifiers and labels.</p>
+
+<p style="margin-left:11%; margin-top: 1em"><b>Extensions
+<br>
+ARRAY/TABLE</b> access</p>
+
+<p style="margin-left:22%;">Multiple <b>ARRAY</b> and/or
+<b>TABLE</b> index operations may appear in a row, without
+having to resort to use of the <b>ELEMENT</b> function, so
+long as no intervening spaces (or line continuations)
+appear.</p>
+
+<p style="margin-left:11%;"><b>BREAKX()</b></p>
+
+<p style="margin-left:22%;">The <b>BREAKX()</b> function is
+a pattern function used for fast scanning.
+<b>BREAKX(</b><i>str</i><b>)</b> is equivalent to
+<b>BREAK(</b><i>str</i><b>) ARBNO(LEN(1)
+BREAK(</b><i>str</i><b>))</b>. In other words BREAKX matches
+a sequence of ever larger strings terminated by a break set.
+BREAKX can be used as a faster matching replacement for
+<b>ARB</b>: <b>BREAKX(&rsquo;S&rsquo;)
+&rsquo;STRING&rsquo;</b> always runs faster than <b>ARB
+&rsquo;STRING&rsquo;</b> since it only attempts matching
+<b>&rsquo;STRING&rsquo;</b> at locations where an
+<b>&rsquo;S&rsquo;</b> has been detected.</p>
+
+<p style="margin-left:11%;">Case folding</p>
+
+<p style="margin-left:22%;">By default the compiler folds
+identifiers and directives to upper case, so programs can be
+entered in either case. To disable case folding use the
+directive <b>&minus;CASE 0 or &minus;CASE</b>. To re-enable
+case folding use directive <b>&minus;CASE</b> <i>n</i> where
+<i>n</i> is a non-zero integer. The status of case folding
+may be examined and controlled from a running program by the
+unprotected system keyword <b>&amp;CASE</b>.</p>
+
+<table width="100%" border="0" rules="none" frame="void"
+       cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="9%">
+
+
+<p><b>CHAR()</b></p></td>
+<td width="2%"></td>
+<td width="78%">
+
+
+<p>The <b>CHAR()</b> function takes an integer from 0 to
+255 and returns the nth character in
+<b>&amp;ALPHABET</b>.</p> </td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="9%">
+
+
+<p><b>DATE()</b></p></td>
+<td width="2%"></td>
+<td width="78%">
+
+
+<p>For compatibility with new versions of Catspaw SPITBOL,
+<b>DATE(0)</b> returns strings of the form <i>MM/DD/YY
+HH:MM:SS</i>, and <b>DATE(2)</b> returns strings of the form
+<i>YYYY-MM-YY HH:MM:SS</i>. With any other arguments
+<b>DATE()</b> returns strings of the form <i>MM/DD/YYYY
+HH:MM:SS</i>.</p> </td></tr>
+</table>
+
+<p style="margin-left:11%;"><b>&amp;DIGITS</b></p>
+
+<p style="margin-left:22%;">The protected keyword
+<b>&amp;DIGITS</b> contains the string <b>0123456789</b> for
+compatibility with the Unicon/Icon languages!</p>
+
+
+<p style="margin-left:11%;"><b>&minus;ERROR/&minus;NOERRORS</b></p>
+
+<p style="margin-left:22%;">Directives <b>&minus;ERROR</b>
+and <b>&minus;NOERRORS</b> control execution of program with
+compiler errors. If the <b>&minus;ERROR</b> directive is
+given, the program will be executed (but any attempt to
+execute a statement with a compiler error will cause a fatal
+execution error). By default programs with compiler errors
+will not be started, this can be restored using
+<b>&minus;NOERRORS</b>.</p>
+
+<p style="margin-left:11%;"><b>&amp;ERRTEXT</b></p>
+
+<p style="margin-left:22%;">After a statement with an error
+has been handled due to a non-zero value in
+<b>&amp;ERRLIMIT</b>, the protected keyword
+<b>&amp;ERRTEXT</b> will contain the error message. See the
+<b>DIAGNOSTICS</b> section below for explanations of errors,
+and whether they are fatal or not.</p>
+
+
+<p style="margin-left:11%;"><b>&minus;EXECUTE/&minus;NOEXECUTE</b></p>
+
+<p style="margin-left:22%;">Directives
+<b>&minus;EXECUTE</b> and <b>&minus;NOEXECUTE</b> control
+execution of programs. If the <b>&minus;NOEXECUTE</b>
+directive is given, the program will be not executed after
+compilation. <b>&minus;EXECUTE</b> cancels any previous
+<b>&minus;NOEXECUTE</b>.</p>
+
+
+<p style="margin-left:11%;"><b>FILE_ABSPATH()/FILE_ISDIR()</b></p>
+
+
+<p style="margin-left:22%;"><b>FILE_ABSPATH(</b><i>string</i><b>)</b>
+is a predicate which returns the null string if its argument
+is an absolute file path, and returns failure if the path is
+relative. <b>FILE_ISDIR(</b><i>string</i><b>)</b> is a
+predicate which returns the null string if its argument is
+the pathname of a directory, and returns failure if not.</p>
+
+<p style="margin-left:11%;"><b>FREEZE()/THAW()</b></p>
+
+<p style="margin-left:22%;">The <b>FREEZE()</b> function
+prohibits creation of new entries in the referenced table.
+This is useful once a table has been initialized to avoid
+creating empty entries on lookups that fail. This can
+greatly improve program speed, since frozen tables will not
+become clogged with empty entries. Lookups for uninitialized
+entries will return the null string. Attempts to assign to a
+non-existent entry will cause a &ldquo;Variable not present
+where required&rdquo; error. The <b>THAW()</b> function
+restores normal entry creation behavior.</p>
+
+<p style="margin-left:11%;"><b>FUNCTION()</b></p>
+
+<p style="margin-left:22%;">The <b>FUNCTION()</b> predicate
+evaluates its argument as a string (with case folding), and
+returns the null string if a function with that name exists
+and fails if it does not. The <b>FUNCTION()</b> predicate
+exists in SITBOL.</p>
+
+<p style="margin-left:11%;"><b>&amp;GCTIME</b></p>
+
+<p style="margin-left:22%;">The protected keyword
+<b>&amp;GCTIME</b> contains a <b>REAL</b> number of
+milliseconds of execution time spent in the garbage
+collector.</p>
+
+<p style="margin-left:11%;"><b>&amp;GTRACE</b></p>
+
+<p style="margin-left:22%;">If the unprotected keyword
+<b>&amp;GTRACE</b> set to a non-zero value, each time a
+garbage collection is run, a trace message is output
+indicating the source file and line number of the current
+statement, how long the GC took, and how many units of
+storage are now free. If positive, the value of
+<b>&amp;GTRACE</b> will be decremented after it is
+tested.</p>
+
+<table width="100%" border="0" rules="none" frame="void"
+       cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="9%">
+
+
+<p><b>-HIDE</b></p></td>
+<td width="2%"></td>
+<td width="78%">
+
+
+<p>The <b>-HIDE</b> directive stops listing, and assignment
+of new statement numbers. It is used to hide the source code
+for the <b>sdb</b>(1) source code debugger.</p></td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="9%">
+
+
+<p><b>HOST()</b></p></td>
+<td width="2%"></td>
+<td width="78%">
+
+
+<p>A limited simulation of the SPITBOL <b>HOST()</b>
+function (with liberal implementation specific extensions)
+is included.</p></td></tr>
+</table>
+
+<p style="margin-left:22%; margin-top: 1em">The
+<b>-INCLUDE</b> file <b>host.sno</b> contains symbolic
+defines for these (and <b>many</b> other) function
+codes.</p>
+
+<p style="margin-left:22%; margin-top: 1em"><b>HOST()</b>
+with no parameters returns a string describing the system
+the program is running on. The string contains three parts,
+separated by colons. The first part describes the physical
+architecture, the second describes the operating system, and
+the third describes the language implementation name. NOTE!
+Architecture names come from the <b>uname</b>(3) library
+call, and may be different for the same hardware when
+running different operating systems. An example value:
+<i>i386:FreeBSD 10.0-ALPHA2:CSNOBOL4 1.5</i></p>
+
+<p style="margin-left:22%; margin-top: 1em"><b>HOST(0)</b>
+returns a string containing the command line parameter
+supplied to the <b>-u</b> option, if any. If no <b>-u</b>
+option was given, <b>HOST(0)</b> returns the concatenation
+of all user parameters following the input filename(s).</p>
+
+
+<p style="margin-left:22%; margin-top: 1em"><b>HOST(1,</b><i>string</i><b>)</b>
+passes the string to the <b>system</b>(3) c library
+function, and returns the subprocess exit status.</p>
+
+
+<p style="margin-left:22%; margin-top: 1em"><b>HOST(2,</b><i>n</i><b>)</b>
+for integer <i>n</i> returns the <i>n</i>&rsquo;th command
+line argument (regardless of whether the argument was the
+command name, an option, a filename or a user parameter) as
+a string, or failure if <i>n</i> is out of range.</p>
+
+<p style="margin-left:22%; margin-top: 1em"><b>HOST(3)</b>
+returns an integer for use with <b>HOST(2)</b> indicating
+the first command line argument available as a user
+parameter.</p>
+
+
+<p style="margin-left:22%; margin-top: 1em"><b>HOST(4,</b><i>string</i><b>)</b>
+returns the value of the environment variable named
+<i>string</i>.</p>
+
+<p style="margin-left:11%;"><b>&minus;INCLUDE</b></p>
+
+<p style="margin-left:22%;">The <b>&minus;INCLUDE</b>
+directive causes the compiler to interpolate the contents of
+the named file enclosed in single or double quotes. Any
+filename will be included only once, this can be overridden
+by appending a trailing space to the filename. Trailing
+spaces are removed from the filename before use. If the file
+is not found in the current working directory an attempt
+will be made to find it in the directories specified in the
+search path. <b>&minus;COPY</b> is a synonym for
+<b>&minus;INCLUDE</b> for compatibility with
+SPITBOL/370.</p>
+
+<p style="margin-left:11%;"><b>IO_FINDUNIT()</b></p>
+
+<p style="margin-left:22%;">The <b>IO_FINDUNIT()</b>
+function returns an unused I/O unit number for use with the
+<b>INPUT()</b> or <b>OUTPUT()</b> functions.
+<b>IO_FINDUNIT()</b> is meant for use in subroutines which
+can be reused. <b>IO_FINDUNIT()</b> will never return a unit
+number below 20.</p>
+
+<p style="margin-left:11%;"><b>LABEL()</b></p>
+
+<p style="margin-left:22%;">The <b>LABEL()</b> predicate
+evaluates its argument as a string (with case folding), and
+returns the null string if a label with that name has been
+defined, and fails if it does not. The <b>LABEL()</b>
+predicate was copied from Steve Duff&rsquo;s version of
+Macro SPITBOL. SITBOL has a <b>LABEL function that takes an
+optional line offset</b> from the label and returns a
+<b>CODE</b> pointer.</p>
+
+
+<p style="margin-left:11%;"><b>&amp;LINE/&amp;FILE/&amp;LASTLINE/&amp;LASTFILE</b></p>
+
+<p style="margin-left:22%;">The <b>&amp;LINE</b> and
+<b>&amp;FILE</b> keywords can be used to determine the
+source file and file line associated with the current
+statement. The <b>&amp;LASTLINE</b> and <b>&amp;LASTFILE</b>
+return the source file and file line associated with the
+previous statement (and are useful in <b>TRACE</b> and
+<b>SETEXIT</b> handlers.</p>
+
+<table width="100%" border="0" rules="none" frame="void"
+       cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="7%">
+
+
+<p><b>&minus;LINE</b></p></td>
+<td width="4%"></td>
+<td width="78%">
+
+
+<p>The <b>&minus;LINE</b> directive can be used to alter
+SNOBOL&rsquo;s idea of the current source file and line (ie;
+for use by preprocessors). <b>&minus;LINE</b> takes a line
+number and an optional quoted string filename.</p></td></tr>
+</table>
+
+<p style="margin-left:11%;">Lexical comparison</p>
+
+<p style="margin-left:22%;">A full set of lexical (string)
+comparison predicates have been added to complement the
+standard <b>LGT()</b> function; <b>LEQ()</b>, <b>LGE()</b>,
+<b>LLE()</b>, <b>LLT()</b>, <b>LNE()</b>.</p>
+
+<p style="margin-left:11%;"><b>LPAD()/RPAD()</b></p>
+
+<p style="margin-left:22%;">The <b>LPAD()</b> and
+<b>RPAD()</b> functions take the first argument (subject)
+string, and pad it out to the length specified in the second
+argument, using the first character of the optional third
+argument. If the third argument is missing, or is the null
+string, spaces will be used for padding. The subject will be
+returned unmodified if already long enough.</p>
+
+<p style="margin-left:11%;"><b>&amp;MAXINT</b></p>
+
+<p style="margin-left:22%;">The protected keyword
+<b>&amp;MAXINT</b> contains the largest positive integer
+value that can be represented by the <b>INTEGER</b> data
+type.</p>
+
+<p style="margin-left:11%;">Named files</p>
+
+<p style="margin-left:22%;">Filenames can be supplied to
+the <b>INPUT()</b> and <b>OUTPUT()</b> functions via an
+optional fourth argument.</p>
+
+<p style="margin-left:22%; margin-top: 1em">The filename -
+(hyphen) is interpreted as stdin on <b>INPUT()</b> and
+stdout on <b>OUTPUT()</b>.</p>
+
+<p style="margin-left:22%; margin-top: 1em">If the filename
+begins with a vertical bar (|), the remainder is used as a
+shell command whose stdin (in the case of <b>OUTPUT()</b>)
+or stdout (in the case of <b>INPUT()</b>) will be connected
+to the file variable via a pipe. If a pipe is opened by
+INPUT() input in &ldquo;update&rdquo; mode, the connection
+will be bi-directional (on systems with socketpair and
+Unix-domain sockets). See below for how to associate a
+variable for I/O in both directions.</p>
+
+<p style="margin-left:22%; margin-top: 1em">If the filename
+begins with two vertical bars (||) the remainder is used as
+a shell command executed with stdin, stdout and stderr
+attached to the slave side of a pseudo-terminal (pty), if
+the system C library contains the <b>forkpty</b>(3) routine.
+Use of ptys are necessary when the program to be invoked
+cannot be run without a &quot;terminal&quot; for I/O. See
+below on how to properly associate the I/O variable.</p>
+
+<p style="margin-left:22%; margin-top: 1em">The magic
+filenames <b>/dev/stdin</b>, <b>/dev/stdout</b>, and
+<b>/dev/stderr</b> refer to the current process standard
+input, standard output and standard error I/O streams
+respectively regardless of whether those special filenames
+exist on your system.</p>
+
+<p style="margin-left:22%; margin-top: 1em">The magic
+pathname <b>/dev/fd/</b><i>n,</i> opens a new I/O stream
+associated with file descriptor number <i>n</i>.</p>
+
+<p style="margin-left:22%; margin-top: 1em">The magic
+pathname <b>/tcp/</b><i>hostname</i><b>/</b><i>service</i>
+can be used to open connection to a TCP server. If the path
+ends in the optional suffix <b>/priv</b> the local address
+will be bound to a port number below 1024, if process
+privileges allow.
+<b>/udp/</b><i>hostname</i><b>/</b><i>service</i> behaves
+similarly for UDP.</p>
+
+<p style="margin-left:22%; margin-top: 1em">The magic
+pathname <b>/dev/tmpfile</b> opens an anonymous temporary
+file for reading and writing, see <b>tmpfile</b>(3).</p>
+
+<p style="margin-left:22%; margin-top: 1em">On VMS, Win32,
+and MS-DOS the pathnames <b>/dev/null</b> and
+<b>/dev/tty</b> are magical, and refer to the null device,
+and the user&rsquo;s terminal/console, respectively.</p>
+
+<table width="100%" border="0" rules="none" frame="void"
+       cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="7%">
+
+
+<p><b>ORD()</b></p></td>
+<td width="4%"></td>
+<td width="78%">
+
+
+<p>The <b>ORD()</b> function returns the ordinal value
+(zero to 255) of the first character in its string argument
+(the inverse of the <b>CHAR()</b> function).</p></td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="7%">
+
+
+<p><b>&amp;PARM</b></p></td>
+<td width="4%"></td>
+<td width="78%">
+
+
+<p>The entire command line is available via the
+<b>&amp;PARM</b> protected keyword for compatibility with
+Catspaw SNOBOL4+. Use of the SPITBOL compatible
+<b>HOST()</b> function is preferable, as it makes it
+possible to tell if a positional parameter containing spaces
+was passed in using shell quote characters.</p></td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="7%">
+
+
+<p><b>&amp;PI</b></p></td>
+<td width="4%"></td>
+<td width="78%">
+
+
+<p>The protected keyword <b>&amp;PI</b> contains value of
+the transendental number &pi;.</p></td></tr>
+</table>
+
+<p style="margin-left:11%;"><b>REAL</b> numbers in
+<b>INTEGER</b> contexts</p>
+
+<p style="margin-left:22%;"><b>REAL</b> numbers (or strings
+convertible to <b>REAL</b>) are accepted in all contexts
+which previously required an <b>INTEGER</b> (or string
+convertible to <b>INTEGER</b>). Contexts include
+<b>TABLE()</b>, <b>ITEM()</b>, array indices,
+<b>INPUT()</b>, <b>OUTPUT(), SET()</b>, keyword values,
+<b>CHAR()</b>, <b>RPAD()</b>, <b>LPAD()</b>, <b>FIELD()</b>,
+<b>COLLECT()</b>, <b>DUMP()</b>, <b>DUPL()</b>,
+<b>OPSYN()</b>, <b>SUBSTR()</b>.</p>
+
+<p style="margin-left:11%;"><b>REVERSE()</b></p>
+
+<p style="margin-left:22%;"><b>REVERSE()</b> returns its
+subject string in reverse order.</p>
+
+<p style="margin-left:11%;">Scientific notation</p>
+
+<p style="margin-left:22%;"><b>REAL</b> number syntax has
+been expanded to allow exponents of the form: <i><br>
+ANY(&rsquo;Ee&rsquo;) (&rsquo;+&rsquo; | &rsquo;-&rsquo; |
+&rsquo;&rsquo;) SPAN(&rsquo;0123456789&rsquo;)</i>.
+Exponential format reals need not contain a decimal
+point.</p>
+
+<p style="margin-left:11%;"><b>SERV_LISTEN()</b></p>
+
+<p style="margin-left:22%;">The <b>SERV_LISTEN()</b>
+function makes SNOBOL4 into a network server process, and
+takes three STRING arguments: FAMILY, TYPE, SERVICE. FAMILY
+must be either &quot;inet&quot; for an Internet Protocol v4
+socket, &quot;inet6&quot; for an Internet Protocol v6
+socket, or &quot;unix&quot; for a local (&quot;unix
+domain&quot;) socket. The second argument, TYPE must be
+&quot;stream&quot;, and the third argument, SERVICE must be
+a port number or service name (for an internet socket), or a
+pathname (for a &quot;unix&quot; socket). SERV_LISTEN()
+listens for incoming requests, accepts them, then
+&ldquo;forks&rdquo; a child process and returns an integer
+file descriptor which can be opened for bidirectional I/O
+using a &quot;/dev/fd/n&quot; magic pathname. The original
+(&ldquo;parent&rdquo;) process never returns from the
+SERV_LISTEN() call. This function is only available on
+systems with the &ldquo;fork&rdquo; system call, which makes
+a child process which is an identical copy of the parent
+process.</p>
+
+<table width="100%" border="0" rules="none" frame="void"
+       cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="7%">
+
+
+<p><b>SET()</b></p></td>
+<td width="4%"></td>
+<td width="78%">
+
+
+<p>The <b>SET()</b> function can be used to seek the file
+pointer of an open file. The first argument is an I/O unit
+number, the second is an integer offset. The third argument,
+an integer determines from <b>whence</b> the file pointer
+will be adjusted. If whence is zero the starting point is
+the beginning of the file, if whence is one, the starting
+point is the current file pointer, and if whence is two, the
+starting point is the end of the file. <b>SET()</b> returns
+the new file pointer value. On systems with 64-bit file
+pointers and 32-bit integers (ie; 4.4BSD on i386) the return
+value will be truncated to 32-bits, and only the first and
+last 4 gigabytes of a file can be accessed directly.</p></td></tr>
+</table>
+
+<p style="margin-left:11%;"><b>SITBOL</b> file
+functions</p>
+
+
+<p style="margin-left:22%;"><b>FILE(</b><i>string</i><b>)</b>
+is a predicate which returns the null string if its argument
+is the name of a file that exists, and fails if it does not.
+<b>DELETE(</b><i>string</i><b>)</b> is a predicate which
+tries to remove the file named by its argument, and fails if
+it cannot.
+<b>RENAME(</b><i>string1</i><b>,</b><i>string2</i><b>)</b>
+is a predicate which attempts to rename the file named by
+<i>string2</i> to the file named by <i>string1</i>. Unlike
+the <b>SITBOL</b> version, if the target file exists, it
+will be removed.</p>
+
+<p style="margin-left:11%;"><b>SNOBOL4+</b> real
+functions</p>
+
+<p style="margin-left:22%;"><b>EXP()</b>, <b>LOG()</b> and
+<b>CHOP()</b> functions are available for compatibility with
+SNOBOL4+. <b>EXP()</b> returns the value <i>e ** x</i>,
+<b>LOG()</b> returns the natural logarithm of its REAL
+argument, and <b>CHOP()</b> truncates the fractional part of
+its REAL argument (rounding towards zero), and returns a
+REAL. <b>LN()</b> is an alias for <b>LOG()</b>, for
+compatibility with Catspaw SPITBOL.</p>
+
+<p style="margin-left:11%;"><b>SORT()/RSORT()</b></p>
+
+<p style="margin-left:22%;">The <b>SORT()</b> and
+<b>RSORT()</b> functions take two arguments. The first can
+be either an array or a table. If the first argument is an
+array, it may be singly-dimensioned in which case the second
+argument, if non-null should indicate the name of a field of
+a programmer defined data type to use to access the sort
+key. Otherwise the first argument should be a table or a
+doubly-dimensioned array, in which case the second argument
+may an integer indicating the array column on which to sort.
+If the second argument is null, it is taken to be 1. The
+array (or table) is not modified; a new array is allocated
+and returned. <b>SORT()</b> sorts elements in ascending
+order, while <b>RSORT()</b> sorts in descending order.</p>
+
+<p style="margin-left:22%; margin-top: 1em">Example: for a
+table <i>TAB</i> of integers, indexed by strings being used
+to tabulate word counts <i>FREQ = RSORT(TAB,2)</i> returns
+an array such that <i>FREQ&lt;1,1&gt;</i> contains the most
+frequent word while <i>FREQ&lt;1,2&gt;</i> contains the
+number of occurrences of that word. While <i>WORDS =
+SORT(TAB,1)</i> returns an array with the rows by the
+lexicographical ordering of the words;
+<i>WORDS&lt;1,1&gt;</i> contains the lexicographically first
+word and <i>WORDS&lt;1,2&gt;</i> contains the number of
+occurrences of that word.</p>
+
+<p style="margin-left:11%;"><b>SPITBOL</b> operators</p>
+
+<p style="margin-left:22%;">The SPITBOL scan (?) and
+assignment (=) operators have been added. A pattern match
+can appear within an expression, and returns the matched
+string as its value. Similarly assignment can appear in an
+expression, and returns the assigned value. An assignment
+after a scan (ie; <i>STRING ? PATTERN = VALUE</i>) performs
+a scan and replace. Assignment is right associative, and has
+the lowest precedence, while scan is left associative and
+has a precedence just higher than assignment.</p>
+
+<p style="margin-left:22%; margin-top: 1em">The SPITBOL
+selection/alternative construction can be used in any
+expression. It consists of a comma separated list of
+expressions inside parentheses. The expressions are
+evaluated until one succeeds, and its value is returned.
+Abuse of this construction may result in incomprehensible
+code.</p>
+
+<p style="margin-left:22%; margin-top: 1em">The type
+<b>NUMERIC</b> with <b>CONVERT()</b> and the removal of
+leading spaces from strings converted to numbers (implicitly
+or explicitly) are also legal when SPITBOL extensions are
+enabled. SPITBOL extensions can be enabled and disabled
+using the <b>&minus;PLUSOPS</b> directive. <b>&minus;PLUSOPS
+0</b> or <b>&minus;PLUSOPS</b> disables SPITBOL operators,
+while <b>&minus;PLUSOPS</b> <i>n</i> where <i>n</i> is a
+non-zero integer enables them. SPITBOL extensions are
+enabled by default.</p>
+
+<p style="margin-left:11%;">SPITBOL <b>SETEXIT()</b>
+function</p>
+
+<p style="margin-left:22%;">The argument to
+<b>SETEXIT()</b> is a label to which control is passed if a
+subsequent error occurs, providing that the value of the
+keyword <b>&amp;ERRLIMIT</b> is non-zero. The value of
+<b>&amp;ERRLIMIT</b> is decremented when The error trap
+occurs. A <b>SETEXIT()</b> call with a null argument causes
+cancellation of the intercept. A Subsequent error will
+terminate execution as usual with an error message. The
+result returned by <b>SETEXIT()</b> is the previous
+intercept setting (i.e., a label name or null if no
+intercept is set). This can be used to save and restore the
+<b>SETEXIT()</b> conditions in a recursive environment. The
+error intercept routine may inspect <b>&amp;ERRTYPE</b> and
+take one of the following actions:</p>
+
+<p style="margin-left:22%; margin-top: 1em">1. Terminate
+execution by transferring to the special label <b>ABORT</b>.
+This causes error processing to resume as though no error
+intercept had been set.</p>
+
+<p style="margin-left:22%; margin-top: 1em">2. Branching to
+the special label <b>CONTINUE</b> causes execution to resume
+by taking the failure exit of the statement in error.</p>
+
+<p style="margin-left:22%; margin-top: 1em">3. Branching to
+the special label <b>SCONTINUE</b> causes execution to
+resume at the point of interruption.</p>
+
+<p style="margin-left:22%; margin-top: 1em">4. If the error
+occurred inside a function (<b>&amp;FNCLEVEL</b> is
+non-zero), branch to label <b>RETURN</b>, <b>FRETURN</b>,
+<b>NRETURN</b>.</p>
+
+<p style="margin-left:22%; margin-top: 1em">The occurrence
+of an error cancels the error intercept. The error intercept
+routine must reissue the <b>SETEXIT()</b> Error handlers
+cannot be nested: only one copy of the saved execution state
+is kept.</p>
+
+<table width="100%" border="0" rules="none" frame="void"
+       cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="9%">
+
+
+<p><b>SQRT()</b></p></td>
+<td width="2%"></td>
+<td width="78%">
+
+
+<p>The <b>SQRT()</b> function is available for
+compatibility with SPARC SPITBOL. <b>SQRT()</b> fails if the
+argument is negative, but does not cause a fatal error.</p></td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="9%">
+
+
+<p><b>SSET()</b></p></td>
+<td width="2%"></td>
+<td width="78%">
+
+
+<p>Experimental &quot;scaled set&quot; function. Takes
+arguments unit, offset, whence, and scale. The first three
+are analogous to the same arguments for the <b>SET()</b>
+function. The last parameter is used as a multiplicative
+scaling factor on the <b>offset</b> parameter, and as a
+divisor on the return value. When used in combination with
+relative <b>SET()</b> calls (whence of one), any file offset
+can be achieved, even when system file offsets are larger
+than can be represented in a SNOBOL4 <b>INTEGER</b>. Support
+for &quot;Large Files&quot; is enabled when available, but
+not all file systems support them.</p></td></tr>
+</table>
+
+<p style="margin-left:11%;"><b>&amp;STEXEC</b></p>
+
+<p style="margin-left:22%;">The protected keyword
+<b>&amp;STEXEC</b> contains the number of statements
+executed, regardless of the value of
+<b>&amp;STLIMIT</b>.</p>
+
+<p style="margin-left:11%;"><b>SUBSTR()</b></p>
+
+<p style="margin-left:22%;"><b>SUBSTR()</b> takes a subject
+string as its first argument, and returns the substring
+starting at the position specified by the second argument
+(one-based) with a length specified by the third argument.
+If the third argument is missing or zero, the remainder of
+the string is returned.</p>
+
+<p style="margin-left:11%;"><b>TERMINAL</b> I/O
+variable</p>
+
+<p style="margin-left:22%;">The variable <b>TERMINAL</b> is
+associated with the standard error file descriptor for both
+input and output.</p>
+
+<p style="margin-left:11%;"><b>TRACE()</b> function type
+argument</p>
+
+<p style="margin-left:22%;">The second argument of the
+<b>TRACE()</b> function can be abbreviated to a single
+letter: <b>C</b> (CALL), <b>F</b> (FUNCTION), <b>K</b>
+(KEYWORD), <b>L</b> (LABEL), <b>R</b> (RETURN), or <b>V</b>
+(VALUE) as in Macro SPITBOL.</p>
+
+<p style="margin-left:11%;">Trig functions</p>
+
+<p style="margin-left:22%;"><b>ATAN()</b>, <b>SIN()</b>,
+<b>COS()</b> and <b>TAN()</b> functions are available for
+compatibility with SPARC SPITBOL. <b>SIN()</b>, <b>COS()</b>
+and <b>TAN()</b> take arguments in radians. <b>ATAN()</b>
+returns the principal value of the arc tangent of its REAL
+argument.</p>
+
+
+<p style="margin-left:11%;"><b>&amp;UCASE/&amp;LCASE</b></p>
+
+<p style="margin-left:22%;">Protected keywords
+<b>&amp;UCASE</b> and <b>&amp;LCASE</b> contain upper and
+lower case characters respectively.</p>
+
+<p style="margin-left:11%;"><b>VDIFFER()</b></p>
+
+<p style="margin-left:22%;">The <b>VDIFFER()</b> function
+takes two arguments, if they <b>DIFFER()</b>, the first
+argument&rsquo;s value is returned. This is intended to be
+used in contexts where <i>DIFFER(X) X</i> would otherwise
+have been used. The <b>VDIFFER()</b> function was copied
+from Steve Duff&rsquo;s version of Macro SPITBOL.</p>
+
+<p style="margin-left:11%; margin-top: 1em"><b>I/O
+Associations</b> <br>
+I/O is performed by associating a variable name with a
+numbered I/O unit using the <b>INPUT()</b> and
+<b>OUTPUT()</b> functions. The following associations are
+available by default;</p>
+
+<p style="margin-left:11%; margin-top: 1em">Variable Unit
+Association</p>
+
+<table width="100%" border="0" rules="none" frame="void"
+       cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="4%">
+
+
+<p><b>INPUT</b></p></td>
+<td width="16%">
+
+
+<p>5</p></td>
+<td width="69%">
+
+
+<p>standard input</p></td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="4%">
+
+
+<p><b>OUTPUT</b></p></td>
+<td width="16%">
+
+
+<p>6</p></td>
+<td width="69%">
+
+
+<p>standard output</p></td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="4%">
+
+
+<p><b>TERMINAL</b></p></td>
+<td width="16%">
+
+
+<p>7</p></td>
+<td width="69%">
+
+
+<p>standard error (output)</p></td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="4%">
+
+
+<p><b>TERMINAL</b></p></td>
+<td width="16%">
+
+
+<p>8</p></td>
+<td width="69%">
+
+
+<p>/dev/tty (input)</p></td></tr>
+</table>
+
+<p style="margin-left:11%; margin-top: 1em"><b>I/O
+Options</b> <br>
+The third argument of the <b>INPUT()</b> and <b>OUTPUT()</b>
+functions is interpreted as a string of single letter
+options, commas are ignored. Some options effect only the
+I/O variable named in the first argument, others effect any
+variable associated with the unit number in the second
+argument.</p>
+
+<table width="100%" border="0" rules="none" frame="void"
+       cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="9%">
+
+
+<p><i>digits</i></p></td>
+<td width="2%"></td>
+<td width="78%">
+
+
+<p>A span of digits will set the input record length for
+the named I/O variable. This controls the maximum string
+that will be returned for regular text I/O, and the number
+of bytes returned for binary I/O. Record length is
+per-variable association; multiple variables may be
+associated with the same unit, but with different record
+lengths. The default record length for input is 1024; longer
+lines will be silently truncated.</p></td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="9%">
+
+
+<p><b>A</b></p></td>
+<td width="2%"></td>
+<td width="78%">
+
+
+<p>For <b>OUTPUT()</b> the unit will be opened for append
+access (no-op for <b>INPUT()</b>).</p></td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="9%">
+
+
+<p><b>B</b></p></td>
+<td width="2%"></td>
+<td width="78%">
+
+
+<p>The unit will be opened for binary access. On input
+newline characters have no special meaning; the number of
+bytes transferred depends on record length (see above). On
+output no newline is appended. For terminal devices, all I/O
+to this unit will be done without special processing for
+line editing or EOF, while characters which deliver signals
+(interrupt, kill, suspend) are still processed. Units opened
+on the same terminal device entry operate independently;
+some can use binary mode, while others operate in text
+mode.</p> </td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="9%">
+
+
+<p><b>C</b></p></td>
+<td width="2%"></td>
+<td width="78%">
+
+
+<p>Character at a time I/O. A synonym for <b>B,1</b>.</p></td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="9%">
+
+
+<p><b>T</b></p></td>
+<td width="2%"></td>
+<td width="78%">
+
+
+<p>Terminal mode. No newline characters are added on
+output, and any newline characters are returned on input.
+Terminal mode effects only the referenced unit. Terminal
+mode is useful for outputting prompts in interactive
+programs.</p> </td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="9%">
+
+
+<p><b>Q</b></p></td>
+<td width="2%"></td>
+<td width="78%">
+
+
+<p>Quiet mode. Turns off input echo on terminals. Effects
+only input from this unit.</p></td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="9%">
+
+
+<p><b>U</b></p></td>
+<td width="2%"></td>
+<td width="78%">
+
+
+<p>Update mode. The unit is opened for both input and
+output. Here is how to associate a variable for I/O in both
+directions:
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</p> </td></tr>
+</table>
+
+<p style="margin-left:22%; margin-top: 1em">unit =
+IO_FINDUNIT()
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <br>
+INPUT(.name, unit, &rsquo;U&rsquo;, &rsquo;filepath&rsquo;)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <br>
+OUTPUT(.name, unit)</p>
+
+<p style="margin-left:22%; margin-top: 1em">Useful
+situations for this when filepath is <b>/dev/fd/</b><i>n</i>
+where <i>n</i> is a file descriptor number returned by
+<b>SERV_LISTEN,</b> filepath specifies a pipe (|command) or
+pseudo-terminal (||command) paths. The above sequence is
+also useful with when combined with fixed record length,
+binary mode and the <b>SET()</b> function for I/O to
+preexisting files. Performing <b>OUTPUT()</b> first will
+create a regular file if it does not exist, but will also
+truncate a preexisting file!</p>
+
+<table width="100%" border="0" rules="none" frame="void"
+       cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="1%">
+
+
+<p style="margin-top: 1em"><b>W</b></p></td>
+<td width="10%"></td>
+<td width="78%">
+
+
+<p style="margin-top: 1em">Unbuffered writes. Each output
+variable assignment causes an I/O transfer to occur, rather
+than collecting the data in a buffer for efficiency.</p></td></tr>
+</table>
+
+<h2>OPTIONS
+<a name="OPTIONS"></a>
+</h2>
+
+
+<table width="100%" border="0" rules="none" frame="void"
+       cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="9%">
+
+
+<p style="margin-top: 1em"><b>-b</b></p></td>
+<td width="6%"></td>
+<td width="74%">
+
+
+<p style="margin-top: 1em">Toggle startup banner output (by
+default on).</p></td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="9%">
+
+
+<p><b>-d</b> <i>DDD</i></p></td>
+<td width="6%"></td>
+<td width="74%">
+
+
+<p>Allocate &ldquo;dynamic storage&rdquo; region of
+<i>DDD</i> descriptors for program code and data. A suffix
+of <b>k</b> multiplies the number by 1024, a suffix of
+<b>m</b> multiplies the number by 1048576. A larger dynamic
+region may result in fewer garbage collections (storage
+regenerations), however large values may cause execution to
+slow down when large amounts of garbage collect. Most
+programs do not need an increased dynamic region to run. If
+your program terminates with an &ldquo;Insufficient storage
+to continue&rdquo; message you need to increase the dynamic
+storage region size. The <b>-h</b> option displays the
+default dynamic region size.</p></td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="9%">
+
+
+<p><b>-f</b></p></td>
+<td width="6%"></td>
+<td width="74%">
+
+
+<p>Toggle folding of identifiers to upper case (see
+<b>&minus;CASE</b> and <b>&amp;CASE</b>).</p></td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="9%">
+
+
+<p><b>-g</b></p></td>
+<td width="6%"></td>
+<td width="74%">
+
+
+<p>Enable garbage collection tracing (sets
+<b>&amp;GTRACE</b> to -1).</p></td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="9%">
+
+
+<p><b>-h</b></p></td>
+<td width="6%"></td>
+<td width="74%">
+
+
+<p>Give help. Shows usage message, includes default sizes
+for &ldquo;dynamic region&rdquo; and pattern match
+stack.</p> </td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="9%">
+
+
+<p><b>-k</b></p></td>
+<td width="6%"></td>
+<td width="74%">
+
+
+<p>Toggle running programs with compilation errors (see
+<b>&minus;ERROR</b> and <b>&minus;NOERRORS</b> extensions).
+By default programs with compilation errors will not be
+run.</p> </td></tr>
+</table>
+
+<p style="margin-left:11%;"><b>-l</b>
+<i>LISTINGFILE</i></p>
+
+<p style="margin-left:26%;">Enable listing output to the
+named file. The default listing side is <b>LEFT</b>.</p>
+
+<table width="100%" border="0" rules="none" frame="void"
+       cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="14%">
+
+
+<p><b>-n</b></p></td>
+<td width="1%"></td>
+<td width="74%">
+
+
+<p>Toggle running programs after compilation (see
+<b>&minus;EXECUTE</b> and <b>&minus;NOEXECUTE</b>
+extensions). By default programs are run after
+compilation.</p> </td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="14%">
+
+
+<p><b>-p</b></p></td>
+<td width="1%"></td>
+<td width="74%">
+
+
+<p>Toggle SPITBOL extensions (also controlled by
+<b>&minus;PLUSOPS</b>).</p> </td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="14%">
+
+
+<p><b>-r</b></p></td>
+<td width="1%"></td>
+<td width="74%">
+
+
+<p>Toggle reading <b>INPUT</b> from input file(s) after
+<b>END</b> label. Otherwise <b>INPUT</b> defaults (back) to
+standard input after program compilation is complete.</p></td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="14%">
+
+
+<p><b>-s</b></p></td>
+<td width="1%"></td>
+<td width="74%">
+
+
+<p>Toggle termination statistics (off by default).</p></td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="14%">
+
+
+<p><b>-u</b> <i>params</i></p></td>
+<td width="1%"></td>
+<td width="74%">
+
+
+<p>specifies a parameter string available via
+<b>HOST(0)</b>.</p> </td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="14%">
+
+
+<p><b>-v</b></p></td>
+<td width="1%"></td>
+<td width="74%">
+
+
+<p>Show version and exit.</p></td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="14%">
+
+
+<p><b>-z</b></p></td>
+<td width="1%"></td>
+<td width="74%">
+
+
+<p>Show directory search path in use (including <b>-I</b>
+options) and exit.</p></td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="14%">
+
+
+<p><b>--</b></p></td>
+<td width="1%"></td>
+<td width="74%">
+
+
+<p>Terminates processing items as options. Any remaining
+strings are treated as files or user parameters.</p></td></tr>
+</table>
+
+<p style="margin-left:11%;"><b>-I</b> <i>directory</i></p>
+
+<p style="margin-left:26%;">Appends directory argument to
+include search path (before elements from the <b>SNOLIB</b>
+or <b>SNOPATH</b> environment variables).</p>
+
+<table width="100%" border="0" rules="none" frame="void"
+       cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="11%">
+
+
+<p><b>-L</b> <i>file</i></p></td>
+<td width="4%"></td>
+<td width="74%">
+
+
+<p>Load source file before others on command line. May be
+used multiple times. Used to preload the <b>sdb</b>(1)
+source code debugger.</p></td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="11%">
+
+
+<p><b>-M</b></p></td>
+<td width="4%"></td>
+<td width="74%">
+
+
+<p>Specifies that all items left on the command line after
+option processing is complete are to be treated as
+filenames. The files are read in turn until an <b>END</b>
+statement is found (Any remaining data is available via the
+<b>INPUT</b> variable if the <b>-r</b> option is also
+given). A <b>--</b> terminates processing of arguments as
+files, and makes the remaining arguments available as user
+parameters (see the <b>HOST()</b> function).</p></td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="11%">
+
+
+<p><b>-P</b> <i>DDD</i></p></td>
+<td width="4%"></td>
+<td width="74%">
+
+
+<p>Allocate <i>DDD</i> descriptors for the pattern match
+stack. A suffix of <b>k</b> multiplies the number by 1024, a
+suffix of <b>m</b> multiplies the number by 1048576. The
+pattern match stack is used to save backtracking and
+conditional assignment information during pattern matching.
+If your program terminates with an &ldquo;Overflow during
+pattern matching&rdquo; message (Error 16) you need to
+increase the pattern match stack size. The <b>-h</b> option
+displays the default pattern match stack size.</p></td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="11%">
+
+
+<p><b>-S</b> <i>DDD</i></p></td>
+<td width="4%"></td>
+<td width="74%">
+
+
+<p>Allocate <i>DDD</i> descriptors for the interpreter
+stack. A suffix of <b>k</b> multiplies the number by 1024, a
+suffix of <b>m</b> multiplies the number by 1048576. The
+interpreter stack is used for saving data, and passing
+parameters to internal procedures. If your program
+terminates with an &ldquo;Stack overflow&rdquo; message
+(Error 21) you need to increase the interpreter stack size.
+A common reason for needing additional stack space is for
+tracing deeply nested DATA() structures during garbage
+collection. The <b>-h</b> option displays the default
+interpreter stack size.</p></td></tr>
+</table>
+
+<p style="margin-left:11%; margin-top: 1em"><b>Directory
+Search List</b> <br>
+Files specified in <b>-INCLUDE</b> directives and
+<b>LOAD()</b> function calls are first checked for in the
+current working directory. If not found, the following
+directory search order is used: Any directories specified on
+the command line using <b>-I</b> options, in the order
+specified; The list of directories from the <b>SNOPATH</b>
+environment variable, if defined; If <b>SNOPATH</b> is not
+defined, the <b>SNODIR</b> environment directory (or a
+compiled in default) is used to add the following: <br>
+SNODIR/VERSION/local <br>
+SNODIR/VERSION <br>
+SNODIR/local</p>
+
+<table width="100%" border="0" rules="none" frame="void"
+       cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="9%">
+
+
+<p>SNODIR</p></td>
+<td width="80%">
+</td></tr>
+</table>
+
+<h2>ENVIRONMENT
+<a name="ENVIRONMENT"></a>
+</h2>
+
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>SNOPATH</b></p>
+
+<p style="margin-left:22%;">Is a list of directories
+delimited by colons (semi-colons on VMS and Windows)
+appended to the Directory Search List (see above). NOTE!!
+<b>SNOPATH</b>, <b>SNOBOL_PRELOAD_PATH</b> introduces
+security and portability issues!!</p>
+
+<p style="margin-left:11%;"><b>SNOBOL_PRELOAD_PATH</b></p>
+
+<p style="margin-left:22%;">Is a list of source files
+delimited by colons (semi-colons on VMS and Windows) that
+will be read before the program source. Like <b>SNOPATH</b>,
+<b>SNOBOL_PRELOAD_PATH</b> introduces security and
+portability issues.</p>
+
+<table width="100%" border="0" rules="none" frame="void"
+       cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="9%">
+
+
+<p><b>SNOLIB</b></p></td>
+<td width="2%"></td>
+<td width="78%">
+
+
+<p>(the sole search directory in versions of CSNOBOL4 prior
+to version 1.5) is used to establish the base libary path if
+<b>SNOPATH</b> is not defined. See Directory Search List
+above.</p> </td></tr>
+</table>
+
+<h2>SEE ALSO
+<a name="SEE ALSO"></a>
+</h2>
+
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>sdb</b>(1),<b>snobol4dbm</b>(3),<b>snobol4tcl</b>(3),<b>snobol4time</b>(3),<b>snolib</b>(3).
+<br>
+http://www.snobol4.org</p>
+
+<p style="margin-left:22%;">All things SNOBOL4 related.</p>
+
+<p style="margin-left:11%;">http://www.snobol4.com</p>
+
+<p style="margin-left:22%;">Catspaw: commercial SPITBOL
+implementations, Free SNOBOL4+ for DOS.</p>
+
+
+<p style="margin-left:11%;">http://www.snobol4.org/doc/burks/tutorial/contents.htm</p>
+
+<p style="margin-left:22%;">SNOBOL4 language tutorial (from
+Catspaw Vanilla SNOBOL4)</p>
+
+
+<p style="margin-left:11%;">http://www.snobol4.org/doc/burks/manual/contents.htm</p>
+
+<p style="margin-left:22%;">Catspaw Vanilla SNOBOL4
+manual.</p>
+
+
+<p style="margin-left:11%;">ftp://ftp.snobol4.com/spitman.pdf</p>
+
+<p style="margin-left:22%;">Catspaw Macro SPITBOL
+manual</p>
+
+<p style="margin-left:11%;">[1] R. E. Griswold, J. F.
+Poage, and I. P. Polonsky</p>
+
+<p style="margin-left:22%;"><i>The SNOBOL4 Programming
+Language</i>, 2nd ed., Prentice-Hall Inc., 1971. <i><br>
+(aka the green book)</i> <br>
+ftp://ftp.cs.arizona.edu/snobol4/gb.pdf</p>
+
+<p style="margin-left:11%;">[2] R. E. Griswold,</p>
+
+<p style="margin-left:22%;"><i>The Macro Implementation of
+SNOBOL4</i>, W. H. Freeman and Co., 1972. <br>
+Book describing the implementation techniques used in Macro
+SNOBOL4.</p>
+
+
+<p style="margin-left:11%;">http://www.snobol4.org/docs/arizona/</p>
+
+<p style="margin-left:22%;">University of Arizona SNOBOL4
+memos, formatted as PDF files by Scott Marovich. Includes
+memo s4d58, which describes each pseudo-instruction in the
+Snobol Implementation Language (SIL), corrigendae for [1],
+[2] and <i>String and List Processing in SNOBOL4</i>.</p>
+
+<h2>AUTHOR
+<a name="AUTHOR"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em">Philip L.
+Budne</p>
+
+<p style="margin-left:11%; margin-top: 1em">with help
+from:</p>
+
+<p style="margin-left:11%; margin-top: 1em">R. E. Griswold,
+J. F. Poage, and I. P. Polonsky</p>
+
+<p style="margin-left:11%; margin-top: 1em">Mark Emmer
+(code from SNOBOL4+)</p>
+
+<p style="margin-left:11%; margin-top: 1em">Viktors Berstis
+(code from Minnesota SNOBOL4)</p>
+
+<h2>DIAGNOSTICS
+<a name="DIAGNOSTICS"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em">SNOBOL4 errors
+shown with <b>&amp;ERRTYPE</b> values. Errors marked
+<i>fatal</i> cannot be curtailed by setting
+<b>&amp;ERRLIMIT</b>.</p>
+
+<table width="100%" border="0" rules="none" frame="void"
+       cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="3%">
+
+
+<p>1</p></td>
+<td width="8%"></td>
+<td width="78%">
+
+
+<p>&quot;Illegal data type&quot;</p></td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="3%">
+
+
+<p>2</p></td>
+<td width="8%"></td>
+<td width="78%">
+
+
+<p>&quot;Error in arithmetic operation&quot;</p></td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="3%">
+
+
+<p>3</p></td>
+<td width="8%"></td>
+<td width="78%">
+
+
+<p>&quot;Erroneous array or table reference&quot;</p></td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="3%">
+
+
+<p>4</p></td>
+<td width="8%"></td>
+<td width="78%">
+
+
+<p>&quot;Null string in illegal context&quot;</p></td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="3%">
+
+
+<p>5</p></td>
+<td width="8%"></td>
+<td width="78%">
+
+
+<p>&quot;Undefined function or operation&quot;</p></td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="3%">
+
+
+<p>6</p></td>
+<td width="8%"></td>
+<td width="78%">
+
+
+<p>&quot;Erroneous prototype&quot;</p></td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="3%">
+
+
+<p>7</p></td>
+<td width="8%"></td>
+<td width="78%">
+
+
+<p>&quot;Unknown keyword&quot;</p></td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="3%">
+
+
+<p>8</p></td>
+<td width="8%"></td>
+<td width="78%">
+
+
+<p>&quot;Variable not present where required&quot;</p></td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="3%">
+
+
+<p>9</p></td>
+<td width="8%"></td>
+<td width="78%">
+
+
+<p>&quot;Entry point of function not label&quot;</p></td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="3%">
+
+
+<p>10</p></td>
+<td width="8%"></td>
+<td width="78%">
+
+
+<p>&quot;Illegal argument to primitive function&quot;</p></td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="3%">
+
+
+<p>11</p></td>
+<td width="8%"></td>
+<td width="78%">
+
+
+<p>&quot;Reading error&quot;</p></td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="3%">
+
+
+<p>12</p></td>
+<td width="8%"></td>
+<td width="78%">
+
+
+<p>&quot;Illegal i/o unit&quot;</p></td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="3%">
+
+
+<p>13</p></td>
+<td width="8%"></td>
+<td width="78%">
+
+
+<p>&quot;Limit on defined data types exceeded&quot;</p></td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="3%">
+
+
+<p>14</p></td>
+<td width="8%"></td>
+<td width="78%">
+
+
+<p>&quot;Negative number in illegal context&quot;</p></td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="3%">
+
+
+<p>15</p></td>
+<td width="8%"></td>
+<td width="78%">
+
+
+<p>&quot;String overflow&quot;</p></td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="3%">
+
+
+<p>16</p></td>
+<td width="8%"></td>
+<td width="78%">
+
+
+<p>&quot;Overflow during pattern matching&quot;
+<i>fatal.</i> See the <b>-P</b> option.</p></td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="3%">
+
+
+<p>17</p></td>
+<td width="8%"></td>
+<td width="78%">
+
+
+<p>&quot;Error in SNOBOL4 system&quot; <i>fatal.</i>
+Various internal errors.</p></td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="3%">
+
+
+<p>18</p></td>
+<td width="8%"></td>
+<td width="78%">
+
+
+<p>&quot;Return from level zero&quot; <i>fatal.</i></p></td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="3%">
+
+
+<p>19</p></td>
+<td width="8%"></td>
+<td width="78%">
+
+
+<p>&quot;Failure during goto evaluation&quot;
+<i>fatal.</i></p> </td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="3%">
+
+
+<p>20</p></td>
+<td width="8%"></td>
+<td width="78%">
+
+
+<p>&quot;Insufficient storage to continue&quot;
+<i>fatal.</i> See the <b>-d</b> option.</p></td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="3%">
+
+
+<p>21</p></td>
+<td width="8%"></td>
+<td width="78%">
+
+
+<p>&quot;Stack overflow&quot; <i>fatal.</i> See the
+<b>-S</b> option.</p></td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="3%">
+
+
+<p>22</p></td>
+<td width="8%"></td>
+<td width="78%">
+
+
+<p>&quot;Limit on statement execution exceeded&quot;
+<i>fatal.</i></p> </td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="3%">
+
+
+<p>23</p></td>
+<td width="8%"></td>
+<td width="78%">
+
+
+<p>&quot;Object exceeds size limit&quot; <i>fatal.</i></p></td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="3%">
+
+
+<p>24</p></td>
+<td width="8%"></td>
+<td width="78%">
+
+
+<p>&quot;Undefined or erroneous goto&quot;
+<i>fatal.</i></p> </td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="3%">
+
+
+<p>25</p></td>
+<td width="8%"></td>
+<td width="78%">
+
+
+<p>&quot;Incorrect number of arguments&quot;
+<i>fatal.</i></p> </td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="3%">
+
+
+<p>26</p></td>
+<td width="8%"></td>
+<td width="78%">
+
+
+<p>&quot;Limit on compilation errors exceeded&quot;
+<i>fatal.</i></p> </td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="3%">
+
+
+<p>27</p></td>
+<td width="8%"></td>
+<td width="78%">
+
+
+<p>&quot;Erroneous END statement&quot; <i>fatal.</i></p></td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="3%">
+
+
+<p>28</p></td>
+<td width="8%"></td>
+<td width="78%">
+
+
+<p>&quot;Execution of statement with compilation
+error&quot; <i>fatal.</i> Last error in standard
+SNOBOL4.</p> </td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="3%">
+
+
+<p>29</p></td>
+<td width="8%"></td>
+<td width="78%">
+
+
+<p>&quot;Erroneous INCLUDE statement&quot;
+<i>fatal.</i></p> </td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="3%">
+
+
+<p>30</p></td>
+<td width="8%"></td>
+<td width="78%">
+
+
+<p>&quot;Cannot open INCLUDE file&quot; <i>fatal.</i></p></td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="3%">
+
+
+<p>31</p></td>
+<td width="8%"></td>
+<td width="78%">
+
+
+<p>&quot;Erroneous LINE statement&quot; <i>fatal.</i></p></td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="3%">
+
+
+<p>32</p></td>
+<td width="8%"></td>
+<td width="78%">
+
+
+<p>&quot;Missing END statement&quot; <i>fatal.</i></p></td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="3%">
+
+
+<p>33</p></td>
+<td width="8%"></td>
+<td width="78%">
+
+
+<p>&quot;Output error&quot;</p></td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="3%">
+
+
+<p>34</p></td>
+<td width="8%"></td>
+<td width="78%">
+
+
+<p>&quot;User interrupt&quot; Interrupt character (SIGINT)
+was recieved.</p></td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="3%">
+
+
+<p>35</p></td>
+<td width="8%"></td>
+<td width="78%">
+
+
+<p>&quot;Not in a SETEXIT handler&quot; Attempt to branch
+to <b>CONTINUE</b>, <b>SCONTINUE</b>, or <b>ABORT</b> when
+no unhandled error condition present.</p></td></tr>
+</table>
+
+<h2>BUGS
+<a name="BUGS"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em">I/O retains
+some record oriented flavor.</p>
+
+<p style="margin-left:11%; margin-top: 1em">I/O is still
+tied to unit numbers.</p>
+
+
+<p style="margin-left:11%; margin-top: 1em">&ldquo;Dynamic&rdquo;
+storage cannot be expanded after startup.</p>
+
+<p style="margin-left:11%; margin-top: 1em">Integer math
+can never &ldquo;fail&rdquo;, even on overflow.</p>
+
+<p style="margin-left:11%; margin-top: 1em">Oversize
+integer constants may not be detected.</p>
+
+<p style="margin-left:11%; margin-top: 1em">This manual
+page is too long, and should be split up!</p>
+
+<p style="margin-left:11%; margin-top: 1em">There should be
+a <b>snobol4func</b>(1) man page which describes all
+intrinsic functions (this page only includes
+extensions).</p>
+<hr>
+</body>
+</html>

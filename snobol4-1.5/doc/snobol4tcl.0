@@ -1,0 +1,107 @@
+SNOBOL4TCL(1)                                                    SNOBOL4TCL(1)
+
+
+
+NNAAMMEE
+       snobol4tcl - SNOBOL4 Tcl/Tk interface
+
+
+SSYYNNOOPPSSIISS
+       --IINNCCLLUUDDEE ''ssttccll..ssnnoo''
+
+       ttccllhhaannddllee == SSTTCCLL__CCRREEAATTEEIINNTTEERRPP(())
+
+       SSTTCCLL__DDEELLEETTEEIINNTTEERRPP((ttccllhhaannddllee))
+
+       SSTTCCLL__EEVVAALLFFIILLEE((ttccllhhaannddllee,,ttccllffiilleennaammee))
+
+       vvaalluuee == SSTTCCLL__GGEETTVVAARR((ttccllhhaannddllee,,vvaarrnnaammee))
+
+       SSTTCCLL__SSEETTVVAARR((ttccllhhaannddllee,,vvaarrnnaammee,,vvaalluuee))
+
+       SSTTCCLL__EEVVAALL((ttccllhhaannddllee,,ttccllssttmmtt))
+
+
+DDEESSCCRRIIPPTTIIOONN
+       Tcl  is  an  embedable  scripting language developed by John Osterhout,
+       while at the University of Clifornia, Berkeley.  Tk is a graphical user
+       interface toolkit developed for Tcl.
+
+
+       This page describes STCL, an experimental facility for invoking Tcl and
+       Tk from SNOBOL4 programs, inspired by Arjen Markus' "ftcl"  FORTRAN/Tcl
+       interface
+
+
+       SSTTCCLL__CCRREEAATTEEIINNTTEERRPP  creates a Tcl interpreter and returns a handle which
+       can be passed to the remaining functions.
+
+
+       SSTTCCLL__DDEELLEETTEEIINNTTEERRPP destroys a Tcl interpreter.
+
+
+       SSTTCCLL__EEVVAALLFFIILLEE reads a Tcl script file into the  referenced  Tcl  inter-
+       preter.
+
+
+       SSTTCCLL__GGEETTVVAARR  retrieves  the  string  value of named variable from a Tcl
+       interpreter.  SSTTCCLL__GGEETTVVAARR stores a string value of named variable in  a
+       Tcl interpreter.
+
+
+       SSTTCCLL__EEVVAALL evaluates a string containing Tcl code in a Tcl interpreter.
+
+
+EEXXAAMMPPLLEE
+              --IINNCCLLUUDDEE ''ssttccll..ssnnoo''
+                      IINNTTEERRPP == SSTTCCLL__CCRREEAATTEEIINNTTEERRPP(())
+                      TTCCLL__VVEERRSSIIOONN == SSTTCCLL__GGEETTVVAARR((IINNTTEERRPP,, ""ttccll__vveerrssiioonn""))
+                      OOUUTTPPUUTT == IIDDEENNTT((TTCCLL__VVEERRSSIIOONN)) ""CCoouulldd nnoott ggeett ttccll__vveerrssiioonn"" ::SS((EENNDD))
+                      OOUUTTPPUUTT == ""TTccll VVeerrssiioonn:: "" TTCCLL__VVEERRSSIIOONN
+
+              ** cchheecckk TTccll vveerrssiioonn
+                      NNUUMM == SSPPAANN((''00112233445566778899''))
+                      VVPPAATT == NNUUMM ''..'' NNUUMM
+                      TTCCLL__VVEERRSSIIOONN VVPPAATT .. VVEERR                          ::SS((CCHHEECCKKVV))
+                      OOUUTTPPUUTT == ""ccoouulldd nnoott ppaarrssee ttccll__vveerrssiioonn""          ::((EENNDD))
+
+              CCHHEECCKKVV  LLTT((VVEERR,, 88..44))                                    ::SS((CCHHEECCKKTTKK))
+
+              ** TTccll 88..44 aanndd llaatteerr ccaann ddyynnaammiiccllyy llooaadd TTkk!!
+                      SSTTCCLL__EEVVAALL((IINNTTEERRPP,, ""ppaacckkaaggee rreeqquuiirree TTkk""))         ::FF((EENNDD))
+
+              ** CChheecckk ffoorr TTkk
+              CCHHEECCKKTTKK TTKK__VVEERRSSIIOONN == SSTTCCLL__GGEETTVVAARR((IINNTTEERRPP,, ""ttkk__vveerrssiioonn""))  ::FF((NNOO__TTKK))
+                      DDIIFFFFEERR((TTKK__VVEERRSSIIOONN))                              ::SS((HHAAVVEETTKK))
+              NNOO__TTKK   OOUUTTPPUUTT == ""CCoouulldd nnoott ffiinndd ttkk__vveerrssiioonn""            ::((EENNDD))
+
+              HHAAVVEETTKK  OOUUTTPPUUTT == ""TTkk vveerrssiioonn:: "" TTKK__VVEERRSSIIOONN
+
+              LLOOOOPP    OOUUTTPPUUTT == SSTTCCLL__EEVVAALL((IINNTTEERRPP,, ''ttkk__mmeessssaaggeeBBooxx --mmeessssaaggee ""AAlleerrtt!!"" --ttyyppee ookk --iiccoonn iinnffoo''))
+                      VVAALL == SSTTCCLL__EEVVAALL((IINNTTEERRPP,, ''ttkk__mmeessssaaggeeBBooxx --mmeessssaaggee ""RReeaallllyy qquuiitt??"" --ttyyppee yyeessnnoo --iiccoonn qquueessttiioonn''))
+                      OOUUTTPPUUTT == VVAALL
+                      DDIIFFFFEERR((VVAALL,, ""yyeess""))                              ::SS((LLOOOOPP))
+              EENNDD
+
+
+SSEEEE AALLSSOO
+       ttccllsshh(n), TTccll(n).
+
+
+AAUUTTHHOORR
+       Philip L. Budne
+
+
+BBUUGGSS
+       NOTE!   By  default the STCL extension is not built into ssnnoobbooll44(1), it
+       must be explicitly included at build time.  In Tcl 8.4  and  later,  Tk
+       can  be dynamicly loaded by Tcl at runtime, but in earlier releases, it
+       has to be included at compile time.  When  dynamicly  linked  libraries
+       are not available, this can cause the SNOBOL4 interpreter executable to
+       expand by up to four fold!  STCL should be a dynamicly  loaded  SNOBOL4
+       extension.
+
+
+
+
+SNOBOL                            7 Aug 2013                     SNOBOL4TCL(1)

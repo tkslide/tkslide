@@ -1,0 +1,192 @@
+<!-- Creator     : groff version 1.21 -->
+<!-- CreationDate: Tue Oct  1 11:33:16 2013 -->
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta name="generator" content="groff -Thtml, see www.gnu.org">
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII">
+<meta name="Content-Style" content="text/css">
+<style type="text/css">
+       p       { margin-top: 0; margin-bottom: 0; vertical-align: top }
+       pre     { margin-top: 0; margin-bottom: 0; vertical-align: top }
+       table   { margin-top: 0; margin-bottom: 0; vertical-align: top }
+       h1      { text-align: center }
+</style>
+<title>SNOBOL4TCL</title>
+
+</head>
+<body>
+
+<h1 align="center">SNOBOL4TCL</h1>
+
+<a href="#NAME">NAME</a><br>
+<a href="#SYNOPSIS">SYNOPSIS</a><br>
+<a href="#DESCRIPTION">DESCRIPTION</a><br>
+<a href="#EXAMPLE">EXAMPLE</a><br>
+<a href="#SEE ALSO">SEE ALSO</a><br>
+<a href="#AUTHOR">AUTHOR</a><br>
+<a href="#BUGS">BUGS</a><br>
+
+<hr>
+
+
+<h2>NAME
+<a name="NAME"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em">snobol4tcl
+&minus; SNOBOL4 Tcl/Tk interface</p>
+
+<h2>SYNOPSIS
+<a name="SYNOPSIS"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>-INCLUDE
+&rsquo;stcl.sno&rsquo;</b></p>
+
+<p style="margin-left:11%; margin-top: 1em"><b>tclhandle =
+STCL_CREATEINTERP()</b></p>
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>STCL_DELETEINTERP(tclhandle)</b></p>
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>STCL_EVALFILE(tclhandle,tclfilename)</b></p>
+
+<p style="margin-left:11%; margin-top: 1em"><b>value =
+STCL_GETVAR(tclhandle,varname)</b></p>
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>STCL_SETVAR(tclhandle,varname,value)</b></p>
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>STCL_EVAL(tclhandle,tclstmt)</b></p>
+
+<h2>DESCRIPTION
+<a name="DESCRIPTION"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em">Tcl is an
+embedable scripting language developed by John Osterhout,
+while at the University of Clifornia, Berkeley. Tk is a
+graphical user interface toolkit developed for Tcl.</p>
+
+<p style="margin-left:11%; margin-top: 1em">This page
+describes STCL, an experimental facility for invoking Tcl
+and Tk from SNOBOL4 programs, inspired by Arjen
+Markus&rsquo; &quot;ftcl&quot; FORTRAN/Tcl interface</p>
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>STCL_CREATEINTERP</b>
+creates a Tcl interpreter and returns a handle which can be
+passed to the remaining functions.</p>
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>STCL_DELETEINTERP</b>
+destroys a Tcl interpreter.</p>
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>STCL_EVALFILE</b>
+reads a Tcl script file into the referenced Tcl
+interpreter.</p>
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>STCL_GETVAR</b>
+retrieves the string value of named variable from a Tcl
+interpreter. <b>STCL_GETVAR</b> stores a string value of
+named variable in a Tcl interpreter.</p>
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>STCL_EVAL</b>
+evaluates a string containing Tcl code in a Tcl
+interpreter.</p>
+
+<h2>EXAMPLE
+<a name="EXAMPLE"></a>
+</h2>
+
+
+<p style="margin-left:22%; margin-top: 1em"><b>-INCLUDE
+&rsquo;stcl.sno&rsquo; <br>
+INTERP = STCL_CREATEINTERP() <br>
+TCL_VERSION = STCL_GETVAR(INTERP, &quot;tcl_version&quot;)
+<br>
+OUTPUT = IDENT(TCL_VERSION) &quot;Could not get
+tcl_version&quot; :S(END) <br>
+OUTPUT = &quot;Tcl Version: &quot; TCL_VERSION</b></p>
+
+<p style="margin-left:22%; margin-top: 1em"><b>* check Tcl
+version <br>
+NUM = SPAN(&rsquo;0123456789&rsquo;) <br>
+VPAT = NUM &rsquo;.&rsquo; NUM <br>
+TCL_VERSION VPAT . VER :S(CHECKV) <br>
+OUTPUT = &quot;could not parse tcl_version&quot;
+:(END)</b></p>
+
+<p style="margin-left:22%; margin-top: 1em"><b>CHECKV
+LT(VER, 8.4) :S(CHECKTK)</b></p>
+
+<p style="margin-left:22%; margin-top: 1em"><b>* Tcl 8.4
+and later can dynamicly load Tk! <br>
+STCL_EVAL(INTERP, &quot;package require Tk&quot;)
+:F(END)</b></p>
+
+<p style="margin-left:22%; margin-top: 1em"><b>* Check for
+Tk <br>
+CHECKTK TK_VERSION = STCL_GETVAR(INTERP,
+&quot;tk_version&quot;) :F(NO_TK) <br>
+DIFFER(TK_VERSION) :S(HAVETK) <br>
+NO_TK OUTPUT = &quot;Could not find tk_version&quot;
+:(END)</b></p>
+
+<p style="margin-left:22%; margin-top: 1em"><b>HAVETK
+OUTPUT = &quot;Tk version: &quot; TK_VERSION</b></p>
+
+<p style="margin-left:22%; margin-top: 1em"><b>LOOP OUTPUT
+= STCL_EVAL(INTERP, &rsquo;tk_messageBox -message
+&quot;Alert!&quot; -type ok -icon info&rsquo;) <br>
+VAL = STCL_EVAL(INTERP, &rsquo;tk_messageBox -message
+&quot;Really quit?&quot; -type yesno -icon question&rsquo;)
+<br>
+OUTPUT = VAL <br>
+DIFFER(VAL, &quot;yes&quot;) :S(LOOP) <br>
+END</b></p>
+
+<h2>SEE ALSO
+<a name="SEE ALSO"></a>
+</h2>
+
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>tclsh</b>(n),
+<b>Tcl</b>(n).</p>
+
+<h2>AUTHOR
+<a name="AUTHOR"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em">Philip L.
+Budne</p>
+
+<h2>BUGS
+<a name="BUGS"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em">NOTE! By
+default the STCL extension is not built into
+<b>snobol4</b>(1), it must be explicitly included at build
+time. In Tcl 8.4 and later, Tk can be dynamicly loaded by
+Tcl at runtime, but in earlier releases, it has to be
+included at compile time. When dynamicly linked libraries
+are not available, this can cause the SNOBOL4 interpreter
+executable to expand by up to four fold! STCL should be a
+dynamicly loaded SNOBOL4 extension.</p>
+<hr>
+</body>
+</html>

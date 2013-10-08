@@ -1,0 +1,299 @@
+<!-- Creator     : groff version 1.21 -->
+<!-- CreationDate: Tue Oct  1 11:33:15 2013 -->
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta name="generator" content="groff -Thtml, see www.gnu.org">
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII">
+<meta name="Content-Style" content="text/css">
+<style type="text/css">
+       p       { margin-top: 0; margin-bottom: 0; vertical-align: top }
+       pre     { margin-top: 0; margin-bottom: 0; vertical-align: top }
+       table   { margin-top: 0; margin-bottom: 0; vertical-align: top }
+       h1      { text-align: center }
+</style>
+<title>SDB</title>
+
+</head>
+<body>
+
+<h1 align="center">SDB</h1>
+
+<a href="#NAME">NAME</a><br>
+<a href="#SYNOPSIS">SYNOPSIS</a><br>
+<a href="#DESCRIPTION">DESCRIPTION</a><br>
+<a href="#SEE ALSO">SEE ALSO</a><br>
+<a href="#AUTHOR">AUTHOR</a><br>
+<a href="#NOTA BENE">NOTA BENE</a><br>
+<a href="#BUGS">BUGS</a><br>
+
+<hr>
+
+
+<h2>NAME
+<a name="NAME"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em">sdb &minus;
+SNOBOL4 debugger</p>
+
+<h2>SYNOPSIS
+<a name="SYNOPSIS"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>sdb</b> [
+<i>options</i> ... ] <i>program.sno</i></p>
+
+<h2>DESCRIPTION
+<a name="DESCRIPTION"></a>
+</h2>
+
+
+
+<p style="margin-left:11%; margin-top: 1em"><i><b>sdb</b></i>
+is a debugger for <b>snobol4</b>(1) programs, in the mold
+(clawning fone) of <b>gdb</b>(1), The GNU debugger.
+<b>sdb</b>(1) uses <b>readline</b>(3) for command line
+editing/history when available.</p>
+
+<p style="margin-left:11%; margin-top: 1em"><b>Commands:
+<br>
+break</b> <i>LABEL_OR_STATEMENT_NUMBER</i></p>
+
+<p style="margin-left:14%;">Set a breakpoint.</p>
+
+<p style="margin-left:11%;"><b>bt</b></p>
+
+<p style="margin-left:14%;">Display call stack
+backtrace.</p>
+
+<p style="margin-left:11%;"><b>commands</b>
+<i>BREAKPOINT_NUMBER</i></p>
+
+<p style="margin-left:14%;">Add sdb commands to execute
+(ie; print &amp; continue) to a breakpoint.</p>
+
+<p style="margin-left:11%;"><b>condition</b>
+<i>BREAKPOINT_NUMBER EXPR</i></p>
+
+<p style="margin-left:14%;">If <i>EXPR</i> is supplied, it
+is used as a predicate to make the breakpoint
+conditional.</p>
+
+<p style="margin-left:11%;"><b>continue</b>
+<i>EMPTY_OR_COUNT</i></p>
+
+<p style="margin-left:14%;">Continue from breakpoint. The
+optional count specifies how many times to continue past
+this breakpoint (sets &quot;ignore&quot; count).</p>
+
+<p style="margin-left:11%;"><b>delete</b>
+<i>BREAKPOINT_NUMBER_OR_EMPTY</i></p>
+
+<p style="margin-left:14%;">Delete a single breakpoint, or
+all breakpoints.</p>
+
+<p style="margin-left:11%;"><b>disable</b>
+<i>BREAKPOINT_NUMBER_OR_EMPTY</i></p>
+
+<p style="margin-left:14%;">Temporarily disable a
+breakpoint, or all breakpoints.</p>
+
+<p style="margin-left:11%;"><b>enable</b>
+<i>BREAKPOINT_NUMBER_OR_EMPTY</i></p>
+
+<p style="margin-left:14%;">Reenable a breakpoint, or all
+breakpoints.</p>
+
+<p style="margin-left:11%;"><b>finish</b></p>
+
+<p style="margin-left:14%;">Resume debugging after current
+function returns. Will display function return type and
+value, if any.</p>
+
+<p style="margin-left:11%;"><b>help</b></p>
+
+<p style="margin-left:14%;">Display help.</p>
+
+<p style="margin-left:11%;"><b>ignore</b>
+<i>BREAKPOINT_NUMBER COUNT</i></p>
+
+<p style="margin-left:14%;">Set breakpoint ignore
+count.</p>
+
+<p style="margin-left:11%;"><b>info</b></p>
+
+<p style="margin-left:14%;">Display list of breakpoints and
+their status.</p>
+
+<p style="margin-left:11%;"><b>list</b>
+<i>EMPTY_OR_STATEMENT_NUMBER</i></p>
+
+<p style="margin-left:14%;">Display source code.</p>
+
+<p style="margin-left:11%;"><b>next</b>
+<i>EMPTY_OR_COUNT</i></p>
+
+<p style="margin-left:14%;">Single step execution, skipping
+over function calls.</p>
+
+<p style="margin-left:11%;"><b>print</b>
+<i>EXPRESSION</i></p>
+
+<p style="margin-left:14%;">Evaluate expression and print
+result. Can be used to call functions, or set variables.</p>
+
+<p style="margin-left:11%;"><b>quit</b></p>
+
+<p style="margin-left:14%;">Exit debugger.</p>
+
+<p style="margin-left:11%;"><b>step</b>
+<i>EMPTY_OR_COUNT</i></p>
+
+<p style="margin-left:14%;">Single step.</p>
+
+<p style="margin-left:11%;"><b>watch</b>
+<i>VARIABLE</i></p>
+
+<p style="margin-left:14%;">Set watchpoint on a variable
+(break when value changes).</p>
+
+<p style="margin-left:11%;"><b>what</b></p>
+
+<p style="margin-left:14%;">Display the datatype of
+variable contents (or expression).</p>
+
+<p style="margin-left:11%;"><b>where</b></p>
+
+<p style="margin-left:14%;">An alias for bt.</p>
+
+<p style="margin-left:11%; margin-top: 1em">A blank line
+repeats the previous command.</p>
+
+<p style="margin-left:11%; margin-top: 1em">Non-ambiguous
+abbreviations of commands can be used (ie; &quot;s&quot;,
+&quot;n&quot;).</p>
+
+<p style="margin-left:11%; margin-top: 1em">The GNU
+Readline library (when available) will be used for sdb input
+for command editing and history.</p>
+
+<p style="margin-left:11%; margin-top: 1em">The keyboard
+interrupt character (eg; Control C) will stop a running
+program and return control to the <b>sdb</b>(1) command
+prompt.</p>
+
+<p style="margin-left:11%; margin-top: 1em">If your program
+calls the <b>SDB()</b> function, it will act as a
+breakpoint. You can check whether <b>sdb</b>(1) is loaded
+with the <b>FUNCTION</b> predicate, ie;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</p>
+
+
+<p style="margin-left:22%; margin-top: 1em">FUNCTION(&rsquo;SDB&rsquo;)
+SDB()</p>
+
+<h2>SEE ALSO
+<a name="SEE ALSO"></a>
+</h2>
+
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>snobol4</b>(1),
+<b>gdb</b>(1), <b>readline</b>(3),
+<b>snobol4readline</b>(3)</p>
+
+<h2>AUTHOR
+<a name="AUTHOR"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em">Philip L.
+Budne</p>
+
+<p style="margin-left:11%; margin-top: 1em">Inspired by
+Fred Weigel&rsquo;s DDT.SNO and <b>SITBOL</b>&rsquo;s
+SNODDT.</p>
+
+<h2>NOTA BENE
+<a name="NOTA BENE"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>sdb</b>(1)
+uses a wide variety of system facilities and will interact
+poorly with any programs that use any number of features,
+including:</p>
+
+<table width="100%" border="0" rules="none" frame="void"
+       cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="1%">
+
+
+<p>&bull;</p></td>
+<td width="10%"></td>
+<td width="78%">
+
+
+<p>Altering listing settings with directive/control
+lines.</p> </td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="1%">
+
+
+<p>&bull;</p></td>
+<td width="10%"></td>
+<td width="78%">
+
+
+<p>Altering <b>&amp;STLIMIT</b>, <b>&amp;ERRLIMIT</b>, or
+<b>&amp;TRACE</b>.</p> </td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="1%">
+
+
+<p>&bull;</p></td>
+<td width="10%"></td>
+<td width="78%">
+
+
+<p>Calling <b>SETEXIT()</b></p></td></tr>
+</table>
+
+<h2>BUGS
+<a name="BUGS"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em">If you try to
+put a breakpoint on a label or line with no code or goto
+fields, the breakpoint will never be triggered.</p>
+
+<p style="margin-left:11%; margin-top: 1em">You cannot put
+a breakpoint on the <b>END</b> label (however control always
+returns to sdb when the <b>END</b> label is reached).</p>
+
+<p style="margin-left:11%; margin-top: 1em">There is no
+&quot;run&quot; command; you cannot restart the program
+without quitting and losing breakpoint settings.</p>
+
+<p style="margin-left:11%; margin-top: 1em">Interrupt
+character trapping is in it&rsquo;s infancy, and only occurs
+at the start of a each statement executed.</p>
+
+<p style="margin-left:11%; margin-top: 1em">The interrupt
+character is silently ignored when at the <b>sdb</b> command
+prompt.</p>
+
+<p style="margin-left:11%; margin-top: 1em"><b>sdb</b> does
+not read an init file (ie; .sdbinit).</p>
+<hr>
+</body>
+</html>

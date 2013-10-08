@@ -1,0 +1,66 @@
+*	$Id: serv.sno,v 1.2 2002/01/15 05:19:01 phil Exp $
+*	Ssmple TCP server demo for SNOBOL4
+*	Phil Budne
+*	November/December 1997
+
+*	TCP port number for server
+	SERVER_PORT = 54321
+
+****************
+*	perform any initialization here
+*	(ie; read in/calculate data common to all server forks)
+
+*	ASCII
+	TAB = CHAR(8)
+	LF = CHAR(10)
+	CR = CHAR(13)
+	SP = CHAR(40)
+
+	CRLF = CR LF
+
+****************
+*	main process loops, forking children to handle connections
+
+SLOOP	FD = SERV_LISTEN("inet", "stream", SERVER_PORT) :F(LERR)
+
+****************
+*	here in a child process with a new FD
+
+*	connect socket to an I/O variable
+	INPUT(.NET, 9, "UWT", "/dev/fd/" FD)		:F(IERR)
+	OUTPUT(.NET, 9)
+
+*	do protocol (looks like SMTP)
+
+*	output a welcome message
+	NET = "220 Hello, I'm listening" CRLF
+
+*	client loop
+CLOOP	LINE = NET					:F(END)
+
+*	strip all CR/LF chars
+CRLOOP	LINE ANY(CRLF) =				:S(CRLOOP)
+
+*	get first token, lower casify it
+	LINE POS(0) SPAN(&UCASE &LCASE) . CMD		:F(BADCMD)
+	CMD = REPLACE(CMD,&UCASE,&LCASE)
+
+	IDENT(CMD,'quit')				:S(END)
+	IDENT(CMD,'help')				:S(HELPCMD)
+
+*	ADD your command checks here
+
+BADCMD	NET = "500 Unrecognized command" CRLF		:(CLOOP)
+
+HELPCMD	NET =
++	"240-Serv.sno under SNOBOL4 " HOST() CRLF
++	"240-Commands" CRLF
++	"240-	HELP" CRLF
++	"240-	QUIT" CRLF
++	"240-more help here when it becomes available" CRLF
++	"240 End of HELP" CRLF				:(CLOOP)
+
+LERR	OUTPUT = "?LISTEN failed"			:(END)
+IERR	OUTPUT = "?Input error"
+
+END

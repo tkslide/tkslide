@@ -1,0 +1,9 @@
+* $Id: random.sno,v 1.1 2012/01/04 22:37:06 phil Exp $
+*
+* Phil Budne <phil@ultimate.com>
+* January 4, 2011
+*
+* random number functions
+	LOAD("RANDOM()INTEGER")
+	LOAD("SRANDOM(INTEGER)STRING")
+	LOAD("SRANDOMDEV()STRING")

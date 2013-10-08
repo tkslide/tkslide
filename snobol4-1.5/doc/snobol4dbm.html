@@ -1,0 +1,260 @@
+<!-- Creator     : groff version 1.21 -->
+<!-- CreationDate: Tue Oct  1 11:33:15 2013 -->
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta name="generator" content="groff -Thtml, see www.gnu.org">
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII">
+<meta name="Content-Style" content="text/css">
+<style type="text/css">
+       p       { margin-top: 0; margin-bottom: 0; vertical-align: top }
+       pre     { margin-top: 0; margin-bottom: 0; vertical-align: top }
+       table   { margin-top: 0; margin-bottom: 0; vertical-align: top }
+       h1      { text-align: center }
+</style>
+<title>SNOBOL4DBM</title>
+
+</head>
+<body>
+
+<h1 align="center">SNOBOL4DBM</h1>
+
+<a href="#NAME">NAME</a><br>
+<a href="#SYNOPSIS">SYNOPSIS</a><br>
+<a href="#DESCRIPTION">DESCRIPTION</a><br>
+<a href="#FILES">FILES</a><br>
+<a href="#SEE ALSO">SEE ALSO</a><br>
+<a href="#AUTHOR">AUTHOR</a><br>
+<a href="#BUGS">BUGS</a><br>
+
+<hr>
+
+
+<h2>NAME
+<a name="NAME"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em">snobol4dbm
+&minus; SNOBOL4 NDBM interface</p>
+
+<h2>SYNOPSIS
+<a name="SYNOPSIS"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>-INCLUDE
+&rsquo;ndbm.sno&rsquo;</b></p>
+
+<p style="margin-left:11%; margin-top: 1em"><b>dbhandle =
+DBM_OPEN(file,flags,mode)</b></p>
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>DBM_CLOSE(dbhandle)</b></p>
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>DBM_STORE(dbhandle,key,datum,flags)</b></p>
+
+<p style="margin-left:11%; margin-top: 1em"><b>datum =
+DBM_FETCH(dbhandle,key)</b></p>
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>DBM_DELETE(dbhandle,key)</b></p>
+
+<p style="margin-left:11%; margin-top: 1em"><b>key =
+DBM_FIRSTKEY(dbhandle)</b></p>
+
+<p style="margin-left:11%; margin-top: 1em"><b>key =
+DBM_NEXTKEY(dbhandle)</b></p>
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>DBM_ERROR(dbhandle)</b></p>
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>DBM_CLEARERR(dbhandle)</b></p>
+
+<h2>DESCRIPTION
+<a name="DESCRIPTION"></a>
+</h2>
+
+
+
+<p style="margin-left:11%; margin-top: 1em">&quot;NDBM&quot;
+(for New Data Base Managemnt) is an industry standard fast
+hashed storage API first created in 4.3BSD, and included in
+the Unix 98 (SUSv2) standard. The original DBM API appeared
+in AT&amp;T Research Unix Version 7, and only allowed access
+to a single file at a time.</p>
+
+<p style="margin-left:11%; margin-top: 1em">There are many
+different implementations of this API, including:</p>
+
+<table width="100%" border="0" rules="none" frame="void"
+       cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="1%">
+
+
+<p>&bull;</p></td>
+<td width="10%"></td>
+<td width="78%">
+
+
+<p>The original BSD 4.3 ndbm, based on AT&amp;T dbm. Found
+in commercial Un*x offerings.</p></td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="1%">
+
+
+<p>&bull;</p></td>
+<td width="10%"></td>
+<td width="78%">
+
+
+<p>Berkeley DB v1 compatibility interface. Supplied with
+4.4BSD based systems: (Free|Open|Net)BSD, MacOS X.</p></td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="1%">
+
+
+<p>&bull;</p></td>
+<td width="10%"></td>
+<td width="78%">
+
+
+<p>GNU DBM (GDBM) found in Linux distributions.</p></td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="1%">
+
+
+<p>&bull;</p></td>
+<td width="10%"></td>
+<td width="78%">
+
+
+<p>SDBM, Ozan Yigit&rsquo;s Public Domain implementation of
+NDBM. Supplied with this distribution, and used as a last
+resort on Un*x systems (and by default on non Un*x
+systems).</p> </td></tr>
+</table>
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>DBM_OPEN</b>
+takes a filename (STRING), flags (either &quot;R&quot; for
+read-only, &quot;W&quot; for write access, or &quot;CW&quot;
+to create and write a new file), and a &quot;mode&quot;
+string, which defaults to &quot;0660&quot; (octal) and
+returns a database handle which can be passed to the
+remaining functions.</p>
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>DBM_CLOSE</b>
+closes the database file. <b>DBM_CLOSE</b> <i>MUST</i> be
+called to ensure that all your data is written.</p>
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>DBM_STORE</b>
+takes a database handle, key and datum strings, and a flag
+(either <b>DBM_INSERT</b> to insert a new pair, or fail if
+the key already exists, or <b>DBM_REPLACE</b> to insert or
+replace existing data). The key and datum strings may
+contain an arbitrary series of characters.</p>
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>DBM_FETCH</b>
+returns the stored datum (if any) for the supplied key, or
+fails.</p>
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>DBM_DELETE</b>
+deletes the stored datum (if any) for the supplied key, or
+fails.</p>
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>DBM_FIRSTKEY</b>
+and subsequent calls to <b>DBM_NEXTKEY</b> allow you to
+traverse all stored keys. The keys will be returned in
+arbitrary order, and the routines will fail at the end of
+the traversal.</p>
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>DBM_ERROR</b>
+is a predicate which succeeds if the database handle is
+valid and an I/O error has occurred on the file.
+<b>DBM_CLEARERR</b> is a predicate which succeeds if if the
+database handle is valid, and has the side effect of
+clearing the I/O error flag.</p>
+
+<h2>FILES
+<a name="FILES"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em">NDBM, GDBM, and
+SDBM create two files: <i>filename</i>.dir,
+<i>filename</i>.pag. Berkeley DB creates a single
+<i>filename</i>.db file.</p>
+
+<h2>SEE ALSO
+<a name="SEE ALSO"></a>
+</h2>
+
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>ndbm</b>(3),
+<b>dbopen</b>(3), <b>gdbm</b>(3).</p>
+
+<h2>AUTHOR
+<a name="AUTHOR"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em">Philip L.
+Budne</p>
+
+<h2>BUGS
+<a name="BUGS"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em">None of the
+implementations allow concurrent read and write.</p>
+
+<p style="margin-left:11%; margin-top: 1em">Some
+implementations (classic NDBM and SDBM) place limits on the
+total size of key plus datum (typically slightly less than
+1KB).</p>
+
+<p style="margin-left:11%; margin-top: 1em">NOTE: Some
+implementations (classic NDBM and SDBM) create sparse file
+which appear (to &quot;ls -l&quot;) to be larger than they
+are (see &quot;ls -s&quot;). Copying such files may cause
+the non-allocated blocks to be &quot;filled&quot; with
+zeroed disk blocks, and then the files really will be
+large!</p>
+
+<p style="margin-left:11%; margin-top: 1em">Only GDBM
+provides locking to eliminate the possibility of file
+corruption, or reading of incomplete data.</p>
+
+<p style="margin-left:11%; margin-top: 1em">GDBM locking
+sometimes fails on NFS mounted partitions (particularly on
+Linux systems). GDBM&rsquo;s NDBM interface does not provide
+a way to disable locking.</p>
+
+<p style="margin-left:11%; margin-top: 1em">DBM databases
+accessed concurrently by multiple processes are
+traditionally (re)created from text files and used for fast
+disk-based read-only table lookups. Programs which need to
+update the file generate a new temporary copy using a
+different name, and then rename the new file(s), so that the
+next reader gets the new copies (existing readers continue
+to see old data).</p>
+<hr>
+</body>
+</html>

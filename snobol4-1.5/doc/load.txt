@@ -1,0 +1,333 @@
+$Id: load.txt,v 1.20 2003/04/15 21:17:01 phil Exp $
+
+1. Introduction
+
+External C functions are loaded into SNOBOL4 via the LOAD() function.
+LOAD() is passed a prototype which names the function and describes
+the number and types of the parameters the function will be passed, as
+well as the return type.
+
+The named function will first be searched for in a table built in at
+compile time (see section 3).  Dynamic loading of functions is
+supported a number of different ways;
+
+	A. Using Unix 98 dlopen() and dlsym() dynamic library functions
+		Currently available under;
+		AIX (4.2 or later), BSD/OS, FreeBSD, NetBSD, OpenBSD,
+		Cygwin, Darwin (MacOS	X), HP-UX (64-bit), IRIX,
+		Linux, SunOS4, SunOS5, OSF1/DU/Tru64, DOS/DJGPP (DXE2).
+		(see section 4. for more information)
+
+	B. Using HP-UX shared-library functions (32-bit HP-UX)
+		(see section 4. for more information)
+
+	C. Systems with BSD/V7 style a.out object format
+
+	E. Using NSLinkModule on NextStep, MacOS X/Darwin/Rhapsody
+		On MacOS X, if the cctools libdyld package
+		has been installed, dlopen() emulation will be used.
+
+The second parameter to LOAD is used as the name of an object file (or
+(shared) library) to load the function from. If no second parameter is
+given, the value of the SNOLIB environment variable (or a built in
+default, if SNOLIB is not set) will be used to locate a directory to
+find an object library named snolib.a.
+
+examples (see lib/snolib/*.c for code);
+	LOAD("FORK()INTEGER")
+	LOAD("GETENV(STRING)STRING")
+	LOAD("SPRINTF(STRING,INTEGER)STRING")
+	LOAD("SYSTEM(STRING)INTEGER")
+
+The following snolib functions are available by default
+(via pml.h);
+
+	RENAME, SQRT, DELETE, FILE, LOG, EXP, CHOP, SIN, COS, TAN,
+	IO_FINDUNIT, SSET, SERV_LISTEN, ORD, LOGIC
+
+	The LOGIC function is linked into the snobol4 executable,
+	but must be accessed using LOAD() before it is available.
+
+2. Creating a C function to be loaded.
+
+An external C function should be declared as follows (see lib/snolib
+for many examples);
+
+    #include "config.h"
+    #include "h.h"
+    #include "snotypes.h"
+    #include "macros.h"
+    #include "load.h"
+    #include "equ.h"
+
+    int
+    NAME( LA_ALIST ) LA_DCL
+    {
+	/* function body */
+    }
+
+The name given in the LOAD() prototype must be the name of the function.
+If case folding is in effect, the entry point name must be upper case.
+
+The typedefs int_t and real_t should be used for all SNOBOL integer
+and real values.
+
+The SNOBOL4 functions in "wrapper.sno" installed in
+/usr/local/lib/snobol4 will generate C glue code given a
+LOAD() style prototype.
+
+2.1 Return value
+
+The function should use one of the following macros to return a value
+(the type of which should be compatible with the type in the prototype
+passed to the LOAD() function;
+
+	RETINT(i)			/* return INTEGER (int_t) value */
+	RETREAL(a)			/* return REAL (real_t) value */
+	RETNULL				/* return null string, success */
+	RETSTR(buf)			/* return C string */
+	RETSTR2(buf,len)		/* return counted string */
+	RETFAIL				/* return failure */
+
+The correct behavior for a new predicate is to declare it as returning
+type STRING, and to use RETNULL on success and RETFAIL on failure.
+
+2.2 Parameters
+
+Parameters are accessed positionally via the following macros.  When a
+data type is specified in the LOAD() prototype, values passed to the
+function will automatically be CONVERT()ed to the specified data type.
+The following macros do NOT perform data type conversion, and using the
+wrong macro to access a parameter will return garbage, or worse.
+
+For a function loaded with LOAD("MUMBLE(INTEGER,REAL,STRING)")
+
+for INTEGER parameters;
+	LA_INT(0)	gets value of 1st parameter; returns int_t.
+
+for REAL parameters;
+	LA_REAL(1)	gets value of 2nd parameter; returns real_t
+
+for STRING parameters;
+	getstr(LA_PTR(2), buffer, sizeof(buffer));
+			fetches 3rd parameter into used supplied buffer
+			as NUL terminated C string.
+		
+	LA_STR_PTR(2)	return a (const char *) pointer (or NULL) to
+			string data.
+
+				*** NOTE***
+
+			The parameter MUST be a	string!!
+			The referenced data MUST NOT be modified
+			The data is not NUL terminated; see LA_STR_LEN()
+
+	LA_STR_LEN(2)	returns string length.
+			The referenced parameter MUST be a string!!
+
+Complex datatypes are described in the "dt.h" include file, and can be
+referenced using the LA_PTR() macro.
+
+2.3 Polymorphic parameters
+
+External functions can be written to take polymorphic parameters by
+leaving the type name blank in the prototype. For example
+"FOO(,STRING)INTEGER" is a function with two parameters, the first is
+polymorphic.  The LA_TYPE() macro must be used to determine the actual
+data type;
+
+	LA_TYPE(n)	returns the data type of the n'th parameter
+			(values declared in equ.h)
+
+		I	arg is an integer of type int_t (fetch with LA_INT(n))
+		R	arg is a real of type real_t (fetch with LA_REAL(n))
+
+		S	arg references a string.
+			(fetch with getstring() & LA_PTR(n))
+
+		See include file "dt.h" for the representation of
+		non-scalar data types.
+
+		User DATA() types begin at 100 and appear as an array of
+		descriptors located by D_A(dp).
+
+2.4 Polymorphic return values
+
+A function returning different types of values can be constructed by
+omitting the return type from the prototype, and assigning the return
+value type to "RETYPE" before using the associated RETxxx macro. See
+lib/snolib/host.c for an example.
+
+3. ``Static'' (or ``Poor Man's'') Loading
+
+On systems which don't implement the load() library function (and even
+on systems which do), external functions may be linked into the
+snobol4 system image at build time.
+
+Step 1.
+
+	Add a line to the top level file "pml.h" which describes the
+	function name and it's entry point.  If the names are the
+	same, use PMLFUNC(NAME), else use PMLFUNC2("NAME", entry).
+	pml.h contains examples for many of the functions in
+	lib/snolib/
+
+	If you wish the functions to be available automatically
+	(without first calling the LOAD() function) add a line to
+	pml.h of the form; PMPROTO("PROTOTYPE(TYPES...)TYPE")
+
+	NOTE: none of PMLFUNC(), PMLFUNC2() or PMPROTO() lines should
+	end with a semicolon!!!
+
+Step 2.
+
+	Add the paths of the object file(s) in which the functions
+	reside to the PML_OBJS variable in your local-config file;
+
+		PML_OBJS=system.o
+
+	Or by using the --add-objs= option to the configure script.
+
+	If any special libraries are required, you can specify them
+	using "ADD_LDFLAGS([-llibrary])" in local-config, or using
+	the --add-ldflags= option to the configure script.
+
+Step 3.
+
+	Make sure the named object files exist.
+
+Step 4.
+
+	Run "make"
+
+Step 5.
+
+	Functions with PMPROTO() lines in pml.h will be available
+	immediately.  Other functions will be available after you
+	access them using the SNOBOL4 LOAD() function.
+
+	If a prototype in a PMPROTO() line is malformed, the error
+	will be silently ignored, and attempts to invoke the function
+	will fail until a good LOAD() function call is made.
+
+WARNING: because PML functions are loaded with the SNOBOL4 code,
+global symbol collisions can occur.  The file "globals" in the snobol
+source directory contains a list of all global function names.
+Collisions, when they occur can be circumvented by changing the C
+function name, and either loading normally and the using OPSYN() to
+rename the function, or using PMLFUNC2() to specify the name of
+the C function entry point.
+
+4. Creating ``shared libraries'' for dynamic loading by SNOBOL4
+
+The procedure for creating ``shared libraries'' for dynamic loading
+varies depending on the operating system and compiler used.  This is
+an overview.  Consult your local man pages for more information.
+
+On many systems code for shared libraries must be specially compiled
+to be "position independent" so the shared library can be mapped at
+an arbitrary address in SNOBOL4's address space.  The resulting "PIC"
+object files may also need to processed with "ld" with special options
+to create a shared library file.
+
+System & compiler	compiler flags		link flags
+================================================================
+Most gcc based systems	-fpic or -fPIC		-shared or -Bshareable
+SunOS4 cc		-pic or -PIC		-assert pure-text (optional)
+SunOS5 sunpro		-Kpic or -KPIC		-G
+IRIX cc			-KPIC (default?)	-shared (ignore warnings)
+Tru64/DU cc		none			-shared (ignore warnings)
+HP-UX c89		+z or +Z		-b
+DJGPP			none			dxe2gen -U (see below)
+AIX			none			-bM:SRE
+
+NOTES:
+
+http://www.fortran-2000.com/ArnaudRecipes/sharedlib.html has a more
+exaustive table.
+
+The "libtool" (http://www.gnu.org/software/libtool/libtool.html)
+script may be helpful for linking shared libraries in a portable
+way.
+
+On most systems, the shared library will be able to access global
+symbols from the main snobol4 executable, and will not need to be
+linked with support functions like "getstring()" and "retstring()".
+
+On HP-UX there is a getstring() function in libc (and it is found
+before the getstring function in the snobol4 executable), so
+getstring.c must be added to each shared library which calls it.
+
+On SGI and DEC UNIX (OSF/1) systems you will see warnings for
+undefined global symbols. These can be ignored if the symbols are
+defined in the main snobol4 executable.
+
+On many systems using dlopen() if you wish to load a function from the
+current directory, you must prefix the filename with "./"
+
+Some systems with dlopen() will call the void function _init(void)
+when the library is first loaded, before the first call, and call the
+void function _fini(void) before the library is unloaded.
+
+Examples;
+    using gcc;
+	gcc -c -fPIC -DHAVE_CONFIG_H -I/usr/local/lib/snobol4 source.c
+	gcc -shared -o module.so source.o
+
+    on SunOS 4;
+	cc -c -pic -DHAVE_CONFIG_H -I/usr/local/lib/snobol4 source.c
+	ld -o module.so source.o
+
+    on SunOS 5 (Solaris2+);
+	cc -c -Kpic -DHAVE_CONFIG_H -I/usr/local/lib/snobol4 source.c
+	ld -G -o module.so source.o
+
+    On Darwin (MacOS X);
+	A module (bundle), not a shared library must be built;
+	(see http://fink.sourceforge.net/doc/porting/shared.php
+	 and http://fink.sourceforge.net/doc/porting/porting.html)
+
+	cc -c -fno-common -DHAVE_CONFIG_H -I/usr/local/lib/snobol4 source.c
+	cc -bundle -flat_namespace -undefined suppress -o module.so source.o
+
+    On Win32, using Cygwin and MINGW;
+	gcc -c -DHAVE_CONFIG_H -I/usr/local/lib/snobol4 source.c
+	dllwrap -v --export-all-symbols --dllname MODULE -o module.dll source.o
+
+    On DOS, using DJGPP and DXE2;
+	gcc -c -DHAVE_CONFIG_H -I/snobol4 source.c
+	dxe2gen -o module.dxe source.o -U
+
+For more information on dllwrap (under cygwin and mingw), see
+http://www.xraylith.wisc.edu/~khan/software/gnu-win32/dllhelpers.html
+http://www.neuro.gatech.edu/users/cwilson/cygutils/V1.1/dll-stuff/
+
+5. Callable functions in main snobol4 executable
+
+The following functions are available to facilitate writing loadable
+code which interacts with the snobol4 I/O system.
+
+FILE *io_getfp(int unit);
+
+	Returns the stdio stream associated with the passed 1-based unit.
+
+int io_mkfile( int unit, FILE *f, char *name);
+
+	Associates stream "f" with the I/O unit.
+	The "name" is used for error messages.
+	Returns TRUE or FALSE.
+
+int io_closeall(int unit);
+
+	Close all file activity on the I/O unit.
+	Releases all file information (unit cannot be rewound).
+	Returns TRUE or FALSE.
+
+void io_endfile(int unit);
+
+	Performs ENDFILE(unit) functionality.
+	Closes currently open file.
+
+int io_findunit(void);
+
+	Returns an unassigned I/O unit or -1 on failure.

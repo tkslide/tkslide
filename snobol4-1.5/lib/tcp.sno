@@ -1,0 +1,32 @@
+*	open a TCP connection (text only) for CSNOBOL4
+*	Phil Budne <phil@ultimate.com>
+*	May 7, 1997
+*	$Id: tcp.sno,v 1.3 2002/02/07 15:52:03 phil Exp $
+
+****************
+*	map I/O variable name to unit
+
+	TCP.UNITS = TABLE()
+
+****************
+*	open a TCP connection
+
+	DEFINE("TCP.OPEN(TCP.NAME,TCP.HOST,TCP.PORT,TCP.MODE)UNIT")
+							:(TCP.OPEN.END)
+TCP.OPEN
+	UNIT = IO_FINDUNIT()
+	INPUT(TCP.NAME, UNIT, "U" TCP.MODE,
++			"/tcp/" TCP.HOST "/" TCP.PORT)	:F(FRETURN)
+	OUTPUT(TCP.NAME, UNIT)
+	TCP.UNITS[TCP.NAME] = UNIT			:(RETURN)
+TCP.OPEN.END
+
+****************
+*	close a TCP connection
+
+	DEFINE("TCP.CLOSE(TCP.NAME)")			:(TCP.CLOSE.END)
+TCP.CLOSE
+	ENDFILE(TCP.UNITS[TCP.NAME])			:F(FRETURN)
+	TCP.UNITS[TCP.NAME] =
+	DETACH(TCP.NAME)				:(RETURN)
+TCP.CLOSE.END
