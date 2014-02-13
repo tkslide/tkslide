@@ -11,7 +11,7 @@ proc newFile {w} {
 		-title {Save file} \
 		-icon warning \
 		-message "Do you want to save the program?" ] == "yes" } {
-		saveFileAs $w
+		saveFileAs $w 1
 	}
 	$w delete 1.0 end
 	set ::currentFile "unnamed.sno"
@@ -57,10 +57,14 @@ proc saveFile {w fname} {
 		set fileName $fname
 		if {[string length $fileName] == 0} {
 			break
+		} elseif {[string match *unnamed.sno* $fileName]} {
+			saveFileAs $w 1
 		} elseif {[catch {
 			set fd [open $fileName w]
 			puts -nonewline $fd [$w get 1.0 "end -1c"]
 			close $fd
+			set ::currentFile $fileName
+			wm title . "TkS*LIDE $::VERSION - $::currentFile"
 			} err] } {
 			set answer [tk_messageBox -type retrycancel \
 				-icon error -title "Write error" \
@@ -607,7 +611,7 @@ frame .toolbar
 	balloon .toolbar.open "Open file..."
 	button .toolbar.save -image [image create photo -file $icnSave] -text "Save" -width 34 -command {saveFile .text $::currentFile} -relief $::btnStyle 
 	balloon .toolbar.save "Save file"
-	button .toolbar.saveas -image [image create photo -file $icnSvAs] -text "Save as" -width 34 -command {saveFileAs .text} -relief $::btnStyle 
+	button .toolbar.saveas -image [image create photo -file $icnSvAs] -text "Save as" -width 34 -command {saveFileAs .text 1} -relief $::btnStyle 
 	balloon .toolbar.saveas "Save file as..."
 	button .toolbar.transcript -image [image create photo -file $icnTran] -text "Transcript" -width 34 -command {saveTranscript .text} -relief $::btnStyle 
 	balloon .toolbar.transcript "Save transcript file as..."
@@ -764,7 +768,7 @@ menu .menu
 		.menu.file add command -label "Open" -underline 0 -command {openFile .text 1}
 		.menu.file add command -label "Open input" -underline 5 -command {openFile .input 0}
 		.menu.file add command -label "Save" -underline 0 -command {saveFile .text $::currentFile}
-		.menu.file add command -label "Save as" -underline 5 -command {saveFileAs .text}
+		.menu.file add command -label "Save as" -underline 5 -command {saveFileAs .text 1}
 		.menu.file add separator
 		.menu.file add command -label "Save transcript" -underline 5 -command {saveTranscript .text}
 		.menu.file add separator
@@ -866,10 +870,10 @@ set inputMenu [menu .snippetPopupMenu -tearoff 0]
 		-command {.text insert insert "\n"; .text paste [tk_textCopy .snippet]; .text insert insert "\n"}
 
 #{{{ Bindings
-bind . <F2> {saveFileAs .text}
+bind . <F2> {saveFileAs .text 1}
 bind . <Control-s> {
 	if {[string equal $::currentFile "unnamed.sno"]} {
-		saveFileAs .text
+		saveFileAs .text 1
 	} else {
 		saveFile .text $::currentFile
 	}
