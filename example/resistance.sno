@@ -1,0 +1,11 @@
+	parallel = 0.
+	serial = 0.
+while	read = trim(input)	:f(printout)
+	serial = serial + read
+	parallel = parallel + ( 1. / read )	:(while)
+
+printout	Rpar = 1. / parallel
+	Rser = serial
+	output = "Parallel: " Rpar
+	output = "Serial  : " Rser
+end
