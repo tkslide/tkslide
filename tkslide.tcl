@@ -59,6 +59,7 @@ proc saveFile {w fname} {
 			break
 		} elseif {[string match *unnamed.sno* $fileName]} {
 			saveFileAs $w 1
+			break
 		} elseif {[catch {
 			set fd [open $fileName w]
 			puts -nonewline $fd [$w get 1.0 "end -1c"]
