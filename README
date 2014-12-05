@@ -16,7 +16,7 @@ Because it's fun.
 With enough eyes all bugs are shallow. 
 
 - Simple
-A simple and elegant language deserves simple and elegant IDE.
+A simple and elegant language deserves simple and elegant IDE[1].
 It may lack some buzzword-compliant features but won't distract beginners
 trying to learn SNOBOL4.
 
@@ -44,7 +44,7 @@ Credits
 -------
 The basic idea of a simple, efficient, user-friendly IDE comes from the
 DrScheme and its documentation. There is a very interesting paper on design
-guidelines[1]
+guidelines[2]
 
 My warmest thanks to (in alphabetical order):
 - Bruce M. Axtens - for testing and ideas
@@ -65,6 +65,9 @@ The search and replace box is based on a wiki.tcl.tk article by R. Suchenwirth
 (windows only :-( ) Snopad, but I couldn't start it. Well, I must admit, I
 stole some of M.L. ideas ;-)
 
-1. "Implications on the Learning of Programming Through the Implementation of
+1. ... from an exceedingly humble and dashing handsome developer.
+
+2. "Implications on the Learning of Programming Through the Implementation of
 Subset s in Program Development Environments"
 Peter J. DePasquale III 
+
