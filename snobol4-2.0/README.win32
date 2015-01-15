@@ -1,0 +1,13 @@
+This package was built to be unzipped at C:\ If you place it
+elsewhere, define evironment variable SNODIR to point to the the
+snobol4 directory.
+
+The \bin directory contains an sdb.bat file to run the debugger,
+and also a benchmark:
+	timing.bat >timing.txt
+
+       ********************************************************
+       Please consider mailing timing.txt to timing@snobol4.org
+  Anonymized results are posted at http://www.snobol4.org/csnobol4/
+      And you will be notified when test versions are available.
+       ********************************************************

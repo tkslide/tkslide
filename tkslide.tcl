@@ -947,4 +947,4 @@ quickstartHelp .err
 setHilight .text
 focus .text.t
 
-# vim: set ff=unix ts=4 sw=4 foldmethod=marker foldmarker={{{,}}} :
+# vim: set ff=unix ts=4 sw=4 :

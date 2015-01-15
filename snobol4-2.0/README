@@ -1,0 +1,177 @@
+$Id: README,v 1.87 2015/01/02 04:53:04 phil Exp $
+
+2.0 release of ``The Macro Implementation of SNOBOL4 in C'' (CSNOBOL4)
+
+	For users of earlier releases:
+
+	A change in the "major version" number to 2.0 was chosen to
+	reflect not only a major change in functionality -- addition
+	of the long (thought) lost "BLOCKS" extension, and many new
+	extensions (see the CHANGES file for more details), but to
+	also reflect that this release DEPENDS on loadable module
+	support that has only been tested on a few popular platforms
+	(OS X, FreeBSD, Linux, Windows).
+
+	The online "man pages" have been GREATLY improved.
+
+This is a free port of the original SIL (SNOBOL4 Implementation
+Language) "macro" version of SNOBOL4 (developed at Bell Labs) with the
+`C' language as a target.
+
+SNOBOL4, while known primarily as a string language excels at any task
+involving symbolic manipulations.  It provides dynamic typing, garbage
+collection, user data types, on the fly compilation.
+
+The latest release can always be found at http://www.snobol4.org/csnobol4
+
+****************************************************************
+
+Copyright © 1993-2015, Philip L. Budne
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are
+met:
+
+Redistributions of source code must retain the above copyright notice,
+this list of conditions and the following disclaimer.
+
+Redistributions in binary form must reproduce the above copyright
+notice, this list of conditions and the following disclaimer in the
+documentation and/or other materials provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+****************************************************************
+
+Documentation;
+
+Many manual pages, start with "man snobol4"
+    HTML versions of man pages installed in /usr/local/share/doc/snobol4/
+
+Scans of SNOBOL4 books;
+    http://www.snobol4.org/doc/books.html
+
+For a good SNOBOL4 tutorial look at the Catspaw SNOBOL4 tutorial;
+    http://www.snobol4.org/doc/burks/tutorial/contents.htm
+
+Also useful are the Catspaw Vanilla SNOBOL4 manual;
+    http://www.snobol4.org/doc/burks/manual/contents.htm
+
+and the Catspaw SPITBOL manual:
+    ftp://ftp.snobol4.com/spitman.pdf
+
+INSTALL
+	Information on building and installing CSNOBOL4
+
+README
+	This file
+
+CHANGES
+	Important changes since last release
+
+TODO.soon
+	current top priority tasks (hopefully small in any release)
+
+TODO
+	older/ancient identified tasks
+
+There is a mailing list for SNOBOL4 on Yahoo Groups:
+https://groups.yahoo.com/neo/groups/snobol/info
+
+http://www.snobol4.org/
+	SNOBOL4 resources
+
+Acknowledgments;
+
+	First and foremost, I would like to thank Ralph Griswold, for
+	all his invaluable help and time digging up old documentation!
+	(as well as his work of 50 years ago, designing and
+	implementing the language)!
+
+	I would also never have succeeded without the help of Mark
+	Emmer of Catspaw and his excellent SPARC SPITBOL product
+	(used to bootstrap this implementation).
+
+	The contributions of source code by Mark Emmer (SNOBOL4+) and
+	Viktors Berstis (Minnesota SNOBOL4) have allowed me to advance
+	the state of CSNOBOL4 in ways that would have been difficult or
+	impossible.
+
+The following have also provided help, encouragement, support, input,
+historical background, testing, fixes, testing, money, etc
+(in chronological order);
+
+	Bill Henneman
+	Andrew Koenig
+	Doug McIlroy
+	Robert Dewar
+	Alan Martin
+	Jerry Leichter
+	Scott Marovich
+	Jonathan Chandross
+	Randolph J. Herber
+	Jules Gilbert
+	Phillip Lee Thomas
+	Martin D. Waller
+	Burkhard Meissner
+	John McHugh
+	Chrystopher Nehaniv
+	Arne Larsson
+	Rik Faith
+	Keith Waclena
+	Steve Kibler
+	Peter-Arno Coppen
+	David J. Birnbaum
+	Yuli Barcohen
+	Stephen Del Rea
+	David Feustel
+	Laurence Battin
+	John Refling
+	Greg White
+	Russ Urquhart
+	Jan Bernard
+	Chris Anderson
+	Rafal M. Sulejman
+	Ed Quillen
+	Robin H. Johnson
+	Guido Milanese
+	David Stodolsky
+	Robin Kay
+	Sudarshan Gaikaiwari
+	Bruce Axtens
+	Dani Richard
+	Meir Livneh
+	Mark Laster
+	Michael Richter
+	James McKelvey
+	Chap Harrison
+	Robert Shanley
+	Howard Modell
+	Ron Hochsprung
+	Steven Brenton
+	Fred Weigel
+	Anonymous
+	Mike Greenberg
+	Mike Alexander	(SNOBOL4B sources)
+	Clem Cole
+	Harald Arnesen
+	Kevlin Henney	(Windows opendir emulation)
+	Ozan Yigit	(SDBM library)
+	Jonathan Kaye
+
+If you are interested in getting mailings about new releases, send me
+a timing report.  I'm always interested in knowing what people are
+using SNOBOL4 for!
+
+Phil Budne <phil@snobol4.org>

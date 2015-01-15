@@ -1,0 +1,77 @@
+#!<BINDIR>/snobol4<VERS>
+# $Id: snopea.in,v 1.15 2014/12/06 16:30:34 phil Exp $
+
+**=pea
+**=sect NAME
+**snopea \- convert SNOBOL snopea documentation to roff and HTML
+**=sect SYNOPSIS
+**B<snopea> [B<--format> I<format>] [B<--section> I<section>] [B<--page> I<pagename>] I<in> I<out>
+**=sect DESCRIPTION
+**The B<snopea>(1) command converts embedded documentation in
+**B<snopea>(7) format to B<man>(7) or HTML format.
+**=sect OPTIONS
+**=item B<--format>
+**Takes either B<roff> or B<html> as an argument
+**(otherwise the output format
+**will be inferred from the I<output> file name).
+**=item B<--section>
+**Takes a single digit section number (otherwise the section number
+**will be inferred from the I<output> file name).
+**=item B<--page>
+**Takes a page name as an argument
+**(otherwise the page name
+**will be inferred from the I<output> file name).
+**=sect NOT CONFORMING TO
+**Inspired by (but not compatible with) Perl POD format.
+**=sect AUTHOR
+**Philip L. Budne
+**=sect SEE ALSO
+**B<snobol4>(1), B<snopea>(7)
+**=cut
+
+-include 'host.sno'
+-include 'snopea.sno'
+
+	optind = HOST(HOST_FIRSTARG)
+optlop	opt = HOST(HOST_ARGN, optind)		:f(usage)
+	opt POS(0) '-'				:f(endopts)
+	optind = optind + 1
+	val = HOST(HOST_ARGN, optind)		:f(usage)
+	optind = optind + 1
+	format = IDENT(opt, '--format') val	:s(optlop)
+	format = IDENT(opt, '-f') val		:s(optlop)
+	sect = IDENT(opt, '--section') val	:s(optlop)
+	sect = IDENT(opt, '-s') val		:s(optlop)
+	page = IDENT(opt, '--page') val		:s(optlop)
+	page = IDENT(opt, '-p') val		:s(optlop)
+	:(usage)
+
+endopts	infile = HOST(HOST_ARGN, optind)	:f(usage)
+	outfile = HOST(HOST_ARGN, optind + 1)	:f(usage)
+
+	DIFFER(page)				:s(havepage)
+	outfile BREAK('.') . page
+
+havepage
+	DIFFER(sect)				:s(havesect)
+	outfile POS(0) BREAKX('.') '.' ANY(&DIGITS) . sect :f(usage)
+
+havesect
+	DIFFER(fmt)				:s(havefmt)
+	outfile POS(0) BREAKX('.') '.html' RPOS(0) :f(not.html)
+	format = 'html'				:(havefmt)
+
+not.html
+	outfile POS(0) BREAKX('.') '.' ANY(&DIGITS) RPOS(0) :f(usage)
+	format = 'roff'
+
+havefmt
+	snopea(infile, outfile, page, sect, format) :s(end)f(err)
+
+usage	TERMINAL = 'Usage: snopea [opts] INFILE OUTFILE'
+	TERMINAL = 'opts:'
+	TERMINAL = '	--format roff|html'
+	TERMINAL = '	--section 1..9'
+	TERMINAL = '	--page PAGENAME'
+err	&CODE = 1
+end
