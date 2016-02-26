@@ -54,6 +54,15 @@ proc file_open {id} {
 	puts "open $id"
 }
 
+proc file_dup {fname} {
+	set txt [[focus] get 1.0 "end -1c" ]
+	set topname ".top$::wid"
+	toplevel $topname
+	pack [createwin $topname.editor]
+	$topname.editor insert insert $txt
+	set ::wid [expr "$::wid + 1"]
+}
+
 proc file_new {fname} {
 	set topname ".top$::wid"
 	toplevel $topname
@@ -99,11 +108,12 @@ proc file_close {id} {
 
 proc createwin {winid} {
 	set winid [ctext $winid -tabs $::tabs]
-	bind $winid <Control-s> {file_save "" }
-	bind $winid <Control-o> {file_open "" }
+	bind $winid <Control-d> {file_dup  ""}
 	bind $winid <Control-n> {file_new  ""}
-	bind $winid <Control-r> {file_run  "" }
+	bind $winid <Control-o> {file_open "" }
 	bind $winid <Control-q> {file_close ""}
+	bind $winid <Control-r> {file_run  "" }
+	bind $winid <Control-s> {file_save "" }
 	setHilight $winid
 	wm title [winfo parent $winid] "SnoTTY"
 	wm protocol [winfo parent $winid] WM_DELETE_WINDOW {file_close ""}
