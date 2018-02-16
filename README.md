@@ -1,10 +1,10 @@
 tkslide
 =======
 
-##TkS*LIDE - Tk/TCL based Snobol4/Spitbol IDE
+## TkS*LIDE - Tk/TCL based Snobol4/Spitbol IDE
 
 
-###CHANGES
+### CHANGES
 
 * 2014 Feb 13
 	Corrected window title handling.
