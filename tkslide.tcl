@@ -385,7 +385,7 @@ proc help {keyword} {
 proc checkOnlineUpdates {} {
 #{{{
 	#XXX improve (needs some work on server side...)
-	urlOpen "http://rms.republika.pl/slide.shtml"
+	urlOpen "https://github.com/tkslide/tkslide"
 #}}}
 }
 
