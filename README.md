@@ -5,6 +5,8 @@ tkslide
 
 
 ### CHANGES
+* 2019 Aug 8
+	URLs added to the Help menu.
 
 * 2014 Feb 13
 	Corrected window title handling.
