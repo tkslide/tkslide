@@ -2,7 +2,7 @@
 set ::customTabs      {1}
 set ::editorName      {gvim}
 set ::editorParam     {-f}
-set ::snobol4prog     {snobol4-1.5\bin\snobol4.exe}
+set ::snobol4prog     {snobol4-2.0\bin\snobol4.exe}
 set ::spitbolprog     {spitbol-3.7\bin\spitbol-3.7-win.exe}
 set ::snobol4option   {-b}
 set ::snobol4param    {}
