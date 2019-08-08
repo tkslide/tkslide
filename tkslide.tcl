@@ -828,10 +828,16 @@ menu .menu
 		.menu.help add command -label "Check for updates" -underline 0 \
 			-command {checkOnlineUpdates}
 		.menu.help add separator
+		.menu.help add command -label {Phil Budne's SNOBOL4 Resources page} -underline 0 \
+			-command {urlOpen {http://www.snobol4.org}}
 		.menu.help add command -label "RosettaCode.org SNOBOL4 code" -underline 0 \
 			-command {urlOpen {http://rosettacode.org/wiki/Category:SNOBOL4}}
 		.menu.help add command -label {SNOBOL4 Yahoo!Group} -underline 0 \
 			-command {urlOpen {http://tech.groups.yahoo.com/group/snobol}}
+		.menu.help add command -label {Fred Weigel's SNOLIB function library} -underline 0 \
+			-command {urlOpen {https://github.com/ratboy666/snolib}}
+		.menu.help add command -label {Snobol4 at tio.run online interpreter collection} -underline 0 \
+			-command {urlOpen {https://tio.run/#snobol4}}
 		.menu.help add separator
 		.menu.help add command -label "Credits" -underline 0 \
 			-command {creditsWindow}
