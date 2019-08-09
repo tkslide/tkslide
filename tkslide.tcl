@@ -3,7 +3,7 @@
 # Author: Rafal M. Sulejman <rms@poczta.onet.pl>
 # All rights granted. All feedback welcome.
 
-set ::VERSION "0.35"
+set ::VERSION "0.36"
 
 proc newFile {w} {
 #{{{

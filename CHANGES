@@ -1,3 +1,7 @@
+0.36
+* Help menu: links added.
+* Runtime: older CSnobol4 versions removed.
+
 0.35
 * support for spitbol (first implementation)
 
