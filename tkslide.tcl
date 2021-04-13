@@ -3,7 +3,20 @@
 # Author: Rafal M. Sulejman <rms@poczta.onet.pl>
 # All rights granted. All feedback welcome.
 
-set ::VERSION "0.36"
+set ::VERSION "0.37"
+
+proc populate_filetree {{name .}} {
+    puts $name
+		set iid [ string map -nocase { "." "_BASE_" "/" "_SEP_" } $name ]
+		.ftree insert {} end -id "$iid" -text  "$name"
+		foreach sdfile [ glob -nocomplain -directory $name -type f *.sno] {
+			.ftree insert "$iid" end -text "$sdfile"
+		}
+
+    foreach subdir [glob -nocomplain -directory $name -type d *] {
+        populate_filetree $subdir
+    }
+}
 
 proc newFile {w} {
 #{{{
@@ -688,6 +701,9 @@ text .snippet -bg white -fg black -font $::myFont \
 		-undo 1 -maxundo 0 \
 		-yscrollcommand {.snipvscroll set} 
 
+ttk::treeview .ftree
+populate_filetree
+
 if { [file exists $::ifile] && [file readable $::ifile] } {
 	openNamedFile .input $::ifile 0
 }
@@ -710,7 +726,8 @@ scrollbar .outvscroll -orient vertical -command ".output yview"
 scrollbar .errvscroll -orient vertical -command ".err yview"
 scrollbar .hscroll -orient horizontal -command ".text xview"
 scrollbar .vscroll -orient vertical -command ".text yview"
-scrollbar .snipvscroll -orient vertical -command ".snippet yview"
+#scrollbar .snipvscroll -orient vertical -command ".snippet yview"
+scrollbar .snipvscroll -orient vertical -command ".ftree yview"
 
 frame .status
 label .status.text -text "Program text:" -underline 8
@@ -737,7 +754,8 @@ label .errtxt -text "Messages" -underline 0
 
 grid .toolbar -sticky ew -columnspan 5
 grid .rtparam -sticky ew -columnspan 5
-grid .snippet -row 2 -sticky nsew -column 0 
+#grid .snippet -row 2 -sticky nsew -column 0 
+grid .ftree -row 2 -sticky nsew -column 0
 grid .snipvscroll -row 2 -sticky nsew -column 1
 grid .text -row 2 -sticky nsew -columnspan 3 -column 2
 grid .vscroll -row 2 -sticky nsew -column 5
@@ -921,6 +939,20 @@ bind .snippet <ButtonPress-1><ButtonPress-3> {
 	.text insert insert [.snippet get [.snippet index insert-1l+1c] [.snippet index insert+1l-1c]]
 	.text insert end "\n"
 }
+
+bind .ftree <ButtonPress-1><ButtonPress-1> {
+	set ftsel [.ftree selection ]
+	set fttext [ .ftree item $ftsel -text ]
+	puts $fttext
+	if {[string length $fttext] > 0} {
+		if {[ file type "$fttext" ] == "file" } {
+			openNamedFile .text "$fttext" 1
+		} else {
+			puts "Directory: $fttext"
+		}
+	}
+}
+
 bind . <F5> { 
 	toplevel .console
 	entry .console.e -textvar cmd

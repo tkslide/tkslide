@@ -5,6 +5,9 @@ tkslide
 
 
 ### CHANGES
+* 2021 Apr 13
+  Directory/File tree added
+
 * 2019 Aug 8
 	URLs added to the Help menu.
 
