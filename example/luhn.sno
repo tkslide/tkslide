@@ -1,3 +1,0 @@
-	l = reverse(trim(input))	:f(end)
-loop	 l len(1) . output rem . l 	:s(loop)
-end
