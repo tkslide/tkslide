@@ -1,0 +1,15 @@
+This package was built to be installed as C:\Program Files\SNOBOL4
+If you place it elsewhere, define evironment variable SNOLIB to point
+to the the SNOBOL4 directory.
+
+The \bin directory contains an sdb.bat file to run the debugger,
+and also a benchmarking script:
+	timing.bat >timing.txt
+
+       ********************************************************
+       Please consider mailing timing.txt to timing@snobol4.org
+  Anonymized results are posted at http://www.snobol4.org/csnobol4/
+      And you will be notified when test versions are available.
+       ********************************************************
+
+The \doc directory contains HTML versions of the manual pages.

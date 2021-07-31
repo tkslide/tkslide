@@ -1,0 +1,8 @@
+# $Id: config.sno,v 1.7 2020-11-10 20:49:26 phil Exp $
+	SLEEP_C = 'win32/sleep.c'
+	
+	NDBM_INCLUDE = "sdbm"
+	NDBM_SRCS = ",sdbm/sdbm.c,sdbm/sdbm_hash.c,sdbm/sdbm_pair.c"
+
+	DIRS_INCLUDE = "win32"
+	DIRS_SRCS = ",win32/dirent.c"

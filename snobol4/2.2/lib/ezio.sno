@@ -1,0 +1,71 @@
+* $Id: ezio.sno,v 1.2 2020-06-20 21:06:42 phil Exp $
+*
+* Easy to use I/O functions (no unit numbers/ids)
+* (from spitbol.sno 1.3)
+* Phil Budne <phil@snobol4.org>
+* March 10, 2020
+*=pea
+*=sect NAME
+*snobol4ezio \- SNOBOL4 easy to use file I/O
+*
+*=sect SYNOPSIS
+*=code
+*-include 'ezio.sno'
+*
+*	B<EZINPUT(>I<name>, I<filename>[, I<options>])
+*	B<EZOUTPUT(>I<name>, I<filename>[, I<options>])
+*	B<EZUPDATE(>I<name>, I<filename>[, I<options>])
+*	B<EZCLOSE(>I<name>)
+*=ecode
+*=sect DESCRIPTION
+*This library provides I/O functions that avoid the need to specify a
+*"unit number" (an artifact of Macro SNOBOL4 having been originally
+*written to use native FORTRAN runtime code for I/O functions).
+*
+*I<name> is a SNOBOL4 NAME (.VARIABLE) or STRING (note: if a NAME,
+*it may be forced to upper case depending on the setting of case folding).
+*I<filename> is a STRING specifying a filename.
+*I<options> is a STRING specifying I/O options (see B<snobol4io>(1)).
+*=sect SEE ALSO
+*B<snobol4>(1),
+*B<snobol4io>(1)
+*=cut
+*
+	DEFINE("EZINPUT(n,fn,opt)u")
+	DEFINE("EZOUTPUT(n,fn,opt)u")
+	DEFINE("EZUPDATE(n,fn,opt)u")
+	DEFINE("EZCLOSE(n)u")
+*
+	DEFINE("EZREWIND(n)")
+	DEFINE("EZSET(n,o,w)")
+	DEFINE("EZSSET(n,o,w,sc)")
+*
+* map name to snobol unit number
+	EZUNITS = TABLE()
+	:(EZIO_END_DEFNS)
+*
+EZINPUT	DIFFER(EZUNITS<n>)			:S(FRETURN)
+	u = EZUNITS<n> = IO_FINDUNIT()		:F(FRETURN)
+	INPUT(n,u,opt,fn)			:S(RETURN)F(FRETURN)
+
+EZOUTPUT DIFFER(EZUNITS<n>)			:S(FRETURN)
+	u = EZUNITS<n> = IO_FINDUNIT()		:F(FRETURN)
+	OUTPUT(n,u,opt,fn)			:S(RETURN)F(FRETURN)
+
+EZUPDATE DIFFER(EZUNITS<n>)			:S(FRETURN)
+	u = EZUNITS<n> = IO_FINDUNIT()		:F(FRETURN)
+* opening write first means can create a plain file
+	OUTPUT(n, u, 'U' opt, fn)		:F(FRETURN)
+	INPUT(n, u, opt)			:S(RETURN)F(FRETURN)
+
+EZSET	EZSET = SET(EZUNITS<n>,o,w)		:S(RETURN)F(FRETURN)
+EZSSET	EZSSET = SSET(EZUNITS<n>,o,w,sc)	:S(RETURN)F(FRETURN)
+EZREWIND REWIND(EZUNITS<n>)			:S(RETURN)F(FRETURN)
+
+EZCLOSE	u = EZUNITS<n>
+	EZUNITS<n> =
+	DETACH(n)
+	ENDFILE(u)				:S(RETURN)F(FRETURN)
+
+EZIO_END_DEFNS
+

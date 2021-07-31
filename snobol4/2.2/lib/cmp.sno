@@ -1,0 +1,44 @@
+* $Id: cmp.sno,v 1.1 2020-10-25 23:12:48 phil Exp $
+* simple file compare (ala Un*x "cmp" command)
+* for tests
+* Phil Budne <phil@snobol4.org>
+* October 25, 2020
+
+-INCLUDE 'ezio.sno'
+
+	DEFINE("CMP(FN1,FN2,ERRS)")
+	DEFINE("CMPFATAL(FN1,FN2)L1,L2")
+				:(CMP.END)
+
+CMP	EZINPUT(.CMP.F1, FN1)			:F(CMP.F1.ERR)
+	EZINPUT(.CMP.F2, FN2)			:F(CMP.F2.ERR)
+CMP.LOOP
++	L1 = CMP.F1				:F(CMP.F1.EOF)
+	L2 = CMP.F2				:F(CMP.F2.EOF)
+	IDENT(L1, L2)				:S(CMP.LOOP)
+CMP.OK	EZCLOSE(.CMP.F1)
+	EZCLOSE(.CMP.F2)
++	:(RETURN)
+
+CMP.F1.ERR
++	TERMINAL = DIFFER(ERRS) "could not open " FN1 :(CMP.ERR)
+CMP.F2.ERR
++	TERMINAL = DIFFER(ERRS) "could not open " FN2 :(CMP.ERR)
+
+CMP.F1.EOF
++	L2 = CMP.F2				:F(CMP.OK)
+	TERMINAL = DIFFER(ERRS) "premature EOF on " FN1 :(CMP.ERR)
+
+CMP.F2.EOF
++	TERMINAL = DIFFER(ERRS) "premature EOF on " FN2
+	
+CMP.ERR
++	EZCLOSE(.CMP.F1)
+	EZCLOSE(.CMP.F2)
++	:(FRETURN)
+
+CMPFATAL
++	CMP(FN1,FN2)				:S(RETURN)
+	&CODE = 1				:(END)
+
+CMP.END

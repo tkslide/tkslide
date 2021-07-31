@@ -1,0 +1,338 @@
+* $Id: json.sno,v 1.6 2020-10-31 05:25:26 phil Exp $
+* A simple SNOBOL4 JSON package.
+*	(in very unstylish code)
+*=pea
+*=sect NAME
+*JSON Encoding and Decoding
+*=sect SYNOPSYS
+*=code
+*B<-INCLUDE 'json.sno'>
+*      string = B<JSON_ENCODE(>I<data>B<)>
+*      data = B<JSON_DECODE(>I<string>B<)>
+*=ecode
+*=sect DESCRIPTION
+*B<JSON_ENCODE(>I<data>B<)> accepts a subset of SNOBOL4 data types:
+*=bull B<STRING>
+*=bull B<INTEGER>
+*=bull B<REAL>
+*=bull B<ARRAY>
+*MUST be singly-dimensioned and zero-based.
+*=bull B<TABLE>
+*
+*B<JSON_DECODE(>I<json_string>B<)> accepts a proper subset of JSON
+*with the following limits and omissions:
+*=bull arrays must have at least one item.
+*=bull \u escapes can only be used for ASCII (00-7F) characters.
+*=bull B<true> and B<false> are not accepted.
+*
+*NOTE!!! JSON is defined to use UTF-8 encoding, but this is not enforced
+*by this library.  To exchange binary data with other software which
+*may enforce use of only UTF-8 sequences, the binary strings should
+*be encoded (eg with base64) to ASCII sequences.
+*=sect COMPATIBILITY
+*L<https://tools.ietf.org/html/rfc8259>
+*=sect SEE ALSO
+*B<snobol4>(1),
+*B<snobol4base64>(3)
+*=sect AUTHORS
+*Philip L. Budne
+*=cut
+-include 'utf.sno'
+
+	json.nul = CHAR(0)
+	json.bs = CHAR(8)
+	json.ht = CHAR(9)
+	json.lf = CHAR(10)
+	json.ff = CHAR(12)
+	json.cr = CHAR(13)
+	json.ctrl = SUBSTR(&ALPHABET,1,32)
+	json.ws = SPAN(' ' json.ht json.lf json.cr)
+
+	DATA("json.token(json.tokval)")
+	DATA("json.cons(json.car,json.cdr)")
+
+* hex alphabet
+	json.ha = '0123456789abcdef'
+
+**************** json.hi
+* convert hex string to integer
+* (HI available in logic module)
+
+	DEFINE("json.hi(xx)i,x")			:(e.json.hi)
+json.hi	xx = REPLACE(xx, 'ABCDEF', 'abcdef')
+	json.hi = 0
+json.hi.loop
++	IDENT(xx)					:S(RETURN)
+	json.ha POS(0) ARB SUBSTR(xx, 1, 1) @i		:F(FRETURN)
+	json.hi = json.hi * 16 + i - 1
+	xx = SUBSTR(xx, 2)				:(json.hi.loop)
+e.json.hi
+
+**************** json.hex
+* convert 8 bit number to two hex digits (for control characters)
+
+	DEFINE("json.hex(n)")				:(e.json.hex)
+json.hex
++	json.hex = SUBSTR(json.ha, n / 16 + 1, 1)
++		   SUBSTR(json.ha, remdr(n,16) + 1, 1)
++	:(RETURN)
+e.json.hex
+**************** json.descape
+* de-escape backslash escaped string
+
+* for decode:
+* single character escape codes
+	json.escapes = '\"btnfr'
+* escape sequence:
+	json.eseq = '\' ANY(json.escapes)
+* match string not containing an escape sequence:
+	json.escbreak = BREAK('\"')
+
+	json.hd = ANY('0123456789abcdefABCDEF')
+* only allow ASCII in w/ \u escapes (avoid UTF-16 decode)
+	json.hexesc = '\u00' (ANY('01234567') json.hd) . x
+	json.hexesc2 = '\U00' (('0' | '1') json.hd json.hd json.hd json.hd json.hd) . x
+
+	json.q2char = TABLE()
+	json.q2char['\b'] = json.bs
+	json.q2char['\t'] = json.ht
+	json.q2char['\n'] = json.lf
+	json.q2char['\f'] = json.ff
+	json.q2char['\r'] = json.cr
+	json.q2char['\\'] = '\'
+	json.q2char['\"'] = '"'
+	FREEZE(json.q2char)
+
+	DEFINE("json.descape(in)x")			:(e.json.descape)
+* append a marker must be something that can't appear in a quoted string
+* (bare ctrl char, or an un-escaped quote)
+json.descape
++	in = in '"'
+json.descape.loop
++	IDENT(in, '"')					:S(RETURN)
+	in POS(0) json.eseq . x =			:S(json.descape.esc)
+	in POS(0) json.hexesc =				:S(json.descape.hex)
+	in POS(0) json.hexesc2 =			:S(json.descape.hex2)
+	in POS(0) BREAK('\"') . x (ANY('\"') REM) . in	:S(json.descape.str)
+	:(freturn)
+json.descape.esc
++	x = json.q2char[x]				:(json.descape.str)
+json.descape.hex2
++	x = RUNE(json.hi(x))			:F(FRETURN)S(json.descape.str)
+json.descape.hex
++	x = CHAR(json.hi(x))
+json.descape.str
+	json.descape = json.descape x			:(json.descape.loop)
+e.json.descape
+
+**************** json.gtok ****************
+* returns simple values as SNOBOL4 values,
+* other elements returned as JSON.TOKEN('X')
+
+	json.int = ('-' | '') SPAN('123456789') (SPAN(&DIGITS) | '')
+	json.number = json.int
++		(('.' (SPAN(&DIGITS) | '')) | '')
++		((('e' | 'E') json.int) | '')
+
+	json.string = '"' ARBNO(json.escbreak |
++				json.eseq |
++				json.hexesc |
++				json.hexesc2) . json.gtok '"'
+
+	DEFINE("json.gtok()x")				:(e.json.gtok)
+* note x local for json.hexesc[2] patterns
+json.gtok
++	json.subject POS(0) json.ws =			:S(json.gtok)
+	IDENT(json.subject)				:S(FRETURN)
+	json.subject POS(0) json.number . json.gtok =	:S(json.gtok.num)
+	json.subject POS(0) ANY('[],{}:') . json.gtok =	:S(json.gtok.tok)
+	json.subject POS(0) json.string =		:S(json.gtok.str)
+	json.subject POS(0) 'null' =			:S(RETURN)F(FRETURN)
+* here with string to de-escape
+json.gtok.str
++	json.gtok = json.descape(json.gtok)		:S(RETURN)F(FRETURN)
+*
+* here with number
+json.gtok.num
++	json.gtok = json.gtok + 0
++	:(RETURN)
+*
+* here with a terminal syntax element
+json.gtok.tok
++	json.gtok = json.token(json.gtok)
++	:(RETURN)
+e.json.gtok
+**************** json.istok ****************
+* predicate: only true if tok is a JSON.TOKEN instance (not a value)
+* if val non-empty token must match
+	DEFINE("json.istok(tok,val)")			:(e.json.istok)
+json.istok
++	IDENT(datatype(tok),.json.token)		:F(FRETURN)
+	IDENT(val)					:S(RETURN)
+	IDENT(json.tokval(tok), val)			:S(RETURN)F(FRETURN)
+e.json.istok
+**************** json.value ****************
+* inner worker, parses a json.value from json.subject
+* called from JSON_DECODE, and from self
+	DEFINE("json.value()tok,n,list")		:(e.json.value)
+json.value
++	json.value = json.gtok()			:F(FRETURN)
+	json.istok(json.value)				:F(RETURN)
+* here with a json.token
+	json.istok(json.value, '[')			:S(json.array)
+	json.istok(json.value, '{')			:S(json.object)
+	:(FRETURN)
+****
+* here when '[' seen; return as array (MUST have at least one datum)
+json.array
++	list =
+	n = -1
+* loop creating LIFO list of items, keeping (zero-based) count
+json.array.loop
++	list = json.cons(json.value(),list)		:F(FRETURN)
+	n = n + 1
+	tok = json.gtok()				:F(FRETURN)
+	json.istok(tok,',')				:S(json.array.loop)
+	json.istok(tok,']')				:F(FRETURN)
+* here at end of array with reverse order list
+* create ARRAY, and fill in entries from last to first!
+	json.value = ARRAY('0:' n)
+json.array.loop2
++	json.value[n] = json.car(list)
+	list = json.cdr(list)
+	n = n - 1
+	DIFFER(list)					:S(json.array.loop2)
+	:(RETURN)
+****
+* here when '{' seen
+json.object
++	json.value = TABLE()
+json.object.loop
++	n = json.gtok()					:F(FRETURN)
+* allow empty table, trailing comma
+	json.istok(n,'}')				:S(RETURN)
+*	key must be string
+	IDENT(DATATYPE(n),'STRING')			:F(FRETURN)
+	json.istok(json.gtok(),':')			:F(FRETURN)
+	json.value[n] = json.value()			:F(FRETURN)
+*	OUTPUT = n '=>' json.value[n]
+	tok = json.gtok()				:F(FRETURN)
+	json.istok(tok)					:F(FRETURN)
+	json.istok(tok, ',')				:S(json.object.loop)
+	json.istok(tok, '}')				:F(FRETURN)
+	:(RETURN)
+e.json.value
+**************** json.loads (decoder entry point)
+* enter here with subject string in json.subject
+* (establishes context for json.value, and calls it)
+	define("JSON_DECODE(json.subject)")		:(e.json.loads)
+JSON_DECODE
++	JSON_DECODE = json.value()			:F(FRETURN)
+* XXX just check if only whitespace left in json.subject?
+* any additional tokens are error:
+	json.gtok()					:S(FRETURN)
+	:(RETURN)
+
+e.json.loads
+
+****************************************************************
+**************** encode
+
+	json.ord2q = ARRAY('0:255')
+	i = 0
+json.init.loop
++	json.ord2q[i] = '\u00' json.hex(i)
+	i = i + 1
+	le(i, 31)					:S(json.init.loop)
+	json.ord2q[ORD(json.bs)] = '\b'
+	json.ord2q[ORD(json.ht)] = '\t'
+	json.ord2q[ORD(json.lf)] = '\n'
+	json.ord2q[ORD(json.ff)] = '\f'
+	json.ord2q[ORD(json.cr)] = '\r'
+	json.ord2q[ORD('\')] = '\\'
+	json.ord2q[ORD('"')] = '\"'
+
+	json.escaped = '\"' json.ctrl
+	json.brk.esc.p0 = POS(0) BREAK(json.escaped)
+	json.any.esc.p0 = POS(0) ANY(json.escaped)
+	json.any.esc.rem = ANY(json.escaped) REM
+
+* helper for JSON_ENCODE
+* encode string, escaping TAB, CR, LF, \, " and ctrl chars
+	define("json.escape(s)x")			:(e.json.escape)
+* appends a marker, could be any quoted byte
+json.escape
++	s = s json.nul
+json.escape.loop
++	IDENT(s, json.nul)				:S(json.escape.done)
+	s json.any.esc.p0 . x =				:S(json.escape.escape)
+	s json.brk.esc.p0 . x json.any.esc.rem . s	:S(json.escape.append)
+	:(FRETURN)
+json.escape.escape
++	x = json.ord2q[ORD(x)]
+	IDENT(x)					:S(FRETURN)
+json.escape.append
++	json.escape = json.escape x			:(json.escape.loop)
+
+json.escape.done
++	json.escape = '"' json.escape '"'		:(RETURN)
+e.json.escape
+
+****************
+	define("JSON_ENCODE(j)d,a,i,k,v,s")		:(e.JSON_ENCODE)
+JSON_ENCODE
++	d = DATATYPE(j)
+	IDENT(d, 'STRING')				:S(json.encode.str)
+	IDENT(d, 'INTEGER')				:S(json.encode.num)
+	IDENT(d, 'REAL')				:S(json.encode.num)
+	IDENT(d, 'TABLE')				:S(json.encode.tab)
+	IDENT(d, 'ARRAY')				:S(json.encode.arr)
+	TERMINAL = 'json.encode: illegal datatype ' d
++	:(FRETURN)
+
+* XXX quoting!!!
+json.encode.str
++	JSON_ENCODE = json.escape(j)			:(RETURN)
+
+json.encode.num
++	JSON_ENCODE = CONVERT(j, 'STRING')		:(RETURN)
+
+json.encode.tab
++	a = convert(j, 'ARRAY')				:F(json.encode.tab.mt)
+	s = '{'
+	i = 1
+json.encode.tab.loop
++	k = a[i,1]					:F(json.encode.tab.done)
+	v = a[i,2]					:F(json.encode.tab.done)
+	JSON_ENCODE = JSON_ENCODE s json.escape(k) ':' JSON_ENCODE(v)
++		 					:F(FRETURN)
+	i = i + 1
+	s = ','						:(json.encode.tab.loop)
+json.encode.tab.mt
++	JSON_ENCODE = '{'
+json.encode.tab.done
++	JSON_ENCODE = JSON_ENCODE '}'
++	:(RETURN)
+
++	
+json.encode.arr
++	a = PROTOTYPE(j)
+	a pos(0) break(',') ','				:S(json.encode.arr.bad)
+	a pos(0) '0:'					:F(json.encode.arr.bad)
+	i = 0
+	s = '['
+json.encode.arr.loop
++	a = j[i]					:F(json.encode.arr.done)
+	JSON_ENCODE = JSON_ENCODE s JSON_ENCODE(a)	:F(FRETURN)
+	i = i + 1
+	s = ','						:(json.encode.arr.loop)
+
+json.encode.arr.done
++	JSON_ENCODE = JSON_ENCODE ']'
++	:(RETURN)
+
+json.encode.arr.bad
++	TERMINAL = 'json.encode: bad array prototype ' a
++	:(FRETURN)
+
+e.JSON_ENCODE
