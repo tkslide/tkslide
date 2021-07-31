@@ -3,8 +3,14 @@ tkslide
 
 ## TkS*LIDE - Tk/TCL based Snobol4/Spitbol IDE
 
-
 ### CHANGES
+* 2021 Jul 31
+	Snobol4 updated to 2.2
+	Tclkit runtime updated
+
+* 2021 Apr 13
+	Directory/File tree added
+
 * 2019 Aug 8
 	URLs added to the Help menu.
 
