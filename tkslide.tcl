@@ -847,7 +847,7 @@ menu .menu
 			-command {checkOnlineUpdates}
 		.menu.help add separator
 		.menu.help add command -label {Phil Budne's SNOBOL4 Resources page} -underline 0 \
-			-command {urlOpen {http://www.snobol4.org}}
+			-command {urlOpen {http://www.regressive.org/snobol4}}
 		.menu.help add command -label "RosettaCode.org SNOBOL4 code" -underline 0 \
 			-command {urlOpen {http://rosettacode.org/wiki/Category:SNOBOL4}}
 		.menu.help add command -label {SNOBOL4 Yahoo!Group} -underline 0 \
