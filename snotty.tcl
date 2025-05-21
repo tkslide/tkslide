@@ -99,6 +99,7 @@ proc file_run {id} {
 
 proc file_close {id} {
 	puts "close $::wid"
+	destroy [winfo parent [focus]]
 	destroy [focus]
 	
 	set ::wid [expr "$::wid - 1"]
@@ -117,11 +118,13 @@ proc createwin {winid} {
 	bind $winid <Control-s> {file_save "" }
 	setHilight $winid
 	wm title [winfo parent $winid] "SnoTTY"
-	wm protocol [winfo parent $winid] WM_DELETE_WINDOW {file_close ""}
+	wm protocol [winfo parent $winid] WM_DELETE_WINDOW {
+		file_close ""
+	}
 
 	return $winid
 }
 
 wm withdraw .
 toplevel .top0
-pack [createwin .top0.edit]
+pack [createwin .top0.editor]
