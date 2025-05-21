@@ -99,7 +99,8 @@ proc file_run {id} {
 
 proc file_close {id} {
 	puts "close $::wid"
-	destroy [winfo parent [winfo parent [focus]]]
+	destroy [focus]
+	
 	set ::wid [expr "$::wid - 1"]
 	if { $::wid == 0 } {
 		destroy .
