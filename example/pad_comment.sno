@@ -1,0 +1,10 @@
+* pad a C style string to 50 characters length 
+* /* foobar */
+* becomes
+* /*------------------- foobar -------------------*/
+par	s = 50; p = '-'
+inp	trim(input) ( len(2) . f rtab(2) . b ( len(2) . e) ) @l
+cal	w  = s - size(f) + size(e); rm  = w - l - (lm = (w - l) / 2 )
+fil	lp = dupl(p, lm); rp = dupl(p, w - l - lm)
+out	output = f lp b rp e	 
+end
