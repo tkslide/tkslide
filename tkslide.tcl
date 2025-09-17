@@ -3,7 +3,7 @@
 # Author: Rafal M. Sulejman <rms@poczta.onet.pl>
 # All rights granted. All feedback welcome.
 
-set ::VERSION "0.37"
+set ::VERSION "0.38"
 
 proc newFile {w} {
 #{{{
@@ -589,7 +589,6 @@ if {[file exists $::userRc] && [file readable $::userRc]} {
 } else {
 	source $::systemRc
 }
-set ::snips [file join $rootdir "snippets.txt"]
 set ::ifile [file join [::fileutil::tempdir] $::inputfile]
 set ::efile [file join [::fileutil::tempdir] $::errfile]
 set ::ofile [file join [::fileutil::tempdir] $::outputfile]
@@ -684,19 +683,10 @@ if { $::has_r } {
 		-yscrollcommand {.invscroll set} 
 }
 
-text .snippet -bg white -fg black -font $::myFont \
-		-undo 1 -maxundo 0 \
-		-yscrollcommand {.snipvscroll set} 
-
-	
-
 if { [file exists $::ifile] && [file readable $::ifile] } {
 	openNamedFile .input $::ifile 0
 }
 
-if { [file exists $::snips] && [file readable $::snips] } {
-	openNamedFile .snippet $::snips 0
-}
 text .output -bg white -fg darkgreen \
 	-wrap word  -takefocus 1 \
 	-font $::myFont \
@@ -712,7 +702,6 @@ scrollbar .outvscroll -orient vertical -command ".output yview"
 scrollbar .errvscroll -orient vertical -command ".err yview"
 scrollbar .hscroll -orient horizontal -command ".text xview"
 scrollbar .vscroll -orient vertical -command ".text yview"
-scrollbar .snipvscroll -orient vertical -command ".snippet yview"
 
 frame .status
 label .status.text -text "Program text:" -underline 8
@@ -728,23 +717,21 @@ checkbutton .status.customTabs -text "Tabs" -variable custTabs -command {
 }
 checkbutton .status.useUTFlibrary -text "UTF hack" -variable ::useUTFlibrary 
 
-pack .status.text -side left
-pack .status.file -side left -fill x
-pack .status.useUTFlibrary -side right
-pack .status.customTabs -side right
+pack  .status.text          -side      left
+pack  .status.file          -side      left       -fill       x
+pack  .status.useUTFlibrary -side      right
+pack  .status.customTabs    -side      right
 
-label .intxt  -text "Input" -underline 0
-label .outtxt -text "Output" -underline 0
-label .errtxt -text "Messages" -underline 0
+label .intxt                           -text      "Input"     -underline 0
+label .outtxt               -text      "Output"   -underline  0
+label .errtxt               -text      "Messages" -underline  0
 
-grid .toolbar -sticky ew -columnspan 5
-grid .rtparam -sticky ew -columnspan 5
-grid .snippet -row 2 -sticky nsew -column 0 
-grid .snipvscroll -row 2 -sticky nsew -column 1
-grid .text -row 2 -sticky nsew -columnspan 3 -column 2
-grid .vscroll -row 2 -sticky nsew -column 5
-grid .hscroll -row 3 -sticky ew -columnspan 5  -column 1
-grid .status -row 4 -sticky ew -columnspan 5 -column 1
+grid  .toolbar              -sticky    ew         			  -columnspan 5
+grid  .rtparam              -sticky    ew         			  -columnspan 5
+grid  .text                 -sticky    nsew  -row 2 -column 0 -columnspan 5
+grid  .vscroll              -sticky    nsew  -row 2 -column 5              
+grid  .hscroll              -sticky    ew    -row 3 -column 0 -columnspan 5
+grid  .status               -sticky    ew    -row 4 -column 0 -columnspan 5
 grid .input .invscroll .output .outvscroll .err .errvscroll -sticky nwes
 grid .intxt .outtxt .errtxt -sticky ew -columnspan 2
 
@@ -918,12 +905,6 @@ bind .input <ButtonPress-3> {tk_popup .inputPopupMenu %X %Y}
 bind .err <F3> {searchrep .err}
 bind .err <Control-f> {searchrep .err}
 bind .err <ButtonPress-3> {tk_popup .errPopupMenu %X %Y}
-bind .snippet <ButtonPress-3> {tk_popup .snippetPopupMenu %X %Y}
-bind .snippet <ButtonPress-1><ButtonPress-3> {
-	.text insert insert [.snippet get [.snippet index insert-1l+1c] [.snippet index insert+1l-1c]]
-	.text insert end "\n"
-}
-
 
 bind . <F5> { 
 	toplevel .console
