@@ -4,16 +4,14 @@
 #
 # Copyright (c) 1998-2000 by Ajuba Solutions.
 # Copyright (c) 2002      by Phil Ehrens <phil@slug.org> (fileType)
-# Copyright (c) 2005-2009 by Andreas Kupries <andreas_kupries@users.sourceforge.net>
+# Copyright (c) 2005-2013 by Andreas Kupries <andreas_kupries@users.sourceforge.net>
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-# 
-# RCS: @(#) $Id: fileutil.tcl,v 1.76 2009/11/24 21:27:59 andreas_kupries Exp $
 
-package require Tcl 8.2
+package require Tcl 8.5 9
 package require cmdline
-package provide fileutil 1.14.2
+package provide fileutil 1.16.3
 
 namespace eval ::fileutil {
     namespace export \
@@ -21,7 +19,7 @@ namespace eval ::fileutil {
 	    jail stripPwd stripN stripPath tempdir tempfile \
 	    install fileType writeFile appendToFile \
 	    insertIntoFile removeFromFile replaceInFile \
-	    updateInPlace test tempdirReset
+	    updateInPlace test tempdirReset maketempdir
 }
 
 # ::fileutil::grep --
@@ -89,7 +87,6 @@ proc ::fileutil::find {{basedir .} {filtercmd {}}} {
 	FADD $basedir
 
     } elseif {[file isdirectory $basedir]} {
-
 	# For a directory as base we do an iterative recursion through
 	# the directory hierarchy starting at the base. We use a queue
 	# (Tcl list) of directories we have to check. We access it by
@@ -113,7 +110,9 @@ proc ::fileutil::find {{basedir .} {filtercmd {}}} {
 
 	set pending [list $basedir]
 	set at      0
-	array set   known {}
+	array set   parent {}
+	array set   norm   {}
+	Enter {} $basedir
 
 	while {$at < [llength $pending]} {
 	    # Get next directory not yet processed.
@@ -144,9 +143,8 @@ proc ::fileutil::find {{basedir .} {filtercmd {}}} {
 		# encountered before. If ok, record directory for
 		# expansion in future iterations.
 
-		set norm [fileutil::fullnormalize $f]
-		if {[info exists known($norm)]} continue
-		set known($norm) .
+		Enter $current $f
+		if {[Cycle $f]} continue
 
 		lappend pending $f
 	    }
@@ -156,6 +154,24 @@ proc ::fileutil::find {{basedir .} {filtercmd {}}} {
     }
 
     return $result
+}
+
+proc  ::fileutil::Enter {parent path} {
+    upvar 1 parent _parent norm _norm
+    set _parent($path) $parent
+    set _norm($path)   [fullnormalize $path]
+    return
+}
+
+proc  ::fileutil::Cycle {path} {
+    upvar 1 parent _parent norm _norm
+    set nform $_norm($path)
+    set paren $_parent($path)
+    while {$paren ne {}} {
+	if {$_norm($paren) eq $nform} { return yes }
+	set paren $_parent($paren)
+    }
+    return no
 }
 
 # Helper command for fileutil::find. Performs the filtering of the
@@ -180,186 +196,55 @@ proc ::fileutil::FADD {filename} {
     return
 }
 
-# The next three helper commands for fileutil::find depend strongly on
-# the version of Tcl, and partially on the platform.
+# Tcl 8.5+.
+# We have to check readability of "current" on our own, glob
+# changed to error out instead of returning nothing.
 
-# 1. The -directory and -types switches were added to glob in Tcl
-#    8.3. This means that we have to emulate them for Tcl 8.2.
-#
-# 2. In Tcl 8.3 using -types f will return only true files, but not
-#    links to files. This changed in 8.4+ where links to files are
-#    returned as well. So for 8.3 we have to handle the links
-#    separately (-types l) and also filter on our own.
-#    Note that Windows file links are hard links which are reported by
-#    -types f, but not -types l, so we can optimize that for the two
-#    platforms.
-#
-#    Note further that we have to handle broken links on our own. They
-#    are not returned by glob yet we want them in the output.
-#
-# 3. In Tcl 8.3 we also have a crashing bug in glob (SIGABRT, "stat on
-#    a known file") when trying to perform 'glob -types {hidden f}' on
-#    a directory without e'x'ecute permissions. We code around by
-#    testing if we can cd into the directory (stat might return enough
-#    information too (mode), but possibly also not portable).
-#
-#    For Tcl 8.2 and 8.4+ glob simply delivers an empty result
-#    (-nocomplain), without crashing. For them this command is defined
-#    so that the bytecode compiler removes it from the bytecode.
-#
-#    This bug made the ACCESS helper necessary.
-#    We code around the problem by testing if we can cd into the
-#    directory (stat might return enough information too (mode), but
-#    possibly also not portable).
+proc ::fileutil::ACCESS {args} {}
 
-if {[package vsatisfies [package present Tcl] 8.4]} {
-    # Tcl 8.4+.
-    # (Ad 1) We have -directory, and -types,
-    # (Ad 2) Links are returned for -types f/d if they refer to files/dirs.
-    # (Ad 3) No bug to code around
-
-    proc ::fileutil::ACCESS {args} {}
-
-    proc ::fileutil::GLOBF {current} {
-	set res [concat \
-		     [glob -nocomplain -directory $current -types f          -- *] \
-		     [glob -nocomplain -directory $current -types {hidden f} -- *]]
-
-	# Look for broken links (They are reported as neither file nor directory).
-	foreach l [concat \
-		       [glob -nocomplain -directory $current -types l          -- *] \
-		       [glob -nocomplain -directory $current -types {hidden l} -- *] ] {
-	    if {[file isfile      $l]} continue
-	    if {[file isdirectory $l]} continue
-	    lappend res $l
-	}
-	return $res
+proc ::fileutil::GLOBF {current} {
+    if {![file readable $current] ||
+	[BadLink $current]} {
+	return {}
     }
 
-    proc ::fileutil::GLOBD {current} {
-	concat \
-	    [glob -nocomplain -directory $current -types d          -- *] \
-	    [glob -nocomplain -directory $current -types {hidden d} -- *]
+    set res [lsort -unique [concat \
+				[glob -nocomplain -directory $current -types f          -- *] \
+				[glob -nocomplain -directory $current -types {hidden f} -- *]]]
+
+    # Look for broken links (They are reported as neither file nor directory).
+    foreach l [lsort -unique [concat \
+				  [glob -nocomplain -directory $current -types l          -- *] \
+				  [glob -nocomplain -directory $current -types {hidden l} -- *]]] {
+	if {[file isfile      $l]} continue
+	if {[file isdirectory $l]} continue
+	lappend res $l
+    }
+    return [lsort -unique $res]
+}
+
+proc ::fileutil::GLOBD {current} {
+    if {![file readable $current] ||
+	[BadLink $current]} {
+	return {}
     }
 
-} elseif {[package vsatisfies [package present Tcl] 8.3]} {
-    # 8.3.
-    # (Ad 1) We have -directory, and -types,
-    # (Ad 2) Links are NOT returned for -types f/d, collect separately.
-    #        No symbolic file links on Windows.
-    # (Ad 3) Bug to code around.
+    lsort -unique [concat \
+		       [glob -nocomplain -directory $current -types d          -- *] \
+		       [glob -nocomplain -directory $current -types {hidden d} -- *]]
+}
 
-    proc ::fileutil::ACCESS {current} {
-	if {[catch {
-	    set h [pwd] ; cd $current ; cd $h
-	}]} {return -code continue}
-	return
+proc ::fileutil::BadLink {current} {
+    if {[file type $current] ne "link"} { return no }
+
+    set dst [file join [file dirname $current] [file readlink $current]]
+
+    if {![file exists   $dst] ||
+	![file readable $dst]} {
+	return yes
     }
 
-    if {[string equal $::tcl_platform(platform) windows]} {
-	proc ::fileutil::GLOBF {current} {
-	    concat \
-		[glob -nocomplain -directory $current -types f          -- *] \
-		[glob -nocomplain -directory $current -types {hidden f} -- *]]
-	}
-    } else {
-	proc ::fileutil::GLOBF {current} {
-	    set l [concat \
-		       [glob -nocomplain -directory $current -types f          -- *] \
-		       [glob -nocomplain -directory $current -types {hidden f} -- *]]
-
-	    foreach x [concat \
-			   [glob -nocomplain -directory $current -types l          -- *] \
-			   [glob -nocomplain -directory $current -types {hidden l} -- *]] {
-		if {[file isdirectory $x]} continue
-		# We have now accepted files, links to files, and broken links.
-		lappend l $x
-	    }
-
-	    return $l
-	}
-    }
-
-    proc ::fileutil::GLOBD {current} {
-	set l [concat \
-		   [glob -nocomplain -directory $current -types d          -- *] \
-		   [glob -nocomplain -directory $current -types {hidden d} -- *]]
-
-	foreach x [concat \
-		       [glob -nocomplain -directory $current -types l          -- *] \
-		       [glob -nocomplain -directory $current -types {hidden l} -- *]] {
-	    if {![file isdirectory $x]} continue
-	    lappend l $x
-	}
-
-	return $l
-    }
-} else {
-    # 8.2.
-    # (Ad 1,2,3) We do not have -directory, nor -types. Full emulation required.
-
-    proc ::fileutil::ACCESS {args} {}
-
-    if {[string equal $::tcl_platform(platform) windows]} {
-	# Hidden files cannot be handled by Tcl 8.2 in glob. We have
-	# to punt.
-
-	proc ::fileutil::GLOBF {current} {
-	    set current \\[join [split $current {}] \\]
-	    set res {}
-	    foreach x [glob -nocomplain -- [file join $current *]] {
-		if {[file isdirectory $x]} continue
-		if {[catch {file type $x}]} continue
-		# We have now accepted files, links to files, and
-		# broken links. We may also have accepted a directory
-		# as well, if the current path was inaccessible. This
-		# however will cause 'file type' to throw an error,
-		# hence the second check.
-		lappend res $x
-	    }
-	    return $res
-	}
-
-	proc ::fileutil::GLOBD {current} {
-	    set current \\[join [split $current {}] \\]
-	    set res {}
-	    foreach x [glob -nocomplain -- [file join $current *]] {
-		if {![file isdirectory $x]} continue
-		lappend res $x
-	    }
-	    return $res
-	}
-    } else {
-	# Hidden files on Unix are dot-files. We emulate the switch
-	# '-types hidden' by using an explicit pattern.
-
-	proc ::fileutil::GLOBF {current} {
-	    set current \\[join [split $current {}] \\]
-	    set res {}
-	    foreach x [glob -nocomplain -- [file join $current *] [file join $current .*]] {
-		if {[file isdirectory $x]} continue
-		if {[catch {file type $x}]} continue
-		# We have now accepted files, links to files, and
-		# broken links. We may also have accepted a directory
-		# as well, if the current path was inaccessible. This
-		# however will cause 'file type' to throw an error,
-		# hence the second check.
-
-		lappend res $x
-	    }
-	    return $res
-	}
-
-	proc ::fileutil::GLOBD {current} {
-	    set current \\[join [split $current {}] \\]
-	    set res {}
-	    foreach x [glob -nocomplain -- $current/* [file join $current .*]] {
-		if {![file isdirectory $x]} continue
-		lappend res $x
-	    }
-	    return $res
-	}
-    }
+    return no
 }
 
 # ::fileutil::findByPattern --
@@ -557,8 +442,8 @@ if {[string equal $tcl_platform(platform) windows]} {
 
 # ::fileutil::jail --
 #
-#	Ensures that the input path 'filename' stays within the the
-#	directory 'jail'. In this way it preventsuser-supplied paths
+#	Ensures that the input path 'filename' stays within the
+#	directory 'jail'. In this way it prevents user-supplied paths
 #	from escaping the jail.
 #
 # Arguments:
@@ -913,7 +798,7 @@ proc ::fileutil::insertIntoFile {args} {
     Spec ReadWritable $args opts fname at data
 
     set max [file size $fname]
-    CheckLocation $at $max insertion
+    CheckLocation $at $max insertion ; set at [format %d $at]
 
     if {[string length $data] == 0} {
 	# Another degenerate case, inserting nothing.
@@ -968,8 +853,8 @@ proc ::fileutil::removeFromFile {args} {
     Spec ReadWritable $args opts fname at n
 
     set max [file size $fname]
-    CheckLocation    $at $max removal
-    CheckLength   $n $at $max removal
+    CheckLocation    $at $max removal ; set at [format %d $at]
+    CheckLength   $n $at $max removal ; set n  [format %d $n]
 
     if {$n == 0} {
 	# Another degenerate case, removing nothing.
@@ -1026,8 +911,8 @@ proc ::fileutil::replaceInFile {args} {
     Spec ReadWritable $args opts fname at n data
 
     set max [file size $fname]
-    CheckLocation    $at $max replacement
-    CheckLength   $n $at $max replacement
+    CheckLocation    $at $max replacement ; set at [format %d $at]
+    CheckLength   $n $at $max replacement ; set n  [format %d $n]
 
     if {
 	($n == 0) &&
@@ -1306,6 +1191,7 @@ proc ::fileutil::SetOptions {c opts} {
 }
 
 proc ::fileutil::CheckLocation {at max label} {
+    ##nagelfar ignore
     if {![string is integer -strict $at]} {
 	return -code error \
 		"Expected integer but got \"$at\""
@@ -1319,6 +1205,7 @@ proc ::fileutil::CheckLocation {at max label} {
 }
 
 proc ::fileutil::CheckLength {n at max label} {
+    ##nagelfar ignore
     if {![string is integer -strict $n]} {
 	return -code error \
 		"Expected integer but got \"$n\""
@@ -1351,25 +1238,24 @@ proc ::fileutil::foreachLine {var filename cmd} {
     catch {
 	set code 0
 	set result {}
+	set return 0
 	while {[gets $fp line] >= 0} {
-	    set code [catch {uplevel 1 $cmd} result]
-	    if {($code != 0) && ($code != 4)} {break}
+	    set code [catch {uplevel 1 $cmd} result options]
+	    if {$code == 2} {
+		set return 1
+		set code [dict get $options -code]
+		break
+	    } elseif {$code != 0 && $code != 4} {
+		break
+	    }
 	}
     }
     close $fp
 
-    if {($code == 0) || ($code == 3) || ($code == 4)} {
-        return $result
+    if {$return || $code == 1 || $code > 4} {
+	return -options $options $result
     }
-    if {$code == 1} {
-        global errorCode errorInfo
-        return \
-		-code      $code      \
-		-errorcode $errorCode \
-		-errorinfo $errorInfo \
-		$result
-    }
-    return -code $code $result
+    return $result
 }
 
 # ::fileutil::touch --
@@ -1393,56 +1279,50 @@ proc ::fileutil::foreachLine {var filename cmd} {
 # Errors:
 #	Both of "-r" and "-t" cannot be specified.
 
-if {[package vsatisfies [package provide Tcl] 8.3]} {
-    namespace eval ::fileutil {
-	namespace export touch
-    }
+proc ::fileutil::touch {args} {
+    # Don't bother catching errors, just let them propagate up
 
-    proc ::fileutil::touch {args} {
-        # Don't bother catching errors, just let them propagate up
-        
-        set options {
-            {a          "set the atime only"}
-            {m          "set the mtime only"}
-            {c          "do not create non-existant files"}
-            {r.arg  ""  "use time from ref_file"}
-            {t.arg  -1  "use specified time"}
-        }
-        set usage ": [lindex [info level 0] 0]\
+    set options {
+        {a          "set the atime only"}
+        {m          "set the mtime only"}
+        {c          "do not create non-existant files"}
+        {r.arg  ""  "use time from ref_file"}
+        {t.arg  -1  "use specified time"}
+    }
+    set usage ": [lindex [info level 0] 0]\
                       \[options] filename ...\noptions:"
-        array set params [::cmdline::getoptions args $options $usage]
-        
-        # process -a and -m options
-        set set_atime [set set_mtime "true"]
-        if {  $params(a) && ! $params(m)} {set set_mtime "false"}
-        if {! $params(a) &&   $params(m)} {set set_atime "false"}
-        
-        # process -r and -t
-        set has_t [expr {$params(t) != -1}]
-        set has_r [expr {[string length $params(r)] > 0}]
-        if {$has_t && $has_r} {
-            return -code error "Cannot specify both -r and -t"
-        } elseif {$has_t} {
-            set atime [set mtime $params(t)]
-        } elseif {$has_r} {
-            file stat $params(r) stat
-            set atime $stat(atime)
-            set mtime $stat(mtime)
-        } else {
-            set atime [set mtime [clock seconds]]
-        }
+    array set params [::cmdline::getoptions args $options $usage]
 
-        # do it
-        foreach filename $args {
-            if {! [file exists $filename]} {
-                if {$params(c)} {continue}
-                close [open $filename w]
-            }
-            if {$set_atime} {file atime $filename $atime}
-            if {$set_mtime} {file mtime $filename $mtime}
-        }
-        return
+    # process -a and -m options
+    set set_atime [set set_mtime "true"]
+    if {  $params(a) && ! $params(m)} {set set_mtime "false"}
+    if {! $params(a) &&   $params(m)} {set set_atime "false"}
+
+    # process -r and -t
+    set has_t [expr {$params(t) != -1}]
+    set has_r [expr {[string length $params(r)] > 0}]
+    if {$has_t && $has_r} {
+        return -code error "Cannot specify both -r and -t"
+    } elseif {$has_t} {
+        set atime [set mtime $params(t)]
+    } elseif {$has_r} {
+        file stat $params(r) stat
+        set atime $stat(atime)
+        set mtime $stat(mtime)
+    } else {
+        set atime [set mtime [clock seconds]]
     }
+
+    # do it
+    foreach filename $args {
+        if {! [file exists $filename]} {
+            if {$params(c)} {continue}
+            close [open $filename w]
+        }
+        if {$set_atime} {file atime $filename $atime}
+        if {$set_mtime} {file mtime $filename $mtime}
+    }
+    return
 }
 
 # ::fileutil::fileType --
@@ -1455,10 +1335,10 @@ if {[package vsatisfies [package provide Tcl] 8.3]} {
 #
 # Results
 #	type            Type of the file.  May be a list if multiple tests
-#                       are positive (eg, a file could be both a directory 
+#                       are positive (eg, a file could be both a directory
 #                       and a link).  In general, the list proceeds from most
 #                       general (eg, binary) to most specific (eg, gif), so
-#                       the full type for a GIF file would be 
+#                       the full type for a GIF file would be
 #                       "binary graphic gif"
 #
 #                       At present, the following types can be detected:
@@ -1479,7 +1359,7 @@ if {[package vsatisfies [package provide Tcl] 8.3]} {
 #                       gravity_wave_data_frame
 #                       link
 #			doctools, doctoc, and docidx documentation files.
-#                  
+#
 
 proc ::fileutil::fileType {filename} {
     ;## existence test
@@ -1533,17 +1413,19 @@ proc ::fileutil::fileType {filename} {
     if { [ regexp {^\#\!\s*(\S+)} $test -> terp ] } {
         lappend type script $terp
     } elseif {([regexp "\\\[manpage_begin " $test] &&
-	       ![regexp -- {--- !doctools ---} $test]) ||
-              [regexp -- {--- doctools ---} $test]} {
+	       !([regexp -- {--- !doctools ---} $test] || [regexp -- "!tcl\.tk//DSL doctools//EN//" $test])) ||
+                ([regexp -- {--- doctools ---} $test]  || [regexp -- "tcl\.tk//DSL doctools//EN//" $test])} {
 	lappend type doctools
     } elseif {([regexp "\\\[toc_begin " $test] &&
-	       ![regexp -- {--- !doctoc ---} $test]) ||
-              [regexp -- {--- doctoc ---} $test]} {
+	       !([regexp -- {--- !doctoc ---} $test] || [regexp -- "!tcl\.tk//DSL doctoc//EN//" $test])) ||
+                ([regexp -- {--- doctoc ---} $test]  || [regexp -- "tcl\.tk//DSL doctoc//EN//" $test])} {
 	lappend type doctoc
     } elseif {([regexp "\\\[index_begin " $test] &&
-	       ![regexp -- {--- !docidx ---} $test]) ||
-              [regexp -- {--- docidx ---} $test]} {
+	       !([regexp -- {--- !docidx ---} $test] || [regexp -- "!tcl\.tk//DSL docidx//EN//" $test])) ||
+              ([regexp -- {--- docidx ---} $test] || [regexp -- "tcl\.tk//DSL docidx//EN//" $test])} {
 	lappend type docidx
+    } elseif {[regexp -- "tcl\\.tk//DSL diagram//EN//" $test]} {
+	lappend type tkdiagram
     } elseif { $binary && [ regexp {^[\x7F]ELF} $test ] } {
         lappend type executable elf
     } elseif { $binary && [string match "MZ*" $test] } {
@@ -1558,6 +1440,23 @@ proc ::fileutil::fileType {filename} {
                 lappend type executable dos
             }
         }
+    } elseif { $binary && [string match "SQLite format 3\x00*" $test] } {
+	lappend type sqlite3
+
+	# Check for various sqlite-based application file formats.
+	set appid [string range $test 68 71]
+	if {$appid eq "\x0f\x05\x51\x12"} {
+	    lappend type fossil-checkout
+	} elseif {$appid eq "\x0f\x05\x51\x13"} {
+	    lappend type fossil-global-config
+	} elseif {$appid eq "\x0f\x05\x51\x11"} {
+	    lappend type fossil-repository
+	} else {
+	    # encode the appid as hex and append that.
+	    binary scan $appid H8 aid
+	    lappend type A$aid
+	}
+
     } elseif { $binary && [string match "BZh91AY\&SY*" $test] } {
         lappend type compressed bzip
     } elseif { $binary && [string match "\x1f\x8b*" $test] } {
@@ -1585,10 +1484,10 @@ proc ::fileutil::fileType {filename} {
         lappend type graphic tiff
     } elseif { $binary && [string match "BM*" $test] && [string range $test 6 9] == "\x00\x00\x00\x00" } {
         lappend type graphic bitmap
-    } elseif { $binary && [string match "\%PDF\-*" $test] } {
-        lappend type pdf
     } elseif { ! $binary && [string match -nocase "*\<html\>*" $test] } {
         lappend type html
+    } elseif {[string match "\%PDF\-*" $test] } {
+        lappend type pdf
     } elseif { [string match "\%\!PS\-*" $test] } {
        lappend type ps
        if { [string match "* EPSF\-*" $test] } {
@@ -1793,10 +1692,62 @@ namespace eval ::fileutil {
     variable tempdirSet 0
 }
 
+# ::fileutil::maketempdir --
+
+proc ::fileutil::maketempdir {args} {
+    return [Normalize [MakeTempDir $args]]
+}
+
+proc ::fileutil::MakeTempDir {config} {
+    # Setup of default configuration.
+    array set options {}
+    set options(-suffix) ""
+    set options(-prefix) "tmp"
+    set options(-dir)    [tempdir]
+
+    # TODO: Check for and reject options not in -suffix, -prefix, -dir
+    # Merge user configuration, overwrite defaults.
+    array set options $config
+
+    # See also "tempfile" below. Could be shareable internal configuration.
+    set chars       abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789
+    set nrand_chars 10
+    set maxtries    10
+
+    for {set i 0} {$i < $maxtries} {incr i} {
+	# Build up the candidate name. See also "tempfile".
+	set directory_name $options(-prefix)
+	for {set j 0} {$j < $nrand_chars} {incr j} {
+	    append directory_name \
+		[string index $chars [expr {int(rand() * 62)}]]
+	}
+	append directory_name $options(-suffix)
+	set path [file join $options(-dir) $directory_name]
+
+	# Try to create. Try again if already exists, or trouble
+	# with creation and setting of perms.
+	#
+	# Note: The last looks as if it is able to leave partial
+	# directories behind (created, trouble with perms). But
+	# deleting ... Might pull the rug out from somebody else.
+
+	if {[file exists $path]} continue
+	if {[catch {
+	    file mkdir $path
+	    if {$::tcl_platform(platform) eq "unix"} {
+		file attributes $path -permissions 0o700
+	    }
+	}]} continue
+
+	return $path
+    }
+    return -code error "Failed to find an unused temporary directory name"
+}
+
 # ::fileutil::tempfile --
 #
 #   generate a temporary file name suitable for writing to
-#   the file name will be unique, writable and will be in the 
+#   the file name will be unique, writable and will be in the
 #   appropriate system specific temp directory
 #   Code taken from http://mini.net/tcl/772 attributed to
 #    Igor Volobouev and anon.
@@ -1814,14 +1765,14 @@ proc ::fileutil::tempfile {{prefix {}}} {
 proc ::fileutil::TempFile {prefix} {
     set tmpdir [tempdir]
 
-    set chars "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+    set chars       "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
     set nrand_chars 10
-    set maxtries 10
-    set access [list RDWR CREAT EXCL TRUNC]
-    set permission 0600
+    set maxtries    10
+    set access      [list RDWR CREAT EXCL]
+    set permission  0600
     set channel ""
     set checked_dir_writable 0
-    set mypid [pid]
+
     for {set i 0} {$i < $maxtries} {incr i} {
  	set newname $prefix
  	for {set j 0} {$j < $nrand_chars} {incr j} {
@@ -1829,23 +1780,21 @@ proc ::fileutil::TempFile {prefix} {
 		    [expr {int(rand()*62)}]]
  	}
 	set newname [file join $tmpdir $newname]
- 	if {[file exists $newname]} {
- 	    after 1
- 	} else {
- 	    if {[catch {open $newname $access $permission} channel]} {
- 		if {!$checked_dir_writable} {
- 		    set dirname [file dirname $newname]
- 		    if {![file writable $dirname]} {
- 			return -code error "Directory $dirname is not writable"
- 		    }
- 		    set checked_dir_writable 1
- 		}
- 	    } else {
- 		# Success
-		close $channel
- 		return $newname
- 	    }
- 	}
+
+	if {[catch {open $newname $access $permission} channel]} {
+	    if {!$checked_dir_writable} {
+		set dirname [file dirname $newname]
+		if {![file writable $dirname]} {
+		    return -code error "Directory $dirname is not writable"
+		}
+		set checked_dir_writable 1
+	    }
+	} else {
+	    # Success
+	    close $channel
+	    return $newname
+	}
+
     }
     if {[string compare $channel ""]} {
  	return -code error "Failed to open a temporary file: $channel"

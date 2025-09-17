@@ -2,17 +2,15 @@
 #
 #	Directory traversal.
 #
-# Copyright (c) 2006-2009 by Andreas Kupries <andreas_kupries@users.sourceforge.net>
+# Copyright (c) 2006-2015 by Andreas Kupries <andreas_kupries@users.sourceforge.net>
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-# 
-# RCS: @(#) $Id: traverse.tcl,v 1.7 2009/02/10 18:11:07 andreas_kupries Exp $
 
-package require Tcl 8.3
+package require Tcl 8.5 9
 
 # OO core
-if {[package vsatisfies [package present Tcl] 8.5]} {
+if {[package vsatisfies [package present Tcl] 8.5 9]} {
     # Use new Tcl 8.5a6+ features to specify the allowed packages.
     # We can use anything above 1.3. This means v2 as well.
     package require snit 1.3-
@@ -206,9 +204,8 @@ snit::type ::fileutil::traverse {
 		    lappend _results $f
 		}
 
-		set norm [fileutil::fullnormalize $f]
-		if {[info exists _known($norm)]} continue
-		set _known($norm) .
+		Enter $top $f
+		if {[Cycle $f]} continue
 
 		if {[Recurse $f]} {
 		    lappend _pending $f
@@ -218,7 +215,7 @@ snit::type ::fileutil::traverse {
 	    # Stop expanding if we have paths to return.
 
 	    if {[llength $_results]} {
-		set top    [lindex   $_results end]
+		set top      [lindex   $_results end]
 		set _results [lreplace $_results end end]
 		set currentfile $top
 		return 1
@@ -247,12 +244,45 @@ snit::type ::fileutil::traverse {
     variable _base         {} ; # Base directory.
     variable _pending      {} ; # Processing stack.
     variable _results      {} ; # Result stack.
-    variable _known -array {} ; # Seen paths.
+
+    # sym link handling (to break cycles, while allowing the following of non-cycle links).
+    # Notes
+    # - path parent   tracking is lexical.
+    # - path identity tracking is based on the normalized path, i.e. the path with all
+    #   symlinks resolved.
+    # Maps
+    # - path -> parent     (easier to follow the list than doing dirname's)
+    # - path -> normalized (cache to avoid redundant calls of fullnormalize)
+    # cycle <=> A parent's normalized form (NF) is identical to the current path's NF
+
+    variable _parent -array {}
+    variable _norm   -array {}
 
     # ### ### ### ######### ######### #########
     ## Internal helpers.
 
+    proc Enter {parent path} {
+	#puts ___E|$path
+	upvar 1 _parent _parent _norm _norm
+	set _parent($path) $parent
+	set _norm($path)   [fileutil::fullnormalize $path]
+    }
+
+    proc Cycle {path} {
+	upvar 1 _parent _parent _norm _norm
+	set nform $_norm($path)
+	set paren $_parent($path)
+	while {$paren ne {}} {
+	    if {$_norm($paren) eq $nform} { return yes }
+	    set paren $_parent($paren)
+	}
+	return no
+    }
+
     method Init {} {
+	array unset _parent *
+	array unset _norm   *
+
 	# Path ok as result?
 	if {[Valid $_base]} {
 	    lappend _results $_base
@@ -260,10 +290,9 @@ snit::type ::fileutil::traverse {
 
 	# Expansion allowed by prefilter?
 	if {[file isdirectory $_base] && [Recurse $_base]} {
+	    Enter {} $_base
 	    lappend _pending $_base
 	}
-
-	array unset _known *
 
 	# System is set up now.
 	set _init 1
@@ -271,8 +300,10 @@ snit::type ::fileutil::traverse {
     }
 
     proc Valid {path} {
+	#puts ___V|$path
 	upvar 1 options options
 	if {![llength $options(-filter)]} {return 1}
+	set path [file normalize $path]
 	set code [catch {uplevel \#0 [linsert $options(-filter) end $path]} valid]
 	if {!$code} {return $valid}
 	Error $path $valid
@@ -280,8 +311,10 @@ snit::type ::fileutil::traverse {
     }
 
     proc Recurse {path} {
-	upvar 1 options options
+	#puts ___X|$path
+	upvar 1 options options _norm _norm
 	if {![llength $options(-prefilter)]} {return 1}
+	set path [file normalize $path]
 	set code [catch {uplevel \#0 [linsert $options(-prefilter) end $path]} valid]
 	if {!$code} {return $valid}
 	Error $path $valid
@@ -291,6 +324,7 @@ snit::type ::fileutil::traverse {
     proc Error {path msg} {
 	upvar 1 options options
 	if {![llength $options(-errorcmd)]} return
+	set path [file normalize $path]
 	uplevel \#0 [linsert $options(-errorcmd) end $path $msg]
 	return
     }
@@ -302,117 +336,58 @@ snit::type ::fileutil::traverse {
 # ### ### ### ######### ######### #########
 ##
 
-# The next three helper commands for the traverser depend strongly on
-# the version of Tcl, and partially on the platform.
+# Tcl 8.5+.
+# We have to check readability of "current" on our own, glob
+# changed to error out instead of returning nothing.
 
-# 1. In Tcl 8.3 using -types f will return only true files, but not
-#    links to files. This changed in 8.4+ where links to files are
-#    returned as well. So for 8.3 we have to handle the links
-#    separately (-types l) and also filter on our own.
-#    Note that Windows file links are hard links which are reported by
-#    -types f, but not -types l, so we can optimize that for the two
-#    platforms.
-#
-# 2. In Tcl 8.3 we also have a crashing bug in glob (SIGABRT, "stat on
-#    a known file") when trying to perform 'glob -types {hidden f}' on
-#    a directory without e'x'ecute permissions. We code around by
-#    testing if we can cd into the directory (stat might return enough
-#    information too (mode), but possibly also not portable).
-#
-#    For Tcl 8.2 and 8.4+ glob simply delivers an empty result
-#    (-nocomplain), without crashing. For them this command is defined
-#    so that the bytecode compiler removes it from the bytecode.
-#
-#    This bug made the ACCESS helper necessary.
-#    We code around the problem by testing if we can cd into the
-#    directory (stat might return enough information too (mode), but
-#    possibly also not portable).
+proc ::fileutil::traverse::ACCESS {args} {return 1}
 
-if {[package vsatisfies [package present Tcl] 8.4]} {
-    # Tcl 8.4+.
-    # (Ad 1) We have -directory, and -types,
-    # (Ad 2) Links are returned for -types f/d if they refer to files/dirs.
-    # (Ad 3) No bug to code around
-
-    proc ::fileutil::traverse::ACCESS {args} {return 1}
-
-    proc ::fileutil::traverse::GLOBF {current} {
-	set res [concat \
-		     [glob -nocomplain -directory $current -types f          -- *] \
-		     [glob -nocomplain -directory $current -types {hidden f} -- *]]
-
-	# Look for broken links (They are reported as neither file nor directory).
-	foreach l [concat \
-		       [glob -nocomplain -directory $current -types l          -- *] \
-		       [glob -nocomplain -directory $current -types {hidden l} -- *] ] {
-	    if {[file isfile      $l]} continue
-	    if {[file isdirectory $l]} continue
-	    lappend res $l
-	}
-	return $res
+proc ::fileutil::traverse::GLOBF {current} {
+    if {![file readable $current] ||
+	[BadLink $current]} {
+	return {}
     }
 
-    proc ::fileutil::traverse::GLOBD {current} {
-	concat \
-	    [glob -nocomplain -directory $current -types d          -- *] \
-	    [glob -nocomplain -directory $current -types {hidden d} -- *]
+    set res [lsort -unique [concat \
+				[glob -nocomplain -directory $current -types f          -- *] \
+				[glob -nocomplain -directory $current -types {hidden f} -- *]]]
+
+    # Look for broken links (They are reported as neither file nor directory).
+    foreach l [lsort -unique [concat \
+				  [glob -nocomplain -directory $current -types l          -- *] \
+				  [glob -nocomplain -directory $current -types {hidden l} -- *]]] {
+	if {[file isfile      $l]} continue
+	if {[file isdirectory $l]} continue
+	lappend res $l
+    }
+    return [lsort -unique $res]
+}
+
+proc ::fileutil::traverse::GLOBD {current} {
+    if {![file readable $current] ||
+	[BadLink $current]} {
+	return {}
     }
 
-} else {
-    # 8.3.
-    # (Ad 1) We have -directory, and -types,
-    # (Ad 2) Links are NOT returned for -types f/d, collect separately.
-    #        No symbolic file links on Windows.
-    # (Ad 3) Bug to code around.
+    lsort -unique [concat \
+		       [glob -nocomplain -directory $current -types d          -- *] \
+		       [glob -nocomplain -directory $current -types {hidden d} -- *]]
+}
 
-    proc ::fileutil::traverse::ACCESS {current} {
-	if {[catch {
-	    set h [pwd] ; cd $current ; cd $h
-	}]} {return 0}
-	return 1
+proc ::fileutil::traverse::BadLink {current} {
+    if {[file type $current] ne "link"} { return no }
+
+    set dst [file join [file dirname $current] [file readlink $current]]
+
+    if {![file exists   $dst] ||
+	![file readable $dst]} {
+	return yes
     }
 
-    if {[string equal $::tcl_platform(platform) windows]} {
-	proc ::fileutil::traverse::GLOBF {current} {
-	    concat \
-		[glob -nocomplain -directory $current -types f          -- *] \
-		[glob -nocomplain -directory $current -types {hidden f} -- *]]
-	}
-    } else {
-	proc ::fileutil::traverse::GLOBF {current} {
-	    set l [concat \
-		       [glob -nocomplain -directory $current -types f          -- *] \
-		       [glob -nocomplain -directory $current -types {hidden f} -- *]]
-
-	    foreach x [concat \
-			   [glob -nocomplain -directory $current -types l          -- *] \
-			   [glob -nocomplain -directory $current -types {hidden l} -- *]] {
-		if {[file isdirectory $x]} continue
-		# We have now accepted files, links to files, and broken links.
-		lappend l $x
-	    }
-
-	    return $l
-	}
-    }
-
-    proc ::fileutil::traverse::GLOBD {current} {
-	set l [concat \
-		   [glob -nocomplain -directory $current -types d          -- *] \
-		   [glob -nocomplain -directory $current -types {hidden d} -- *]]
-
-	foreach x [concat \
-		       [glob -nocomplain -directory $current -types l          -- *] \
-		       [glob -nocomplain -directory $current -types {hidden l} -- *]] {
-	    if {![file isdirectory $x]} continue
-	    lappend l $x
-	}
-
-	return $l
-    }
+    return no
 }
 
 # ### ### ### ######### ######### #########
 ## Ready
 
-package provide fileutil::traverse 0.4.1
+package provide fileutil::traverse 0.7
