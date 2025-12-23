@@ -790,18 +790,18 @@ menu .menu
 		.menu.snobol add command -label "Clear input" -underline 6 -command { .input delete 1.0 end }
 		.menu.snobol add command -label "Clear errors" -underline 6 -command { .err delete 1.0 end }
 
-	# Syntax menu
-	menu .menu.syntax -tearoff 1
-		.menu add cascade -menu .menu.syntax -label "Syntax" -underline 4
-		.menu.syntax add command -label "function" -underline 0 \
+	# Insert menu
+	menu .menu.insert -tearoff 1
+		.menu add cascade -menu .menu.insert -label "Insert" -underline 4
+		.menu.insert add command -label "function" -underline 0 \
 			-command { .text insert insert "\n\tdefine('fname(param)localvars')\t:(fname_end)\nfname\t\t:f(freturn)\n\t\t:(return)\nfname_end\n" }
-		.menu.syntax add command -label "data" -underline 0 \
+		.menu.insert add command -label "data" -underline 0 \
 			-command { .text insert insert "\n\tdata('typename(fields)')\n" }
-		.menu.syntax add command -label "code" -underline 0 \
+		.menu.insert add command -label "code" -underline 0 \
 			-command { .text insert insert "\n* string must start with label or whitespace\n\tvar = code(string)\t:s<var>f(compile_error)\ncompile_error\n" }
-		.menu.syntax add command -label "input(...)" -underline 0 \
+		.menu.insert add command -label "input(...)" -underline 0 \
 			-command { .text insert insert "\n\tinput('variable', unit, length, 'file')\n" }
-		.menu.syntax add command -label "output(...)" -underline 0 \
+		.menu.insert add command -label "output(...)" -underline 0 \
 			-command { .text insert insert "\n\toutput('variable', unit, length, 'file')\n" }
 
 	# Help menu
