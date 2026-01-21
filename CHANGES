@@ -1,3 +1,6 @@
+0.39
+* Editor: Confirmation dialog only when program was modified.
+
 0.38
 * Editor: removed snippets support
 * Runtime: updated Tcl/Tk files

@@ -3,7 +3,7 @@
 # Author: Rafal M. Sulejman <rms@poczta.onet.pl>
 # All rights granted. All feedback welcome.
 
-set ::VERSION "0.38"
+set ::VERSION "0.39"
 
 proc newFile {w} {
 #{{{
@@ -14,6 +14,7 @@ proc newFile {w} {
 		saveFileAs $w 1
 	}
 	$w delete 1.0 end
+    $w edit modified 0
 	set ::currentFile "unnamed.sno"
 	wm title . "TkS*LIDE $::VERSION - $::currentFile"
 #}}}
@@ -42,6 +43,7 @@ proc openNamedFile {w fileName {setTitle 0}} {
 	set fd [open $fileName r]
 	$w delete 1.0 end
 	$w insert 1.0 [read $fd]
+    $w edit modified 0
 	close $fd
 	if {$setTitle} {
 		set ::currentFile $fileName
@@ -92,6 +94,7 @@ proc saveFileAs {w {setTitle 0}} {
 			set fd [open $fileName w]
 			puts -nonewline $fd [$w get 1.0 "end -1c"]
 			close $fd
+            $w edit modified 0
 			} err] } {
 			set answer [tk_messageBox -type retrycancel \
 				-icon error -title "Write error" \
@@ -236,12 +239,16 @@ proc externalEdit {w} {
 
 proc endProgram {} {
 #{{{
-	if {[tk_messageBox -type yesno -default no \
-		-title {Quitting TkS*LIDE} \
-		-icon warning \
-		-message "Do you want to quit?" ] == "yes" } {
-		exit 0
-	}
+    if { [.text edit modified] } {
+        if {[tk_messageBox -type yesno -default no \
+            -title {Quitting TkS*LIDE} \
+            -icon warning \
+            -message "There are unsaved changes. Do you want to quit?" ] == "yes" } {
+            exit 0
+        }
+    } else {
+        exit 0
+    }
 #}}}
 }
 
