@@ -29,4 +29,4 @@ tkslide
     Version 0.35 - implemented support for second interpreter (Macro Spitbol).
 
 * 2013 Oct 8
-    Version 0.35 - Snobol4 (http://www.snobol4.org) updated to 1.5. 
+    Version 0.35 - Snobol4 (~~http://www.snobol4.org~~ https://regressive.org/snobol4) updated to 1.5.  
