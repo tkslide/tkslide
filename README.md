@@ -4,6 +4,9 @@ tkslide
 ## TkS*LIDE - Tk/TCL based Snobol4/Spitbol IDE
 
 ### CHANGES
+* 2026 Feb 19
+    Project archived. I don't have access to a Windows system to test the editor with newest .exes. 
+  
 * 2026 Jan 21
     Confirmation on close reworked.
 
